@@ -271,7 +271,7 @@ function ConsiderIceBlastRelease()
 	for _,pr in pairs(pro)
 	do
 		if pr ~= nil and pr.ability:GetName() == "ancient_apparition_ice_blast"  then
-			if utils.GetDistance(ReleaseLoc, pr.location) < 100 then
+			if pr ~= nil and ReleaseLoc ~= nil and utils.GetDistance(ReleaseLoc, pr.location) < 100 then
 				return BOT_ACTION_DESIRE_MODERATE;
 			end
 		end	

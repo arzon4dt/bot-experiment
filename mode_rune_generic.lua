@@ -207,7 +207,7 @@ function IsHumanPlayerNearby(bot, cRune)
 end
 
 function IsPureSupport(bot)
-	return hero_roles[bot:GetUnitName()]['support'] == 1 and hero_roles[bot:GetUnitName()]['offlaner'] ~= 1  and hero_roles[bot:GetUnitName()]['midlaner'] ~= 1
+	return role.CanBeSupport(bot:GetUnitName()) and bot:GetAssignedLane() ~= LANE_MID
 end
 
 function PriorityHeroExist(bot)
@@ -217,7 +217,7 @@ function PriorityHeroExist(bot)
 	for _,a in pairs(allies)
 	do
 		if a ~= nil and not a:IsIllusion() and a:GetUnitName() ~= "npc_dota_lone_druid_bear" and a:IsHero() and
-		  ( HasBottle(a) or a:GetAssignedLane() == LANE_MID or hero_roles[a:GetUnitName()]['midlaner'] == 1 or hero_roles[a:GetUnitName()]['carry'] == 1 ) 
+		  ( HasBottle(a) or a:GetAssignedLane() == LANE_MID or role.CanBeMidlaner(a:GetUnitName()) or role.CanBeSafeLaneCarry(a:GetUnitName()) ) 
 		then
 			exist = true;
 			theHero = a:GetUnitName()
