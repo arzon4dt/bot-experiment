@@ -17,10 +17,9 @@ end
 local BotAbilityPriority = build["skills"];
 local IdleTime = 0;
 local AllowedIddle = 15;
+local npcBot = GetBot();
 
 function AbilityLevelUpThink()  
-	
-	local npcBot = GetBot();
 	
 	if DotaTime() > 0 then
 		UnImplementedItemUsage()
@@ -131,9 +130,6 @@ function AbilityLevelUpThink()
 end
 
 function CanBuybackUpperRespawnTime( respawnTime )
-
-	local npcBot = GetBot();
-
 	if ( not npcBot:IsAlive() and respawnTime ~= nil and npcBot:GetRespawnTime() >= respawnTime
 		and npcBot:GetBuybackCooldown() <= 0 and npcBot:GetGold() > npcBot:GetBuybackCost() ) then
 		return true;
@@ -144,9 +140,6 @@ function CanBuybackUpperRespawnTime( respawnTime )
 end
 --GXC BUYBACK LOGIC	
 function BuybackUsageThink() 
-	
-	local npcBot = GetBot();
-
 	if npcBot:IsIllusion() then
 		return;
 	end	
@@ -211,8 +204,6 @@ function CourierUsageThink()
 		return
 	end
 
-	local npcBot = GetBot();
-		
 	local npcCourier = GetCourier(0);	
 
 	if GetCourierState( npcCourier ) == COURIER_STATE_DEAD then
@@ -339,17 +330,18 @@ end
 
 
 function UnImplementedItemUsage()
-	local npcBot = GetBot();
-	
+
 	if npcBot:IsChanneling() or npcBot:IsUsingAbility() or npcBot:IsInvisible() or npcBot:IsMuted( )  then
 		return;
 	end
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
+	local npcTarget = npcBot:GetTarget();
 	
 	local arm=IsItemAvailable("item_armlet");
 	if arm~=nil and arm:IsFullyCastable() then
 		if #tableNearbyEnemyHeroes == 0 and arm:GetToggleState( ) then
 			npcBot:Action_UseAbility(arm);
+			return;
 		end
 	end
 	
@@ -401,6 +393,7 @@ function UnImplementedItemUsage()
 			 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
 		then
 			npcBot:Action_UseAbility(pb);
+			return;
 		end	
 	end
 	
@@ -431,8 +424,7 @@ function UnImplementedItemUsage()
 			 npcBot:GetActiveMode() == BOT_MODE_GANK or
 			 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
 		then
-			local npcTarget = npcBot:GetTarget();
-			if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
+			if ( npcTarget ~= nil and npcTarget:IsHero() and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
 			then
 			    npcBot:Action_UseAbilityOnEntity(sc,npcTarget);
 				return
@@ -464,7 +456,6 @@ function UnImplementedItemUsage()
 			 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
 			 npcBot:GetActiveMode() == BOT_MODE_GANK )
 		then
-			local npcTarget = npcBot:GetTarget();
 			if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) > 1000 and  GetUnitToUnitDistance(npcTarget, npcBot) < 2500 )
 			then
 			    npcBot:Action_UseAbility(se);
@@ -512,7 +503,6 @@ function UnImplementedItemUsage()
 	then
 		if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		then
-			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
 			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 			do
 				if ( GetUnitToUnitDistance( npcEnemy, npcBot ) < 400 and CanCastOnTarget(npcEnemy) )
@@ -521,8 +511,11 @@ function UnImplementedItemUsage()
 					return
 				end
 			end
-			npcBot:Action_UseAbilityOnEntity(hurricanpike,npcBot);
-			return
+			if npcBot:IsFacingLocation(GetAncient(GetTeam()):GetLocation(),10) and npcBot:DistanceFromFountain() > 0 
+			then
+				npcBot:Action_UseAbilityOnEntity(hurricanpike,npcBot);
+				return;
+			end
 		end
 	end
 	
@@ -541,7 +534,7 @@ function UnImplementedItemUsage()
 	then
 		local maxHP = 0;
 		local NCreep = nil;
-		local tableNearbyCreeps = npcBot:GetNearbyCreeps( 800, true );
+		local tableNearbyCreeps = npcBot:GetNearbyCreeps( 1000, true );
 		if #tableNearbyCreeps >= 2 
 		then
 			for _,creeps in pairs(tableNearbyCreeps)
@@ -586,7 +579,9 @@ function UnImplementedItemUsage()
 	
 	local satanic=IsItemAvailable("item_satanic");
 	if satanic~=nil and satanic:IsFullyCastable() then
-		if  npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.50 and tableNearbyEnemyHeroes~=nil and #tableNearbyEnemyHeroes > 0 
+		if  npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.50 and 
+			tableNearbyEnemyHeroes~=nil and #tableNearbyEnemyHeroes > 0 and 
+			npcBot:GetActiveMode() == BOT_MODE_ATTACK
 		then
 			npcBot:Action_UseAbility(satanic);
 			return;
@@ -596,7 +591,6 @@ function UnImplementedItemUsage()
 end
 
 function IsItemAvailable(item_name)
-	local npcBot = GetBot();
     for i = 0, 5 do
         local item = npcBot:GetItemInSlot(i);
 		if (item~=nil) then
@@ -609,8 +603,7 @@ function IsItemAvailable(item_name)
 end
 
 function UseShrine()
-	local npcBot = GetBot();
-	
+
 	--[[local nModifier = npcBot:NumModifiers( )
 	for i=0, nModifier do
 		local modName = npcBot:GetModifierName( i )
@@ -670,9 +663,7 @@ function UseShrine()
 end
 
 function UseGlyph()
-	
-	local npcBot = GetBot()
-	
+
 	if GetGlyphCooldown( ) > 0 then
 		return
 	end	
@@ -725,7 +716,6 @@ function UseGlyph()
 end
 
 function MoveToHealerShrine()
-	local npcBot = GetBot();
 	local Health = npcBot:GetHealth()/npcBot:GetMaxHealth();
 	local Mana = npcBot:GetMana()/npcBot:GetMaxMana();
 	local listShrines = {

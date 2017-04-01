@@ -1373,6 +1373,38 @@ X["hero_roles"] = {
 	}
 }
 
+function X.IsCarry(hero)
+	return X["hero_roles"][hero]["carry"] > 0;
+end
+function X.IsDisabler(hero)
+	return X["hero_roles"][hero]["disabler"] > 0;
+end
+function X.IsDurable(hero)
+	return X["hero_roles"][hero]["durable"] > 0;
+end
+function X.HasEscape(hero)
+	return X["hero_roles"][hero]["escape"] > 0;
+end
+function X.IsInitiator(hero)
+	return X["hero_roles"][hero]["initiator"] > 0;
+end
+function X.IsJungler(hero)
+	return X["hero_roles"][hero]["jungler"] > 0;
+end
+function X.IsNuker(hero)
+	return X["hero_roles"][hero]["nuker"] > 0;
+end
+function X.IsSupport(hero)
+	return X["hero_roles"][hero]["support"] > 0;
+end
+function X.IsPusher(hero)
+	return X["hero_roles"][hero]["pusher"] > 0;
+end
+
+function X.GetRoleLevel(hero, role)
+	return X["hero_roles"][hero][role];
+end
+
 function X.IsRemovedFromSupportPoll(hero)
 	return hero == "npc_dota_hero_alchemist" or
 		   hero == "npc_dota_hero_naga_siren" or
@@ -1384,28 +1416,50 @@ function X.CanBeOfflaner(hero)
 	return string.find(hero, "bounty_hunter") or ( X["hero_roles"][hero]["initiator"] > 0 and
 		   X["hero_roles"][hero]["disabler"] > 0 and
 		   X["hero_roles"][hero]["durable"] > 0 and
-		   X["hero_roles"][hero]["support"] == 0 )
+		   X["hero_roles"][hero]["support"] == 0 
+    )
 end
 
 function X.CanBeMidlaner(hero)
-	return string.find(hero, "zuus") or ( X["hero_roles"][hero]["carry"] > 0 and
-		   ( X["hero_roles"][hero]["nuker"] > 0 or
+	return string.find(hero, "zuus") or string.find(hero, "templar_assassin") or ( X["hero_roles"][hero]["carry"] > 0 and
+		   ( 
+		     X["hero_roles"][hero]["nuker"] > 1 or
 			 X["hero_roles"][hero]["pusher"] > 0 
-			) )
+			) 
+	)
 end
 
 function X.CanBeSafeLaneCarry(hero)
 	return X["hero_roles"][hero]["carry"] > 1 and
-		   ( X["hero_roles"][hero]["nuker"] < 3 or
-			 X["hero_roles"][hero]["pusher"] > 0 or
+		   ( 
+			 ( X["hero_roles"][hero]["nuker"] < 3 and X["hero_roles"][hero]["pusher"] < 3 ) or
+			 ( X["hero_roles"][hero]["escape"] > 0 and X["hero_roles"][hero]["nuker"] < 2 ) or
+			 X["hero_roles"][hero]["nuker"] < 2 or	
 			 X["hero_roles"][hero]["jungler"] == 1 
 			) 
 end
 
 function X.CanBeSupport(hero)
 	return not X.IsRemovedFromSupportPoll(hero) and X["hero_roles"][hero]["support"] > 0 and
-		  ( X["hero_roles"][hero]["carry"] < 2 or 
-		   X["hero_roles"][hero]["disabler"] > 0 )
+		  ( 
+			X["hero_roles"][hero]["carry"] < 2 or 
+			X["hero_roles"][hero]["nuker"] > 0 or 
+		    X["hero_roles"][hero]["disabler"] > 0 
+		   )
+end
+
+function X.GetCurrentSuitableRole()
+	local highestCarryValue;
+end
+
+function X.CountValue(hero, role)
+	local highest = 0;
+	local TeamMember = GetTeamPlayers(GetTeam())
+	for i = 1, #TeamMember
+	do
+		
+	end
+	return highest;
 end
 
 return X

@@ -149,8 +149,8 @@ local AllHeroesSelected = false;
 local BanCycle = 1;
 local PickCycle = 1;
 local NeededTime = 29;
-local Min = 1;
-local Max = 15;
+local Min = -5;
+local Max = 25;
 local CMTestMode = false;
 local UnavailableHeroes = {
 	"npc_dota_hero_techies",
@@ -164,7 +164,7 @@ local HeroLanes = {
 	[5] = LANE_BOT,
 };
 
-local PairsHeroNameNLane = {};
+local PairsHeroNameNRole = {};
 
 function Think()
 	if GetGameMode() == GAMEMODE_AP then
@@ -174,21 +174,29 @@ function Think()
 	end
 end
 
-
 function CaptainModeLogic()
 	if (GetGameState() ~= GAME_STATE_HERO_SELECTION) then
         return
     end
+	
 	if not CMTestMode then
-		NeededTime = RandomInt( Min, Max );
-	end
+		if NeededTime == 29 then
+			NeededTime = RandomInt( Min, Max );
+		elseif NeededTime == 0 then
+			NeededTime = RandomInt( Min, Max );
+		end
+	elseif CMTestMode then
+		NeededTime = 29;
+	end	
 	
 	if GetHeroPickState() == HEROPICK_STATE_CM_CAPTAINPICK then	
 		PickCaptain();
 	elseif GetHeroPickState() >= HEROPICK_STATE_CM_BAN1 and GetHeroPickState() <= HEROPICK_STATE_CM_BAN10 and GetCMPhaseTimeRemaining() <= NeededTime then
 		BansHero();
+		NeededTime = 0 
 	elseif GetHeroPickState() >= HEROPICK_STATE_CM_SELECT1 and GetHeroPickState() <= HEROPICK_STATE_CM_SELECT10 and GetCMPhaseTimeRemaining() <= NeededTime then
 		PicksHero();	
+		NeededTime = 0
 	elseif GetHeroPickState() == HEROPICK_STATE_CM_PICK then
 		SelectsHero();	
 	end	
@@ -272,35 +280,36 @@ function PicksHero()
 	if not IsPlayerBot(GetCMCaptain()) or not IsPlayerInHeroSelectionControl(GetCMCaptain()) then
 		return
 	end	
+	
 	local PickedHero = RandomHero();
 	
 	if PickCycle == 1 then
-		while hero_roles[PickedHero]['midlaner'] == 1 or  hero_roles[PickedHero]['offlaner'] ~= 1 
-		do
+		while not role.CanBeOfflaner(PickedHero) do
 			PickedHero = RandomHero();
 		end
+		PairsHeroNameNRole[PickedHero] = "offlaner";
 	elseif	PickCycle == 2 then
-		while hero_roles[PickedHero]['offlaner'] == 1 or hero_roles[PickedHero]['support'] ~= 1 
-		do
+		while not role.CanBeSupport(PickedHero) do
 			PickedHero = RandomHero();
-		end	
+		end
+		PairsHeroNameNRole[PickedHero] = "support";
 	elseif	PickCycle == 3 then
-		while hero_roles[PickedHero]['midlaner'] ~= 1 
-		do
+		while not role.CanBeMidlaner(PickedHero) do
+			PickedHero = RandomHero();
+		end
+		PairsHeroNameNRole[PickedHero] = "midlaner";
+	elseif	PickCycle == 4 then
+		while not role.CanBeSupport(PickedHero) do
+			PickedHero = RandomHero();
+		end
+		PairsHeroNameNRole[PickedHero] = "support";
+	elseif	PickCycle == 5 then
+		while not role.CanBeSafeLaneCarry(PickedHero) do
 			PickedHero = RandomHero();
 		end	
-	elseif	PickCycle == 4 then
-		while hero_roles[PickedHero]['offlaner'] == 1 or hero_roles[PickedHero]['support'] ~= 1 
-		do
-			PickedHero = RandomHero();
-		end		
-	elseif	PickCycle == 5 then
-		while hero_roles[PickedHero]['midlaner'] == 1 or hero_roles[PickedHero]['offlaner'] == 1 or hero_roles[PickedHero]['carry'] ~= 1 
-		do
-			PickedHero = RandomHero();
-		end		
-	end	
-	
+		PairsHeroNameNRole[PickedHero] = "carry";
+	end
+
 	print(PickedHero.." is picked")
 	CMPickHero(PickedHero);
 	PickCycle = PickCycle + 1;
@@ -345,38 +354,72 @@ function SelectsHero()
 	end
 end
 
-function FillLaneAssignmentTable2()
+function FillLaneAssignmentTable()
 	local supportAlreadyAssigned = false;
 	local TeamMember = GetTeamPlayers(GetTeam());
 	for i = 1, #TeamMember
 	do
 		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
 			local unit_name =  GetTeamMember(i):GetUnitName(); 
+			if PairsHeroNameNRole[unit_name] == "support" and not supportAlreadyAssigned then
+				HeroLanes[i] = LANE_TOP;
+				supportAlreadyAssigned = true;
+			elseif PairsHeroNameNRole[unit_name] == "support" and supportAlreadyAssigned then
+				HeroLanes[i] = LANE_BOT;
+			elseif PairsHeroNameNRole[unit_name] == "midlaner" then
+				HeroLanes[i] = LANE_MID;
+			elseif PairsHeroNameNRole[unit_name] == "offlaner" then
+				if GetTeam() == TEAM_RADIANT then
+					HeroLanes[i] = LANE_TOP;
+				else
+					HeroLanes[i] = LANE_BOT;
+				end
+			elseif PairsHeroNameNRole[unit_name] == "carry" then
+				if GetTeam() == TEAM_RADIANT then
+					HeroLanes[i] = LANE_BOT;
+				else
+					HeroLanes[i] = LANE_TOP;
+				end	
+			end
+		end
+	end	
+end
+
+function FillLaneAssignmentTable2()
+	local supportAlreadyAssigned = false;
+	local midAlreadyAssigned = false;
+	local offAlreadyAssigned = false;
+	local carryAlreadyAssigned = false;
+	local TeamMember = GetTeamPlayers(GetTeam());
+	for i = 1, #TeamMember
+	do
+		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
+			local unit_name =  GetTeamMember(i):GetUnitName(); 
 			if GetTeam() == TEAM_RADIANT then
-				if not supportAlreadyAssigned and hero_roles[unit_name]['offlaner'] ~= 1 and hero_roles[unit_name]['support'] == 1 then
+				if not supportAlreadyAssigned and role.CanBeSupport(unit_name) then
 					HeroLanes[i] = LANE_TOP;
 					supportAlreadyAssigned = true;
-				elseif supportAlreadyAssigned and hero_roles[unit_name]['offlaner'] ~= 1 and hero_roles[unit_name]['support'] == 1 then
+				elseif supportAlreadyAssigned and role.CanBeSupport(unit_name) then
 					HeroLanes[i] = LANE_BOT;
-				elseif hero_roles[unit_name]['midlaner'] ~= 1 and hero_roles[unit_name]['offlaner'] ~= 1 and hero_roles[unit_name]['carry'] == 1 then
-					HeroLanes[i] = LANE_BOT;	
-				elseif  hero_roles[unit_name]['offlaner'] == 1 and hero_roles[unit_name]['midlaner'] ~= 1 then
+				elseif role.CanBeMidlaner(unit_name) then
+					HeroLanes[i] = LANE_MID;		
+				elseif role.CanBeOfflaner(unit_name) then
 					HeroLanes[i] = LANE_TOP;	
-				elseif hero_roles[unit_name]['midlaner'] == 1 then
-					HeroLanes[i] = LANE_MID;	
+				elseif role.CanBeSafeLaneCarry(unit_name) then
+					HeroLanes[i] = LANE_BOT;	
 				end
 			else
-				if not supportAlreadyAssigned and hero_roles[unit_name]['offlaner'] ~= 1 and hero_roles[unit_name]['support'] == 1 then
+				if not supportAlreadyAssigned and role.CanBeSupport(unit_name) then
 					HeroLanes[i] = LANE_BOT;
 					supportAlreadyAssigned = true;
-				elseif supportAlreadyAssigned and hero_roles[unit_name]['offlaner'] ~= 1 and hero_roles[unit_name]['support'] == 1 then
-					HeroLanes[i] = LANE_TOP;
-				elseif hero_roles[unit_name]['midlaner'] ~= 1 and hero_roles[unit_name]['offlaner'] ~= 1 and hero_roles[unit_name]['carry'] == 1 then
+				elseif supportAlreadyAssigned and role.CanBeSupport(unit_name) then
 					HeroLanes[i] = LANE_TOP;	
-				elseif  hero_roles[unit_name]['offlaner'] == 1 and hero_roles[unit_name]['midlaner'] ~= 1 then
+				elseif role.CanBeMidlaner(unit_name) then
+					HeroLanes[i] = LANE_MID;
+				elseif role.CanBeOfflaner(unit_name) then
 					HeroLanes[i] = LANE_BOT;	
-				elseif hero_roles[unit_name]['midlaner'] == 1 then
-					HeroLanes[i] = LANE_MID;	
+				elseif role.CanBeSafeLaneCarry(unit_name) then
+					HeroLanes[i] = LANE_TOP;		
 				end
 			end
 		end
@@ -474,46 +517,6 @@ function PickRightHero(slot)
 		end
 	end
 	
-	--[[if slot == 0 then
-		
-		while hero_roles[initHero]['midlaner'] ~= 1 do
-			initHero = GetRandomHero();
-		end
-		
-	elseif slot == 1 then
-		if GetTeam() == TEAM_RADIANT then
-			while hero_roles[initHero]['offlaner'] ~= 1 do
-				initHero = GetRandomHero();
-			end
-		elseif GetTeam() == TEAM_DIRE then
-			while hero_roles[initHero]['midlaner'] == 1 or hero_roles[initHero]['carry'] ~= 1 do
-				initHero = GetRandomHero();
-			end
-		end	
-	elseif slot == 2 then
-		
-		while hero_roles[initHero]['offlaner'] == 1 or hero_roles[initHero]['support'] ~= 1 do
-			initHero = GetRandomHero();
-		end
-	 
-	elseif slot == 3 then
-		
-		while hero_roles[initHero]['offlaner'] == 1 or hero_roles[initHero]['support'] ~= 1 do
-			initHero = GetRandomHero();
-		end
-		
-	elseif slot == 4 then
-		if GetTeam() == TEAM_RADIANT then
-			while hero_roles[initHero]['midlaner'] == 1 or hero_roles[initHero]['carry'] ~= 1 do
-				initHero = GetRandomHero();
-			end
-		elseif GetTeam() == TEAM_DIRE then
-			while hero_roles[initHero]['offlaner'] ~= 1 do
-				initHero = GetRandomHero();
-			end
-		end	
-	end--]]
-	
 	return initHero;
 end
 
@@ -556,19 +559,15 @@ end
 function IsSlotEmpty(slot)
   local slotEmpty = true;
   for pickedSlot, hero in pairs(picks) do
-    -- print("pickedSlot is", pickedSlot);
-    -- print("hero is", hero);
         if (pickedSlot == slot) then
             slotEmpty = false;
         end
   end
-  -- print("slotempty is ", slotEmpty);
   return slotEmpty;
 end
 
 function PickHero(slot)
   local hero = GetRandomHero();
-  --print("picking hero ", hero, " for slot ", slot);
   SelectHero(slot, hero);
 end
 
@@ -626,7 +625,6 @@ function GetRandomHero()
     end
 
     while ( selectedHeroes[hero] == true ) do
-        --print("repicking because " .. hero .. " was taken.")
         hero = allBotHeroes[RandomInt(1, #allBotHeroes)];
     end
 
@@ -640,18 +638,17 @@ function UpdateLaneAssignments()
 		return APLaneAssignment()
 	elseif GetGameMode() == GAMEMODE_CM then
 		--print("CM Lane Assignment")
-		
 		return CMLaneAssignment()	
 	end
    
 end
 
 function CMLaneAssignment()
-	--[[for _, l in pairs(HeroLanes)
-	do
-		print(GetTeam().."="..l);
-	end]]--
-	FillLaneAssignmentTable2();
+	if IsPlayerBot(GetCMCaptain()) then
+		FillLaneAssignmentTable();
+	else
+		FillLaneAssignmentTable2();
+	end
 	return HeroLanes;
 end
 
@@ -678,8 +675,6 @@ function APLaneAssignment()
     then 
         local ids = GetTeamPlayers(TEAM_RADIANT)
         for i,v in pairs(ids) do
-            --print(tostring(IsPlayerBot(v)))
-			--print("test ids " .. i .. " * " .. tostring(v))
             if not IsPlayerBot(v) then
                 playercount = playercount + 1
             end

@@ -1,19 +1,31 @@
-if not string.find(GetBot():GetUnitName(), "hero") or GetBot():IsIllusion() then
-	return
+--BotsInit = require( "game/botsinit" );
+--local MyModule = BotsInit.CreateGeneric();
+
+local purchase ="NOT IMPLEMENTED";
+
+if string.find(GetBot():GetUnitName(), "hero") then
+    purchase = require(GetScriptDirectory() .. "/builds/item_build_" .. string.gsub(GetBot():GetUnitName(), "npc_dota_hero_", ""))
+end
+
+if purchase == "NOT IMPLEMENTED" then 
+	return 
 end
 
 local role = require(GetScriptDirectory() .. "/RoleUtility");
-local items = require(GetScriptDirectory() .. "/ItemUtility" )
-local hero_roles = role["hero_roles"];
+npcBot = GetBot()
 
-Bot = GetBot();
-local BotName = Bot:GetUnitName();
-local AttackRange = Bot:GetAttackRange();
-local PrimaryAttr = Bot:GetPrimaryAttribute();
+npcBot.tableItemsToBuy = purchase["items"];
+local hero_roles = role["hero_roles"];
 local supportExist = nil;
 local invisEnemyExist = false;
 local enemyInvisCheck = false;
-local BuyRainDrop = false;
+
+local earlyBoots = { 
+	"item_phase_boots", 
+	"item_power_treads", 
+	"item_tranquil_boots", 
+	"item_arcane_boots"  
+}
 local invisHeroes = {
 	['npc_dota_hero_templar_assassin'] = 1,
 	['npc_dota_hero_clinkz'] = 1,
@@ -27,12 +39,22 @@ local invisHeroes = {
 	['npc_dota_hero_broodmother'] = 1
 } 
 
-Bot.StartingItem = {};	
-Bot.EarlyItem = {};	
-Bot.CoreItem = {};	
-Bot.SituationalItem = {};	
-Bot.tableItemsToBuy = {};
-
+ local earlyGameItem = {
+		 "item_clarity", 
+		 "item_tango", 
+		 "item_flask", 
+		 "item_infused_raindrop",
+		 "item_quelling_blade", 
+		 "item_stout_shield", 
+		 "item_poor_mans_shield",
+		 "item_magic_wand",
+		 "item_bottle",  
+	 	 "item_ring_of_aquila", 
+		 "item_urn_of_shadows"
+		 --"item_tpscroll"
+		 --"item_soul_ring", 
+		 --"item_ward_observer",
+	}
 
 function ItemPurchaseThink()
 
@@ -40,20 +62,43 @@ function ItemPurchaseThink()
 		return;
 	end
 	
+	if( npcBot:GetUnitName() == "npc_dota_hero_meepo") then
+        if(npcBot:GetLevel() > 1) then
+            for i=0, 5 do
+                if(npcBot:GetItemInSlot(i) ~= nil ) then
+                    if not ( npcBot:GetItemInSlot(i):GetName() == "item_travel_boots" or 
+							 npcBot:GetItemInSlot(i):GetName() == "item_travel_boots_2" or 
+							 npcBot:GetItemInSlot(i):GetName() == "item_boots" or 
+							 npcBot:GetItemInSlot(i):GetName() == "item_power_treads"
+							) 
+					then
+                        break
+                    end
+                end
+                if i == 5 then
+                    return
+                end
+            end
+        end
+    end
+	
 	if supportExist == nil then supportExist = IsSupportExist(); end
 	
 	if not invisEnemyExist then invisEnemyExist = IsInvisEnemyExist(); end
 
 	PurchaseTP();
 	
-	if  supportExist ~= nil and supportExist and role.CanBeSupport(BotName) then
-		if GetCourier(0) == nil then
-			PurchaseCourier();
-		end
-		UpgradeCourier();
+	if  supportExist ~= nil and supportExist and 
+		role.CanBeSupport(npcBot:GetUnitName()) 
+	then
 		if invisEnemyExist then
 			PurchaseDust();	
 		end
+		if GetCourier(0) == nil then
+			
+			PurchaseCourier();
+		end
+		UpgradeCourier();
 		PurchaseWard();
 	elseif supportExist ~= nil and not supportExist then
 		PurchaseCourier();
@@ -61,16 +106,23 @@ function ItemPurchaseThink()
 	end	
 	
 	PurchaseRainDrop();
+	SellEarlyGameItem();
 	
-	FillStartingItem();
+		PurchaseBOT();
 	
-	if DotaTime() > 15 then
-		FillEarlyItem();
-		FillCoreItem();
+		PurchaseMoonShard();
+		UseMoonShard();
+		
+		PurchaseBOT2();
+	
+	sellBoots();
+	
+	if npcBot:GetActiveMode() ~= BOT_MODE_WARD then
+		SwapBoots();
 	end
 	
-	if ( Bot.tableItemsToBuy == nil or #(Bot.tableItemsToBuy) == 0 ) then
-		Bot:SetNextItemPurchaseValue( 0 );
+	if ( npcBot.tableItemsToBuy == nil or #(npcBot.tableItemsToBuy) == 0 ) then
+		npcBot:SetNextItemPurchaseValue( 0 );
 		return;
 	end
 	
@@ -78,9 +130,8 @@ function ItemPurchaseThink()
 
 end	
 
---CHECK IF SUPPORT EXIST
 function IsSupportExist()
-	if role.CanBeSupport(BotName) then
+	if role.CanBeSupport(npcBot:GetUnitName()) then
 		return true;
 	end
 	local TeamMember = GetTeamPlayers(GetTeam())
@@ -100,8 +151,300 @@ function IsSupportExist()
 	end
 	return false;
 end
---CHECK IF INVIS ENEMY OR INVIS ITEM EXIST
+
+function GeneralItemPurchasing()
+
+	local sNextItem = npcBot.tableItemsToBuy[1];
+	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
+
+	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
+
+		if ( IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) ) then
+			if ( npcBot:DistanceFromSecretShop() == 0 or npcBot:DistanceFromSideShop() == 0 ) then
+				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
+					table.remove( npcBot.tableItemsToBuy, 1 );
+					npcBot.secretShopMode = false;
+					npcBot.sideShopMode = false;
+				end
+			elseif ( npcBot:DistanceFromSecretShop() <= npcBot:DistanceFromSideShop() ) then
+				if ( not npcBot.secretShopMode and IsSuitablePurchaseActiveMode() ) then
+					npcBot.secretShopMode = true;
+					npcBot.sideShopMode = false;
+				end
+			elseif ( npcBot:DistanceFromSecretShop() > npcBot:DistanceFromSideShop() ) then
+				if ( not npcBot.sideShopMode and IsSuitablePurchaseActiveMode() ) then
+					npcBot.secretShopMode = false;
+					npcBot.sideShopMode = true;
+				end
+			end
+		elseif ( IsItemPurchasedFromSecretShop( sNextItem ) and not IsItemPurchasedFromSideShop( sNextItem ) ) then
+			if ( npcBot:DistanceFromSecretShop() == 0 ) then
+				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
+					table.remove( npcBot.tableItemsToBuy, 1 );
+					npcBot.secretShopMode = false;
+					npcBot.sideShopMode = false;
+				end
+			else
+				if ( not npcBot.secretShopMode and IsSuitablePurchaseActiveMode() ) then
+					npcBot.secretShopMode = true;
+					npcBot.sideShopMode = false;
+				end
+			end
+		elseif ( not IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) ) then
+			if ( npcBot:DistanceFromSideShop() == 0 ) then
+				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
+					table.remove( npcBot.tableItemsToBuy, 1 );
+					npcBot.secretShopMode = false;
+					npcBot.sideShopMode = false;
+				end
+			elseif ( npcBot:DistanceFromSideShop() < 2500 ) then
+				if ( not npcBot.sideShopMode and IsSuitablePurchaseActiveMode() ) then
+					npcBot.secretShopMode = false;
+					npcBot.sideShopMode = true;
+				end
+			else
+				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
+					table.remove( npcBot.tableItemsToBuy, 1 );
+					npcBot.secretShopMode = false;
+					npcBot.sideShopMode = false;
+				end
+			end
+		else
+			if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
+				table.remove( npcBot.tableItemsToBuy, 1 );
+				npcBot.secretShopMode = false;
+				npcBot.sideShopMode = false;
+			end
+		end
+	else
+		npcBot.secretShopMode = false;
+		npcBot.sideShopMode = false;
+	end
+
+end
+
+function IsSuitablePurchaseActiveMode()
+
+	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT
+		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
+		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
+		or npcBot:GetActiveMode() == BOT_MODE_ROSHAN
+		or npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP
+		or npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID
+		or npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT 
+		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
+		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
+		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) then
+		return false;
+	end
+
+	return true;
+
+end
+
+function SwapBoots()
+	
+	local itemSlot = -1;
+	for _,item in pairs(earlyBoots)
+	do
+		itemSlot = npcBot:FindItemSlot(item);
+		if itemSlot >= 0
+		then
+			break
+		end
+	end	
+	
+	if itemSlot >= 0 and npcBot:GetItemSlotType(itemSlot) == ITEM_SLOT_TYPE_BACKPACK and not HasItem(npcBot, "item_travel_boots") and not HasItem(npcBot, "item_travel_boots_2")
+	then
+		local lessValItem = getLessValuableItemSlot();
+		if lessValItem ~= -1
+		then
+			npcBot:ActionImmediate_SwapItems( itemSlot, lessValItem );
+		end
+	end
+	
+end
+
+function getLessValuableItemSlot()
+	local minPrice = 10000;
+	local minIdx = -1;
+		for i=0, 5 do
+			if  npcBot:GetItemInSlot(i) ~= nil and npcBot:GetItemInSlot(i):GetName() ~= "item_aegis"  then
+				local _item = npcBot:GetItemInSlot(i):GetName()
+				if( GetItemCost(_item) < minPrice ) then
+					minPrice = GetItemCost(_item)
+					minIdx = i;
+				end
+			end
+		end
+		
+		return minIdx;
+end
+
+function IsBoots(item)
+	for _,boot in pairs (earlyBoots)
+	do
+		if boot == item then
+			return true
+		end	
+	end
+	return false
+end
+
+function getMostValuableBPSlot()
+	local maxPrice = 0;
+	local maxIdx = -1;
+		for i=6, 8 do
+			if(npcBot:GetItemInSlot(i) ~= nil) then
+				local _item = npcBot:GetItemInSlot(i):GetName()
+				if( GetItemCost(_item) > maxPrice ) then
+					maxPrice = GetItemCost(_item)
+					maxIdx = i;
+				end
+			end
+		end
+		
+	return maxIdx;
+end
+
+function SellEarlyGameItem()
+	if ( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 ) and DotaTime() > 30*60 then
+		for _,item in pairs(earlyGameItem)
+		do
+			local itemSlot = npcBot:FindItemSlot(item);
+			if itemSlot >= 0 and GetEmptySlotAmount() <= 4 then
+				if item ~= "item_stout_shield" and item ~= "item_tpscroll" and item ~= "item_soul_ring" and item ~= "item_quelling_blade" then
+					npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(itemSlot));
+					return;
+				elseif item == "item_stout_shield"  then
+					if not HasCGorABBuild() then
+						npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(itemSlot));
+						return;
+					end
+				elseif item == "item_tpscroll" then
+					if HasItem(npcBot, "item_travel_boots") then
+						npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(itemSlot));
+						return;
+					end
+				elseif item == "item_soul_ring" then
+					if not HasSomeBuild("item_recipe_bloodstone") then
+						npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(itemSlot));
+						return;
+					end	
+				elseif item == "item_quelling_blade" then
+					if not string.find(npcBot:GetUnitName(), "antimage") then
+						npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(itemSlot));
+						return;
+					end		
+				end
+			end
+		end		
+	end
+end
+
+function HasCGorABBuild()
+	local npcCourier = GetCourier(0);
+	
+	if HasItem(npcBot, "item_recipe_abyssal_blade") or 
+	   HasItem(npcBot, "item_recipe_crimson_guard") or 
+	   HasItem(npcCourier, "item_recipe_abyssal_blade") or
+	   HasItem(npcCourier, "item_recipe_crimson_guard")
+	then
+		return true
+	end	
+	
+	for _,item in pairs(npcBot.tableItemsToBuy)
+	do
+		if item == "item_recipe_abyssal_blade" then
+			return true
+		elseif item == "item_recipe_crimson_guard" then
+			return true
+		end
+	end
+	
+	return false
+	
+end
+
+function HasSomeBuild(build_name)
+	local npcCourier = GetCourier(0);
+	
+	if HasItem(npcBot, build_name) or 
+	   HasItem(npcCourier, build_name)
+	then
+		return true
+	end	
+	for _,item in pairs(npcBot.tableItemsToBuy)
+	do
+		if item == build_name then
+			return true
+		end
+	end
+	return false
+end
+
+function PurchaseCourier()
+	if( GetItemStockCount( "item_courier" ) > 0 and DotaTime() < 0.0  ) then
+		if(npcBot:DistanceFromFountain() <= 600 ) then
+			if ( npcBot:ActionImmediate_PurchaseItem("item_courier") == PURCHASE_ITEM_SUCCESS ) then
+				npcBot:ActionImmediate_Chat("I'm Buying Courier Guys.", true);
+				activateCourier( );
+			end
+		end
+	end
+end
+
+function PurchaseWard()
+	if GetNumCouriers() == 0 then
+		return 
+	end
+	local npcCourier = GetCourier(0);	
+	local minute = math.floor(DotaTime() / 60);
+		if( GetItemStockCount( "item_ward_observer" ) > 0 and 
+			npcBot:GetGold() >= GetItemCost( "item_ward_observer" ) and
+			GetEmptySlotAmount() >= 2 and
+			GetItemCharges("item_ward_observer") < 2  and
+			not HasItem(npcCourier, "item_ward_observer") 
+			) 
+		then
+			npcBot:ActionImmediate_PurchaseItem("item_ward_observer"); 
+		end
+end
+
+function GetItemCharges(_item)
+	local charges = 0;
+	for i = 0, 15 
+	do
+		local item = npcBot:GetItemInSlot(i);
+		if item ~= nil and item:GetName() == _item then
+			charges = charges + item:GetCurrentCharges();
+		end
+	end
+	return charges;
+end
+
+
+function PurchaseDust()
+	
+	if GetNumCouriers() == 0 then
+		return 
+	end
+	local npcCourier = GetCourier(0);	
+	if ( DotaTime() > 2*60 ) 
+	then
+		if( npcBot:GetGold() >= GetItemCost( "item_dust" ) and
+			GetEmptySlotAmount() >= 4 and
+			GetItemCharges("item_dust") < 1 and 
+			not HasItem(npcCourier, "item_dust") 
+		) 
+		then
+			npcBot:ActionImmediate_PurchaseItem("item_dust"); 
+		end
+	end
+end
+
 function IsInvisEnemyExist()
+
 	if not enemyInvisCheck then
 		local globalEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
 		for _, enemy in pairs(globalEnemies) do
@@ -113,7 +456,7 @@ function IsInvisEnemyExist()
 	end
 	
 	if DotaTime() > 15*60 then
-		local tableEnemies = Bot:GetNearbyHeroes(1000, true, BOT_MODE_NONE)
+		local tableEnemies = npcBot:GetNearbyHeroes(1000, true, BOT_MODE_NONE)
 		for _,enemy in pairs(tableEnemies)
 		do
 			local SASlot = enemy:FindItemSlot("item_shadow_amulet");
@@ -125,394 +468,277 @@ function IsInvisEnemyExist()
 			end	
 		end
 	end
+	
 	return false;
 end
---PURCHASE TP
+
+function PurchaseRainDrop()
+	if GetNumCouriers() == 0 then
+		return 
+	end
+	local npcCourier = GetCourier(0);
+	if ( DotaTime() > 3*60 and DotaTime() < 10*60 ) 
+	then
+		if( GetItemStockCount( "item_infused_raindrop" ) > 0 and 
+			npcBot:GetGold() >= GetItemCost( "item_infused_raindrop" ) and
+			GetEmptySlotAmount() >= 4 and
+			not HasItem(npcBot, "item_infused_raindrop") and 
+			not HasItem(npcCourier, "item_infused_raindrop") 
+		) 
+		then
+			npcBot:ActionImmediate_PurchaseItem("item_infused_raindrop"); 
+		end
+	end	
+end
+
+function UpgradeCourier()
+	if GetNumCouriers() == 0 then
+		return 
+	end
+	local npcCourier = GetCourier(0);
+	if( GetItemStockCount( "item_flying_courier" ) > 0 and not IsFlyingCourier(npcCourier) and npcBot:GetGold() >= GetItemCost( "item_flying_courier" )  ) then
+		npcBot:ActionImmediate_Chat("I'm Upgrading Courier Guys.", true);
+		npcBot:ActionImmediate_PurchaseItem("item_flying_courier");
+	end
+end
+
+function activateCourier( )
+    local courierSlot = npcBot:FindItemSlot("item_courier");
+	if courierSlot >= 0 then
+		npcBot:Action_UseAbility( npcBot:GetItemInSlot(courierSlot) );
+	end
+end
+
 function PurchaseTP()
 	if GetNumCouriers() == 0 then
 		return 
 	end
 	local npcCourier = GetCourier(0);
 	if( GetEmptySlotAmount() > 3 and 
-		not HasItem( Bot, "item_tpscroll") and 
+		not HasItem(npcBot, "item_tpscroll") and 
 		not HasItem(npcCourier, "item_tpscroll") and 
 		not HasItem(npcCourier, "item_travel_boots") and 
-		not HasItem( Bot, "item_travel_boots") and
+		not HasItem( npcBot, "item_travel_boots") and
 		not HasItem(npcCourier, "item_travel_boots_2") and 
-		not HasItem( Bot, "item_travel_boots_2") and
-		Bot:GetGold() >= GetItemCost( "item_tpscroll" ) and 
+		not HasItem( npcBot, "item_travel_boots_2") and
+		npcBot:GetGold() >= GetItemCost( "item_tpscroll" ) and 
 		DotaTime() > 60 ) 
 	then
-		Bot:ActionImmediate_PurchaseItem("item_tpscroll");
+		npcBot:ActionImmediate_PurchaseItem("item_tpscroll");
 	end
 end
---PURCHASE DUST
-function PurchaseDust()
+
+function HasItem( hUnit, sItem )
+	if hUnit:FindItemSlot( sItem ) >= 0 then
+		return true
+	end
+	return false
+end
+
+function PurchaseMoonShard()
 	if GetNumCouriers() == 0 then
 		return 
 	end
-	local npcCourier = GetCourier(0);	
-	if( DotaTime() > 2*60 and Bot:GetGold() >= GetItemCost( "item_dust" ) and
-		GetEmptySlotAmount() >= 4 and
-		GetItemCharges("item_dust") < 1 and 
-		not HasItem(npcCourier, "item_dust") 
-	) 
+	local npcCourier = GetCourier(0);
+	if #(npcBot.tableItemsToBuy) == 0 and 
+		npcBot:GetGold() >= GetItemCost( "item_hyperstone" ) and
+		not npcBot:HasModifier("modifier_item_moon_shard_consumed") and
+		not HasItem( npcBot, "item_moon_shard" ) and
+		not HasItem( npcBot, "item_recipe_assault" ) and
+		not HasItem( npcCourier, "item_recipe_assault" ) and
+		GetEmptySlotAmount() >= 1 and
+		HasItem( npcBot, "item_travel_boots")
 	then
-		Bot:ActionImmediate_PurchaseItem("item_dust"); 
+		table.insert(npcBot.tableItemsToBuy, "item_hyperstone");
 	end
 end
---PURCHASE WARD
-function PurchaseWard()	
-	if( GetItemStockCount( "item_ward_observer" ) > 0 and 
-		Bot:GetGold() >= GetItemCost( "item_ward_observer" ) and
-		GetEmptySlotAmount() >= 2 and
-		GetItemCharges("item_ward_observer") < 2
-		) 
-	then
-		Bot:ActionImmediate_PurchaseItem("item_ward_observer"); 
+
+function UseMoonShard()
+	if HasItem( npcBot, "item_moon_shard" ) then
+		local MSSlot = npcBot:FindItemSlot("item_moon_shard");
+		if MSSlot >= 0 then
+			npcBot:ActionQueue_UseAbilityOnEntity( npcBot:GetItemInSlot(MSSlot), npcBot );
+		end
 	end
 end
---PURCHASE RAINDROP
-function PurchaseRainDrop()
-	if( not BuyRainDrop and GetItemStockCount( "item_infused_raindrop" ) > 0 and 
-		Bot:GetGold() >= GetItemCost( "item_infused_raindrop" ) and
-		GetEmptySlotAmount() >= 4 
-	) 
+
+function PurchaseBOT()
+	if GetNumCouriers() == 0 then
+		return 
+	end
+	local npcCourier = GetCourier(0);
+	if #(npcBot.tableItemsToBuy) == 0 and 
+		npcBot:GetGold() >= GetItemCost( "item_recipe_travel_boots" ) + GetItemCost( "item_boots" ) and
+		not HasItem( npcBot, "item_travel_boots") and
+		not HasItem( npcCourier, "item_travel_boots") and
+		not HasItem( npcBot, "item_travel_boots_2") and
+		not HasItem( npcCourier, "item_travel_boots_2") 
 	then
-		BuyRainDrop = true;
-		Bot:ActionImmediate_PurchaseItem("item_infused_raindrop"); 
+		npcBot:ActionImmediate_PurchaseItem("item_recipe_travel_boots");
+		npcBot:ActionImmediate_PurchaseItem("item_boots");
 	end
 end
---CHECK FOR CERTAIN ITEM
-function HasItem( hUnit, sItem )
-	return hUnit:FindItemSlot( sItem ) >= 0;
+
+function PurchaseBOT2()
+	if GetNumCouriers() == 0 then
+		return 
+	end
+	local npcCourier = GetCourier(0);
+	if npcBot:GetGold() >= GetItemCost( "item_recipe_travel_boots" ) and 
+	   HasItem(npcBot, "item_travel_boots") and 
+	   npcBot:HasModifier("modifier_item_moon_shard_consumed") and 
+	   not HasItem(npcBot, "item_travel_boots_2") and
+	   not HasItem(npcBot, "item_recipe_travel_boots") and
+	   not HasItem(npcCourier, "item_recipe_travel_boots")
+	then
+		npcBot:ActionImmediate_PurchaseItem("item_recipe_travel_boots");
+		return;
+	end
 end
---CHECK NUMBER OF MAIN+BACKPACK INVENTORY EMPTY SLOT
+
+function sellBoots()
+	if ( HasItem( npcBot, "item_travel_boots") or HasItem( npcBot, "item_travel_boots_2")) and
+		( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 )
+	then	
+		for _,boots in pairs(earlyBoots)
+		do
+			local bootsSlot = npcBot:FindItemSlot(boots);
+			if bootsSlot >= 0 then
+				npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(bootsSlot));
+			end
+		end
+	end
+end
+
 function GetEmptySlotAmount()
 	local empty = 9;
 	for i=0, 8 do
-		if(Bot:GetItemInSlot(i) ~= nil) then
+		if(npcBot:GetItemInSlot(i) ~= nil) then
 			empty = empty - 1;
 		end
 	end
 	return empty;
 end
---GET ITEM TOTAL CHARGE
-function GetItemCharges(_item)
-	local charges = 0;
-	for i = 0, 15 
-	do
-		local item = Bot:GetItemInSlot(i);
-		if item ~= nil and item:GetName() == _item then
-			charges = charges + item:GetCurrentCharges();
+
+function IsInvFull()
+	for i=0, 8 do
+		if(npcBot:GetItemInSlot(i) == nil) then
+			return false;
 		end
-	end
-	return charges;
-end
-
-
-function FillStartingItem()
-	if #Bot.StartingItem == 0 and ( Bot.tableItemsToBuy == nil or #(Bot.tableItemsToBuy) == 0 ) then
-		InsertItemToTable(0, 'item_tango');
-		InsertItemToTable(0, 'item_flask');
-		if hero_roles[BotName]['support'] == 1 then
-			InsertItemToTable(0, 'item_clarity');
-		end
-		if AttackRange <= 320 then
-			InsertItemToTable(0, 'item_stout_shield');
-			InsertItemToTable(0, 'item_quelling_blade');
-		end
-	end
-end
-
-function FillEarlyItem()
-	if #Bot.EarlyItem == 0 and ( Bot.tableItemsToBuy == nil or #(Bot.tableItemsToBuy) == 0 ) then
-		BuyStartingStatItem();
-		BuyBottle();
-		InsertItemToTable(1, 'item_magic_wand');
-		BuyEarlyBoots();
-	end	
-end
-
-function FillCoreItem()
-	if #Bot.CoreItem == 0 and ( Bot.tableItemsToBuy == nil or #(Bot.tableItemsToBuy) == 0 ) then
-		BuyCoreItem();
-	end	
-end
-
-function BuyStartingStatItem()
-	if PrimaryAttr == ATTRIBUTE_STRENGTH then
-		InsertItemToTable(1, 'item_bracer')
-	elseif PrimaryAttr == ATTRIBUTE_AGILITY then
-		InsertItemToTable(1, 'item_wraith_band')
-	else
-		InsertItemToTable(1, 'item_null_talisman')
-	end	
-end
-
-function BuyBottle()
-	--print(BotName..tostring(Bot:GetAssignedLane()).." "..tostring(AttackRange).." "..PrimaryAttr)
-	if Bot:GetAssignedLane() == LANE_MID then
-		InsertItemToTable(1, 'item_bottle');
-	end
-end
-
-function BuyEarlyBoots()
-	local rollStat = RollPercentage(50);
-	if role.CanBeSupport(BotName) then
-		if rollStat then
-			InsertItemToTable(1, 'item_arcane_boots');
-		else
-			InsertItemToTable(1, 'item_tranquil_boots');
-		end
-	elseif role.CanBeSafeLaneCarry(BotName) or role.CanBeOfflaner(BotName) then
-		if AttackRange <= 320 then
-			if rollStat then
-				InsertItemToTable(1, 'item_phase_boots')
-			else
-				ChooseTheRightPT();
-			end
-		else
-			ChooseTheRightPT();
-		end
-	end
-end
-
-function ChooseTheRightPT()
-	if PrimaryAttr == ATTRIBUTE_STRENGTH then
-		InsertItemToTable(1, 'item_power_treads_str')
-	elseif PrimaryAttr == ATTRIBUTE_AGILITY then
-		InsertItemToTable(1, 'item_power_treads_agi')
-	else
-		InsertItemToTable(1, 'item_power_treads_int')
-	end	
-end
-
-function BuyCoreItem()
-	if role.CanBeSafeLaneCarry(BotName) and PrimaryAttr == ATTRIBUTE_AGILITY then
-		InsertItemToTable(2, 'item_ring_of_aquila')
-	elseif role.CanBeSafeLaneCarry(BotName) and PrimaryAttr == ATTRIBUTE_STRENGTH	then
-		InsertItemToTable(2, 'item_drums_of_endurance')
-	elseif role.CanBeSafeLaneCarry(BotName) and PrimaryAttr == ATTRIBUTE_INTELLECT	then
-		InsertItemToTable(2, 'item_force_staff')	
-	elseif role.CanBeSupport(BotName) and 
-		   PrimaryAttr == ATTRIBUTE_INTELLECT and 
-		   HaveSpecificItem('item_tranquil_boots') and
-		   not TeamHaveSpecificItem('item_urn_of_shadows') 
-	then
-		InsertItemToTable(2, 'item_urn_of_shadows')	
-	elseif role.CanBeSupport(BotName) and
-		   PrimaryAttr == ATTRIBUTE_INTELLECT and 
-		   HaveSpecificItem('item_arcane_boots') and
-		   not TeamHaveSpecificItem('item_mekansm') 
-	then
-		InsertItemToTable(2, 'item_mekansm')	
-	end
-end
-
-function HaveSpecificItem(item_name)
-	local Slot = Bot:FindItemSlot(item_name);
-	return Slot ~= -1;
-end
-
-function TeamHaveSpecificItem(item_name)
-	local TeamMember = GetTeamPlayers(GetTeam())
-	for i = 1, #TeamMember 
-	do
-		local Player = GetTeamMember(i)
-		if Player ~= nil and IsPlayerBot(Player:GetPlayerID()) and Player:GetUnitName() ~= BotName then
-			for _,item in pairs(Player.CoreItem)
-			do
-				if item == item_name then
-					return true;
-				end
-			end
-		end
-	end
-	return false;
-end
-
-function InsertItemToTable(no_table, item_name)
-	InsertToPurchaseTable(item_name);
-	if no_table == 0 then
-		table.insert(Bot.StartingItem, item_name);
-	elseif no_table == 1 then
-		table.insert(Bot.EarlyItem, item_name);
-	elseif no_table == 2 then
-		table.insert(Bot.CoreItem, item_name);
-	else
-		table.insert(Bot.SituationalItem, item_name);
-	end
-   
-end
-
-function InsertToPurchaseTable(item_name)
-	local tempList = { item_name }
-	local tempTable = GetBasicItems(tempList)
-	for _,item in pairs(tempTable)
-	do	
-		table.insert(Bot.tableItemsToBuy, item);
-	end
-end
-
-
-function GetBasicItems( ... )
-    local basicItemTable = {}
-    for i,v in pairs(...) do
-		print(v)
-        if items[v] ~= nil and not IsExistInAllTable(v) then
-            for _,w in pairs(GetBasicItems(items[v])) do
-                table.insert(basicItemTable, w)
-            end
-        elseif items[v] == nil then
-            table.insert(basicItemTable, v)
-        end
-    end
-    return basicItemTable
-end
-
-function IsExistInAllTable(v)
-	for _,si in pairs(Bot.StartingItem)
-	do
-		if si == v then
-			return true
-		end	
-	end
-	for _,ei in pairs(Bot.EarlyItem)
-	do
-		if ei == v then
-			return true
-		end	
-	end
-	for _,ci in pairs(Bot.CoreItem)
-	do
-		if ci == v then
-			return true
-		end	
-	end
-	for _,sti in pairs(Bot.SituationalItem)
-	do
-		if sti == v then
-			return true
-		end	
-	end
-	return false;
-end
-
---COURIER PURCHASING LOGIC
-function PurchaseCourier()
-	if GetNumCouriers() == 0 then
-	if(Bot:DistanceFromFountain() == 0 ) then
-		if ( Bot:ActionImmediate_PurchaseItem("item_courier") == PURCHASE_ITEM_SUCCESS ) then
-			Bot:ActionImmediate_Chat("I'm Buying Courier Guys.", true);
-			activateCourier( );
-		end
-	end 
-	end
-end
-function activateCourier( )
-    local courierSlot = Bot:FindItemSlot("item_courier");
-	if courierSlot >= 0 and courierSlot <= 5 then
-		Bot:Action_UseAbility( Bot:GetItemInSlot(courierSlot) );
-	end
-end
-function UpgradeCourier()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);
-	if not IsFlyingCourier(npcCourier) and GetItemStockCount( "item_flying_courier" ) > 0 and Bot:GetGold() >= GetItemCost( "item_flying_courier" ) then
-		Bot:ActionImmediate_Chat("I'm Upgrading Courier Guys.", true);
-		Bot:ActionImmediate_PurchaseItem("item_flying_courier");
-	end
-end
------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-function GeneralItemPurchasing()
-
-	local sNextItem = Bot.tableItemsToBuy[1];
-	Bot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-	if ( Bot:GetGold() >= GetItemCost( sNextItem ) ) then
-
-		if ( IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) ) then
-			if ( Bot:DistanceFromSecretShop() == 0 or Bot:DistanceFromSideShop() == 0 ) then
-				if ( Bot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( Bot.tableItemsToBuy, 1 );
-					Bot.secretShopMode = false;
-					Bot.sideShopMode = false;
-				end
-			elseif ( Bot:DistanceFromSecretShop() <= Bot:DistanceFromSideShop() ) then
-				if ( not Bot.secretShopMode and IsSuitablePurchaseActiveMode() ) then
-					Bot.secretShopMode = true;
-					Bot.sideShopMode = false;
-				end
-			elseif ( Bot:DistanceFromSecretShop() > Bot:DistanceFromSideShop() ) then
-				if ( not Bot.sideShopMode and IsSuitablePurchaseActiveMode() ) then
-					Bot.secretShopMode = false;
-					Bot.sideShopMode = true;
-				end
-			end
-		elseif ( IsItemPurchasedFromSecretShop( sNextItem ) and not IsItemPurchasedFromSideShop( sNextItem ) ) then
-			if ( Bot:DistanceFromSecretShop() == 0 ) then
-				if ( Bot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( Bot.tableItemsToBuy, 1 );
-					Bot.secretShopMode = false;
-					Bot.sideShopMode = false;
-				end
-			else
-				if ( not Bot.secretShopMode and IsSuitablePurchaseActiveMode() ) then
-					Bot.secretShopMode = true;
-					Bot.sideShopMode = false;
-				end
-			end
-		elseif ( not IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) ) then
-			if ( Bot:DistanceFromSideShop() == 0 ) then
-				if ( Bot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( Bot.tableItemsToBuy, 1 );
-					Bot.secretShopMode = false;
-					Bot.sideShopMode = false;
-				end
-			elseif ( Bot:DistanceFromSideShop() < 2500 ) then
-				if ( not Bot.sideShopMode and IsSuitablePurchaseActiveMode() ) then
-					Bot.secretShopMode = false;
-					Bot.sideShopMode = true;
-				end
-			else
-				if ( Bot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( Bot.tableItemsToBuy, 1 );
-					Bot.secretShopMode = false;
-					Bot.sideShopMode = false;
-				end
-			end
-		else
-			if ( Bot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-				table.remove( Bot.tableItemsToBuy, 1 );
-				Bot.secretShopMode = false;
-				Bot.sideShopMode = false;
-			end
-		end
-	else
-		Bot.secretShopMode = false;
-		Bot.sideShopMode = false;
-	end
-
-end
-
-function IsSuitablePurchaseActiveMode()
-	local emptySlot = GetEmptySlotAmount();
-	if ( emptySlot < 2
-		or Bot:GetActiveMode() == BOT_MODE_RETREAT
-		or Bot:GetActiveMode() == BOT_MODE_ATTACK
-		or Bot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
-		or Bot:GetActiveMode() == BOT_MODE_ROSHAN
-		or Bot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP
-		or Bot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID
-		or Bot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT 
-		or Bot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
-		or Bot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
-		or Bot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
-	then
-		return false;
 	end
 	return true;
 end
+
+function HasItemInBP()
+	for i=6, 8 do
+		if(npcBot:GetItemInSlot(i) ~= nil) then
+			return true;
+		end
+	end
+	return false;
+end
+
+
+--[[this chunk prevents dota_bot_reload_scripts from breaking your 
+	item/skill builds.  Note the script doesn't account for 
+	consumables. ]]
+
+local npcBot = GetBot();
+
+-- check item build vs current items
+local currentItems = {}
+for i=0, 15 do
+    if(npcBot:GetItemInSlot(i) ~= nil) then
+        local _item = npcBot:GetItemInSlot(i):GetName()
+        if(_item == "item_magic_wand")then
+            table.insert(currentItems, "item_magic_stick")
+            table.insert(currentItems, "item_branches")
+            table.insert(currentItems, "item_branches")
+            table.insert(currentItems, "item_circlet")
+        elseif(_item == "item_arcane_boots")then
+            table.insert(currentItems, "item_energy_booster")
+            table.insert(currentItems, "item_boots")
+        elseif(_item == "item_null_talisman")then
+            table.insert(currentItems, "item_circlet")
+            table.insert(currentItems, "item_mantle")
+            table.insert(currentItems, "item_recipe_null_talisman")
+        elseif(_item == "item_iron_talon")then
+            table.insert(currentItems, "item_quelling_blade")
+            table.insert(currentItems, "item_ring_of_protection")
+            table.insert(currentItems, "item_recipe_iron_talon")
+        elseif(_item == "item_poor_mans_shield")then
+            table.insert(currentItems, "item_slippers")
+            table.insert(currentItems, "item_slippers")
+            table.insert(currentItems, "item_stout_shield")
+        elseif(_item == "item_ultimate_scepter")then
+            table.insert(currentItems, "item_point_booster")
+            table.insert(currentItems, "item_staff_of_wizardry")
+            table.insert(currentItems, "item_ogre_axe")
+            table.insert(currentItems, "item_blade_of_alacrity")
+        elseif(_item == "item_power_treads")then
+            table.insert(currentItems, "item_boots")
+            table.insert(currentItems, "item_gloves")
+            table.insert(currentItems, "item_belt_of_strength")
+        elseif(_item == "item_force_staff")then
+            table.insert(currentItems, "item_ring_of_regen")
+            table.insert(currentItems, "item_staff_of_wizardry")
+            table.insert(currentItems, "item_recipe_force_staff")
+        elseif(_item == "item_dragon_lance")then
+            table.insert(currentItems, "item_ogre_axe")
+            table.insert(currentItems, "item_boots_of_elves")
+            table.insert(currentItems, "item_boots_of_elves")
+        elseif(_item == "item_hurricane_pike")then
+            table.insert(currentItems, "item_ring_of_regen")
+            table.insert(currentItems, "item_staff_of_wizardry")
+            table.insert(currentItems, "item_recipe_force_staff")
+            table.insert(currentItems, "item_ogre_axe")
+            table.insert(currentItems, "item_boots_of_elves")
+            table.insert(currentItems, "item_boots_of_elves")
+            table.insert(currentItems, "item_recipe_hurricane_pike")
+        elseif(_item == "item_sange")then
+            table.insert(currentItems, "item_ogre_axe")
+            table.insert(currentItems, "item_belt_of_strength")
+            table.insert(currentItems, "item_recipe_sange")
+        elseif(_item == "item_yasha")then
+            table.insert(currentItems, "item_blade_of_alacrity")
+            table.insert(currentItems, "item_boots_of_elves")
+            table.insert(currentItems, "item_recipe_yasha")
+        elseif(_item == "item_sange_and_yasha")then
+            table.insert(currentItems, "item_ogre_axe")
+            table.insert(currentItems, "item_belt_of_strength")
+            table.insert(currentItems, "item_recipe_sange")
+            table.insert(currentItems, "item_blade_of_alacrity")
+            table.insert(currentItems, "item_boots_of_elves")
+            table.insert(currentItems, "item_recipe_yasha")
+        elseif(_item == "item_hood_of_defiance")then
+            table.insert(currentItems, "item_ring_of_health")
+            table.insert(currentItems, "item_cloak")
+            table.insert(currentItems, "item_ring_of_regen")
+        elseif(_item == "item_phase_boots")then
+            table.insert(currentItems, "item_boots")
+            table.insert(currentItems, "item_blades_of_attack")
+            table.insert(currentItems, "item_blades_of_attack")
+        elseif(_item == "item_vanguard")then
+            table.insert(currentItems, "item_stout_shield")
+            table.insert(currentItems, "item_ring_of_health")
+            table.insert(currentItems, "item_vitality_booster")	
+        else
+            table.insert(currentItems, npcBot:GetItemInSlot(i):GetName())
+        end
+    end
+end
+
+--utils.print_r(currentItems)
+for i = 0, #currentItems do
+	if(currentItems[i] ~= nil) then
+		for j = 0, #(npcBot.tableItemsToBuy) do
+			if npcBot.tableItemsToBuy[j] == currentItems[i] then
+				--print("Removing Item " .. currentItems[i] .. " index " .. j)
+				table.remove(npcBot.tableItemsToBuy, j)
+				break
+			end
+		end
+	end
+end
+
+--return MyModule;	

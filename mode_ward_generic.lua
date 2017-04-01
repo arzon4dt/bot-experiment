@@ -4,6 +4,8 @@ local MWardSpotTowerFall = {};
 local AggressiveSpot = {};
 local nWardCastRange = 500;
 local nThresholdDist = 1200;
+local wt = nil;
+
 function GetDesire()
 
 	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
@@ -29,6 +31,10 @@ function GetDesire()
 	
 	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE then
 		return ( 0.0 );
+	end
+	
+	if IsPingedByHumanPlayer() then
+		return BOT_MODE_DESIRE_HIGH;
 	end
 	
 	if #AggressiveSpot == 0 then
@@ -67,12 +73,16 @@ function OnStart()
 	if bot:GetItemSlotType( bot.WardSlot ) == ITEM_SLOT_TYPE_BACKPACK then
 		SwapItemForWarding();
 	end
+	if IsPingedByHumanPlayer() then
+		wt = GetWardTarget();
+	end
 end
 
 function OnEnd()
 	MWardSpot = {};
 	MWardSpotTowerFall = {};
 	PutWardOnBackPack();
+	wt = nil;
 end
 
 function Think()
@@ -99,7 +109,18 @@ function Think()
 		end
 	end	
 	
+	if IsPingedByHumanPlayer() then
+		if bot.HasWard and bot:GetItemSlotType(bot.WardSlot) == ITEM_SLOT_TYPE_MAIN  then
+			local wardItem = bot:GetItemInSlot(bot.WardSlot);
+			bot:Action_ClearActions(false);	
+			bot:Action_UseAbilityOnEntity(wardItem, wt);
+			return;	
+		end	
+	end
+	
 	if ( bot:IsUsingAbility() or bot:IsChanneling() ) then return end;
+	
+	
 	
 	if DotaTime() <= 0 and #MWardSpot > 0 and MclosestWardSpot ~= nil then
 		if bot.HasWard and bot:GetItemSlotType(bot.WardSlot) == ITEM_SLOT_TYPE_MAIN  then
@@ -155,6 +176,48 @@ function Think()
 		end
 	end
 
+end
+
+function GetDistance(s, t)
+    return math.sqrt((s[1]-t[1])*(s[1]-t[1]) + (s[2]-t[2])*(s[2]-t[2]));
+end
+
+function IsPingedByHumanPlayer()
+	local ListUnits = GetUnitList(UNIT_LIST_ALLIED_HEROES);
+	for _,unit in pairs(ListUnits)
+	do
+		if unit ~= nil and not unit:IsIllusion() and not IsPlayerBot(unit:GetPlayerID()) and unit:IsAlive() then
+			local ping = unit:GetMostRecentPing();
+			local Wslot = unit:FindItemSlot('item_ward_observer');
+			if GetUnitToUnitDistance(bot, unit) < 600 and 
+			   GetUnitToLocationDistance(bot, ping.location) < 600 and 
+			   GameTime() - ping.time < 10 and 
+			   Wslot == -1
+			then
+				return true;
+			end	
+		end
+	end
+	return false;
+end
+
+function GetWardTarget()
+	local ListUnits = GetUnitList(UNIT_LIST_ALLIED_HEROES);
+	for _,unit in pairs(ListUnits)
+	do
+		if unit ~= nil and not unit:IsIllusion() and not IsPlayerBot(unit:GetPlayerID()) and unit:IsAlive() then
+			local ping = unit:GetMostRecentPing();
+			local Wslot = unit:FindItemSlot('item_ward_observer');
+			if GetUnitToUnitDistance(bot, unit) < 600 and 
+			   GetUnitToLocationDistance(bot, ping.location) < 600 and 
+			   GameTime() - ping.time < 10 and 
+			   Wslot == -1
+			then
+				return unit;
+			end	
+		end
+	end
+	return nil;
 end
 
 function UpdateAvailableWardSpot(bot, sType)
