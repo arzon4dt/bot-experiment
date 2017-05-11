@@ -2,9 +2,7 @@ local npcBot = nil;
 
 function  MinionThink(  hMinionUnit ) 
 	
-	if npcBot == nil then
-		npcBot = GetBot();
-	end
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 	
 		if hMinionUnit:GetUnitName() == "npc_dota_techies_remote_mine" then

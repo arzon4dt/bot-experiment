@@ -1,3 +1,8 @@
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
+
 --require(GetScriptDirectory() ..  "/ability_item_usage_generic")
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
@@ -182,6 +187,8 @@ function ConsiderIllusoryOrb()
 	local nRadius = abilityOrb:GetSpecialValueInt( "radius" );
 	local nCastRange = abilityOrb:GetCastRange();
 	local nDamage = abilityOrb:GetAbilityDamage();
+	
+	nCastRange = 1600;
 
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
 	then
@@ -210,12 +217,9 @@ function ConsiderIllusoryOrb()
 	then
 		local npcTarget = npcBot:GetTarget();
 
-		if ( npcTarget ~= nil ) 
+		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastIllusoryOrbOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange ) 
 		then
-			if ( CanCastIllusoryOrbOnTarget( npcTarget ) )
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
 		end
 	end
 
@@ -227,20 +231,9 @@ function ConsiderIllusoryOrb()
 		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
 		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
 	then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange/2, nRadius, 0.4, 0 );
-
+		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange/2, nRadius, 0, 0 );
 		if ( locationAoE.count >= 4 ) 
 		then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
-		end
-	end
-
-	-- If we're farming and can kill 3+ creeps with ORB
-	if ( npcBot:GetActiveMode() == BOT_MODE_FARM or
-		 npcBot:GetActiveMode() == BOT_MODE_LANING	 ) then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange/3, nRadius, 0.4, nDamage );
-
-		if ( locationAoE.count >= 3 ) then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
@@ -282,19 +275,20 @@ function ConsiderWaningRift()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+	if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes  >= 3 
+	then
+		return BOT_ACTION_DESIRE_MODERATE;
+	end
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and CanCastWaningRiftOnTarget( npcEnemy )  ) 
 			then
-				if ( CanCastWaningRiftOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE;
-				end
+				return BOT_ACTION_DESIRE_MODERATE;
 			end
 		end
 	end
@@ -307,31 +301,9 @@ function ConsiderWaningRift()
 		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil ) 
+		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastWaningRiftOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius ) 
 		then
-			if ( CanCastWaningRiftOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius)
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
-		end
-	end
-
-	-- if we're in creep wave and in range of enemy hero
-	if ( npcBot:GetActiveMode() == BOT_MODE_LANING) 
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
-		local npcTarget = tableNearbyEnemyHeroes[1];
-
-		if ( npcTarget ~= nil ) 
-		then
-			if ( CanCastWaningRiftOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius)
-			then
-				local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), 0, nRadius, 0.0, 100000 );
-				if ( locationAoE.count >= 3 ) then
-					return BOT_ACTION_DESIRE_MODERATE;
-				end
-			end
+			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 

@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -21,34 +23,44 @@ local castWPDesire = 0;
 local castWKDesire = 0;
 local castSBLDesire = 0;
 
+local abilityIS = nil;
+local abilityFS = nil;
+local abilitySB = nil;
+local abilitySBL = nil;
+local abilityWP = nil;
+local abilityWK = nil;
+
+local npcBot = nil;
+
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
+	
+	if abilitySBL == nil then abilitySBL = npcBot:GetAbilityByName( "tusk_launch_snowball" ) end
+	
+	castSBLDesire = ConsiderSnowBallLaunch();
+	
+	if ( castSBLDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilitySBL );
+		return;
+	end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityIS = npcBot:GetAbilityByName( "tusk_ice_shards" );
-	abilityFS = npcBot:GetAbilityByName( "tusk_frozen_sigil" );
-	abilitySB = npcBot:GetAbilityByName( "tusk_snowball" );
-	abilitySBL = npcBot:GetAbilityByName( "tusk_launch_snowball" );
-	abilityWP = npcBot:GetAbilityByName( "tusk_walrus_punch" );
-	abilityWK = npcBot:GetAbilityByName( "tusk_walrus_kick" );
+	if abilityIS == nil then abilityIS = npcBot:GetAbilityByName( "tusk_ice_shards" ) end
+	if abilityFS == nil then abilityFS = npcBot:GetAbilityByName( "tusk_frozen_sigil" ) end
+	if abilitySB == nil then abilitySB = npcBot:GetAbilityByName( "tusk_snowball" ) end
+	if abilityWP == nil then abilityWP = npcBot:GetAbilityByName( "tusk_walrus_punch" ) end
+	if abilityWK == nil then abilityWK = npcBot:GetAbilityByName( "tusk_walrus_kick" ) end
 
 	-- Consider using each ability
 	castSBDesire, castSBTarget = ConsiderSnowBall();
-	castSBLDesire = ConsiderSnowBallLaunch();
 	castWPDesire, castWPTarget = ConsiderWalrusPunch();
 	castWKDesire, castWKTarget = ConsiderWalrusKick();
 	castISDesire, castISLocation = ConsiderIceShards();
 	castFSDesire = ConsiderFrozenSigil();
-	
-	if ( castSBLDesire > 0 ) 
-	then
-		npcBot:Action_ClearActions(false);
-		npcBot:Action_UseAbility( abilitySBL );
-		return;
-	end
 	
 	if ( castISDesire > 0 ) 
 	then
@@ -82,36 +94,13 @@ function AbilityUsageThink()
 
 end
 
-function CanCastIceShardsOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
-
-function CanCastSnowBallOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-function CanCastWalrusPunchOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
 function ConsiderIceShards()
 
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityIS:IsFullyCastable() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
---
-	-- If we want to cast Laguna Blade at all, bail
-	--[[if ( castSBDesire > 0 ) 
-	then
-		return BOT_ACTION_DESIRE_NONE, 0;
-	end]]--
 
 	-- Get some of its values
 	local nRadius = abilityIS:GetSpecialValueInt( "shard_width" );
@@ -124,54 +113,23 @@ function ConsiderIceShards()
 	-- Mode based usage
 	--------------------------------------
 
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
-				--return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetXUnitsInFront(20);
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcEnemy, npcBot)/nSpeed) + nCastPoint );
 			end
 		end
 	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastIceShardsOnTarget( npcTargetToKill ) )
-	then
-		if ( npcTargetToKill:IsHero() and  npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange ) )
-		then
-			--[[if npcTargetToKill:IsFacingUnit( npcBot, 45 ) then
-				return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetLocation();
-			else
-				return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetXUnitsInFront(400);
-			end]]--
-			return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTargetToKill, npcBot)/nSpeed) + nCastPoint );
-		end
-	end
-	
-	-- If we're farming and can kill 3+ creeps with LSA
-	if ( npcBot:GetActiveMode() == BOT_MODE_FARM ) then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, nDamage );
-
-		if ( locationAoE.count >= 3 and npcBot:GetMana()/npcBot:GetMaxMana() > 0.6 ) then
-			return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc;
-		end
-	end
 
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-
-		if ( locationAoE.count >= 4 and npcBot:GetMana()/npcBot:GetMaxMana() > 0.6 ) 
+		if ( locationAoE.count >= 4 and npcBot:GetMana()/npcBot:GetMaxMana() > 0.65 ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc;
 		end
@@ -179,25 +137,12 @@ function ConsiderIceShards()
 
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  
 		then
-			if ( CanCastIceShardsOnTarget( npcTarget ) )
-			then
-				--[[if npcTarget:IsFacingUnit( npcBot, 45 ) then
-					return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
-				else
-					return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetXUnitsInFront(400);
-				end]]--
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed) + nCastPoint );
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed) + nCastPoint );
 		end
 	end
 --
@@ -205,8 +150,6 @@ function ConsiderIceShards()
 end
 
 function ConsiderSnowBall()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilitySB:IsFullyCastable() ) then 
@@ -217,41 +160,29 @@ function ConsiderSnowBall()
 	local nCastRange = 1200;
 	local nDamage = abilitySB:GetSpecialValueInt( "snowball_damage" );
 	
-	-- If enemy is channeling cancel it
-	local npcTarget = npcBot:GetTarget();
-	if (npcTarget ~= nil and npcTarget:IsChanneling() and GetUnitToUnitDistance( npcTarget, npcBot ) < ( nCastRange + 200 ))
-	then
-		return BOT_ACTION_DESIRE_HIGH, npcTarget;
-	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	--local npcTarget = npcBot:GetTarget();
-	if ( npcTarget ~= nil and CanCastSnowBallOnTarget( npcTarget ) )
-	then
-		if ( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > npcTarget:GetHealth() and GetUnitToUnitDistance( npcTarget, npcBot ) < ( nCastRange + 200 ) )
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
-		end
-	end
-	
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
 			then
-				if ( CanCastSnowBallOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-				end
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
 		end
 	end
 	
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
+		end
+	end
+	
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 
 		local npcMostDangerousEnemy = nil;
@@ -260,7 +191,7 @@ function ConsiderSnowBall()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE  );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastSnowBallOnTarget( npcEnemy ) )
+			if ( mutil.CanCastOnNonMagicImmune(npcEnemy)  )
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -278,20 +209,12 @@ function ConsiderSnowBall()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
-			if ( CanCastSnowBallOnTarget( npcTarget ) )
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end
 	end
 	
@@ -302,8 +225,6 @@ end
 
 function ConsiderFrozenSigil()
 
-	local npcBot = GetBot();
-
 	-- Make sure it's castable
 	if ( not abilityFS:IsFullyCastable() ) 
 	then 
@@ -312,17 +233,17 @@ function ConsiderFrozenSigil()
 
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
-			local npcTarget = npcBot:GetTarget();
-			if ( npcTarget ~= nil  )
-			then
-				return BOT_ACTION_DESIRE_LOW;
-			end
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 300)  )
+		then
+			return BOT_ACTION_DESIRE_LOW;
+		end
 	end
 	
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -334,29 +255,20 @@ function ConsiderFrozenSigil()
 		end
 	end
 
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 600, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( GetUnitToUnitDistance( npcEnemy, npcBot ) < 600 ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 then
+			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 	
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < 600 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 600)
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -368,8 +280,6 @@ end
 
 function ConsiderWalrusPunch()
 
-	local npcBot = GetBot();
-
 	-- Make sure it's castable
 	if ( not abilityWP:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
@@ -379,50 +289,38 @@ function ConsiderWalrusPunch()
 	local nCastRange = abilityWP:GetCastRange();
 	local nDamage = abilityWP:GetManaCost() * 3.5;
 	
-	-- If enemy is channeling cancel it
-	local npcTarget = npcBot:GetTarget();
-	if (npcTarget ~= nil and npcTarget:IsChanneling() and GetUnitToUnitDistance( npcTarget, npcBot ) < ( nCastRange + 200 ))
+	if mutil.IsRetreating(npcBot)
 	then
-		return BOT_ACTION_DESIRE_HIGH, npcTarget;
-	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	--local npcTarget = npcBot:GetTarget();
-	if ( npcTarget ~= nil and CanCastSnowBallOnTarget( npcTarget ) )
-	then
-		if ( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PHYSICAL ) > npcTarget:GetHealth() and GetUnitToUnitDistance( npcTarget, npcBot ) < ( nCastRange + 200 ) )
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
-		end
-	end
-	
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) ) 
 			then
-				if ( CanCastWalrusPunchOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-				end
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
 		end
 	end
 	
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
+		end
+	end
+	
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 
 		local npcMostDangerousEnemy = nil;
 		local nMostDangerousDamage = 0;
 
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE  );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE  );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastWalrusPunchOnTarget( npcEnemy ) )
+			if ( mutil.CanCastOnMagicImmune(npcEnemy) )
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -440,20 +338,12 @@ function ConsiderWalrusPunch()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange + 200 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			if ( CanCastWalrusPunchOnTarget( npcTarget ) )
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end
 	end
 	
@@ -462,8 +352,6 @@ function ConsiderWalrusPunch()
 end
 
 function ConsiderWalrusKick()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not npcBot:HasScepter() or not abilityWK:IsFullyCastable() ) then 
@@ -474,50 +362,29 @@ function ConsiderWalrusKick()
 	local nCastRange = abilityWP:GetCastRange();
 	local nDamage = 350;
 	
-	-- If enemy is channeling cancel it
-	local npcTarget = npcBot:GetTarget();
-	if (npcTarget ~= nil and npcTarget:IsChanneling() and GetUnitToUnitDistance( npcTarget, npcBot ) < ( nCastRange + 200 ))
+		if mutil.IsRetreating(npcBot)
 	then
-		return BOT_ACTION_DESIRE_HIGH, npcTarget;
-	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	--local npcTarget = npcBot:GetTarget();
-	if ( npcTarget ~= nil and CanCastSnowBallOnTarget( npcTarget ) )
-	then
-		if ( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PHYSICAL ) > npcTarget:GetHealth() and GetUnitToUnitDistance( npcTarget, npcBot ) < ( nCastRange + 200 ) )
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
-		end
-	end
-	
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) ) 
 			then
-				if ( CanCastWalrusPunchOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-				end
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
 		end
 	end
 	
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 
 		local npcMostDangerousEnemy = nil;
 		local nMostDangerousDamage = 0;
 
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE  );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE  );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastWalrusPunchOnTarget( npcEnemy ) )
+			if ( mutil.CanCastOnMagicImmune(npcEnemy) )
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -535,20 +402,12 @@ function ConsiderWalrusKick()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange + 200 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			if ( CanCastWalrusPunchOnTarget( npcTarget ) )
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end
 	end
 	
@@ -559,19 +418,11 @@ end
 
 function ConsiderSnowBallLaunch()
 
-	local npcBot = GetBot();
-	
 	if ( abilitySBL:IsHidden() ) then 
 		return BOT_ACTION_DESIRE_NONE;
-	else
-		--print("Not Hidden")
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		return BOT_ACTION_DESIRE_HIGH;
 	end

@@ -1,8 +1,12 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
+
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -17,18 +21,24 @@ end
 local castOODesire = 0;
 local castDLDesire = 0;
 local castPTADesire = 0;
+
+local abilityOO = nil;
+local abilityDL = nil;
+local abilityPTA = nil;
+
 local ItemBM = nil;
+local npcBot = nil;
 
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityOO = npcBot:GetAbilityByName( "legion_commander_overwhelming_odds" );
-	abilityDL = npcBot:GetAbilityByName( "legion_commander_duel" );
-	abilityPTA = npcBot:GetAbilityByName( "legion_commander_press_the_attack" );
+	if abilityOO == nil then abilityOO = npcBot:GetAbilityByName( "legion_commander_overwhelming_odds" ) end
+	if abilityDL == nil then abilityDL = npcBot:GetAbilityByName( "legion_commander_duel" ) end
+	if abilityPTA == nil then abilityPTA = npcBot:GetAbilityByName( "legion_commander_press_the_attack" ) end
 	BMSlot = npcBot:FindItemSlot('item_blade_mail');
 	if BMSlot >= 0 and BMSlot <= 5 then
 		ItemBM = npcBot:GetItemInSlot(BMSlot);
@@ -67,28 +77,8 @@ function AbilityUsageThink()
 
 end
 
-function CanCastOverWhelmingOddsOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-
-function CanCastDuelOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
-function isDisabled(npcTarget)
-	if npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) then
-		return true;
-	end
-	return false;
-end
-
 function ConsiderOverwhelmingOdds()
 
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityOO:IsFullyCastable() ) 
 	then 
@@ -112,63 +102,29 @@ function ConsiderOverwhelmingOdds()
 	--------------------------------------
 
 	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastOverWhelmingOddsOnTarget( npcTargetToKill ) )
+	local npcTarget = npcBot:GetTarget();
+	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
+		and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL)
 	then
-		if ( npcTargetToKill:IsHero() and  npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange -300 ) )
-		then
-			--[[if npcTargetToKill:IsFacingUnit( npcBot, 45 ) then
-				return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetLocation();
-			else
-				return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetXUnitsInFront(300);
-			end]]--
-			return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetExtrapolatedLocation( nCastPoint );
-		end
+		return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
 	end
 	
-	-- If we're farming and can kill 3+ creeps with LSA
-	if ( npcBot:GetActiveMode() == BOT_MODE_FARM ) then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 1000 );
-
-		if ( locationAoE.count >= 3 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.6 ) then
-		--print("WA Farm");
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
-		end
-	end
-
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if  ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and npcBot:GetMana() / npcBot:GetMaxMana() > 0.6
 	then
-		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 1000 );
-
-		if ( locationAoE.count >= 4 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.6 ) 
+		local lanecreeps = npcBot:GetNearbyLaneCreeps(nCastRange+200, true);
+		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 4 and #lanecreeps >= 4  ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
 
-	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
-		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange - 200 and CanCastOverWhelmingOddsOnTarget( npcTarget )  ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
-			--[[if npcTarget:IsFacingUnit( npcBot, 45 ) then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
-			else
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetXUnitsInFront(300);
-			end]]--
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
 		end
 	end
@@ -177,8 +133,6 @@ function ConsiderOverwhelmingOdds()
 end
 
 function ConsiderDuel()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityDL:IsFullyCastable() ) then 
@@ -189,26 +143,8 @@ function ConsiderDuel()
 	local nCastRange = abilityDL:GetCastRange();
 	local nDamage = 500;
 	
-	-- If enemy is channeling cancel it
-	local npcTarget = npcBot:GetTarget();
-	if (npcTarget ~= nil and npcTarget:IsChanneling() and GetUnitToUnitDistance( npcTarget, npcBot ) < 2*nCastRange)
-	then
-		return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	--local npcTarget = npcBot:GetTarget();
-	if ( npcTarget ~= nil and CanCastDuelOnTarget( npcTarget ) )
-	then
-		if ( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PHYSICAL ) > npcTarget:GetHealth() and GetUnitToUnitDistance( npcTarget, npcBot ) < 2*nCastRange )
-		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-		end
-	end
-	
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 
 		local npcMostDangerousEnemy = nil;
@@ -217,7 +153,7 @@ function ConsiderDuel()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE  );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastDuelOnTarget( npcEnemy ) )
+			if ( mutil.CanCastOnMagicImmune(npcEnemy) )
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -235,20 +171,12 @@ function ConsiderDuel()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < 2*nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 2*nCastRange)
 		then
-			if ( CanCastDuelOnTarget( npcTarget ) )
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
 	end
 	
@@ -257,8 +185,6 @@ function ConsiderDuel()
 end
 
 function ConsiderPressTheAttack()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityPTA:IsFullyCastable() ) then 
@@ -273,9 +199,9 @@ function ConsiderPressTheAttack()
 		return BOT_ACTION_DESIRE_LOW, npcBot;
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
@@ -285,9 +211,17 @@ function ConsiderPressTheAttack()
 		end
 	end
 	
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 300)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcBot;
+		end
+	end
+	
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 
 		local lowHpAlly = nil;
@@ -296,10 +230,10 @@ function ConsiderPressTheAttack()
 		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
 		for _,npcAlly in pairs( tableNearbyAllies )
 		do
-			if ( CanCastDuelOnTarget( npcAlly ) )
+			if (  mutil.CanCastOnNonMagicImmune(npcAlly)  )
 			then
 				local nAllyHP = npcAlly:GetHealth();
-				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 ) or isDisabled(npcAlly) )
+				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 ) or mutil.IsDisabled(false, npcAlly) )
 				then
 					nLowestHealth = nAllyHP;
 					lowHpAlly = npcAlly;
@@ -314,15 +248,10 @@ function ConsiderPressTheAttack()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < 2*nCastRangeU ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 2*nCastRangeU)
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcBot;
 		end

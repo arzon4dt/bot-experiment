@@ -1,10 +1,25 @@
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local WardUtils = require(GetScriptDirectory() ..  "/WardUtility")
+local bot = GetBot();
 local MWardSpot = {};
 local MWardSpotTowerFall = {};
 local AggressiveSpot = {};
 local nWardCastRange = 500;
 local nThresholdDist = 1200;
 local wt = nil;
+local visionRad = 1600;
+local Boots = { 
+	"item_boots", 
+	"item_phase_boots", 
+	"item_power_treads", 
+	"item_tranquil_boots", 
+	"item_arcane_boots",
+	"item_travel_boots",
+	"item_travel_boots_2"
+}
 
 function GetDesire()
 
@@ -12,7 +27,9 @@ function GetDesire()
 		return ( 0.0 );
 	end
 	
-	local bot = GetBot();
+	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() then
+		return BOT_MODE_DESIRE_NONE;
+	end
 	
 	bot.WardSlot = WardUtils.HasWardInInventory();
 	bot.HasWard  = false;
@@ -54,7 +71,7 @@ function GetDesire()
 		else
 			for _,AggSpot in pairs(AggressiveSpot)
 			do
-				if GetUnitToLocationDistance(bot, AggSpot) < nThresholdDist and not IsWardExistInSpot(AggSpot) then
+				if GetUnitToLocationDistance(bot, AggSpot) < nThresholdDist and not IsWardExistInWardRange(AggSpot) then
 					--print(bot:GetUnitName().."Warding If Near Aggresive Spot")
 					return BOT_MODE_DESIRE_HIGH;
 				end
@@ -91,7 +108,7 @@ function Think()
 		return;
 	end
 	
-	local bot = GetBot()
+	--local bot = GetBot()
 	
 	if not bot.HasWard then return end;
 	
@@ -119,8 +136,6 @@ function Think()
 	end
 	
 	if ( bot:IsUsingAbility() or bot:IsChanneling() ) then return end;
-	
-	
 	
 	if DotaTime() <= 0 and #MWardSpot > 0 and MclosestWardSpot ~= nil then
 		if bot.HasWard and bot:GetItemSlotType(bot.WardSlot) == ITEM_SLOT_TYPE_MAIN  then
@@ -161,7 +176,7 @@ function Think()
 	else
 		for _, AggSpot in pairs(AggressiveSpot)
 		do
-			if bot.HasWard and GetUnitToLocationDistance(bot, AggSpot) < nThresholdDist and not IsWardExistInSpot(AggSpot) and bot:GetItemSlotType(bot.WardSlot) == ITEM_SLOT_TYPE_MAIN
+			if bot.HasWard and GetUnitToLocationDistance(bot, AggSpot) < nThresholdDist and not IsWardExistInWardRange(AggSpot) and bot:GetItemSlotType(bot.WardSlot) == ITEM_SLOT_TYPE_MAIN
 			then
 				local wardItem = bot:GetItemInSlot(bot.WardSlot);
 				if GetUnitToLocationDistance(bot,  AggSpot) < nWardCastRange then
@@ -176,10 +191,6 @@ function Think()
 		end
 	end
 
-end
-
-function GetDistance(s, t)
-    return math.sqrt((s[1]-t[1])*(s[1]-t[1]) + (s[2]-t[2])*(s[2]-t[2]));
 end
 
 function IsPingedByHumanPlayer()
@@ -220,23 +231,26 @@ function GetWardTarget()
 	return nil;
 end
 
-function UpdateAvailableWardSpot(bot, sType)
-	
+function IsWardExistInWardRange(Spot)
 	local WardList = GetUnitList(UNIT_LIST_ALLIED_WARDS);
-	
+	for _,ward in pairs(WardList)
+	do	
+		if ward ~= nil and IsObserver(ward) and GetUnitToLocationDistance(ward, Spot) <= visionRad then
+			return true;
+		end
+	end
+	return false;
+end
+
+function IsObserver(wardUnit)
+	return string.find(wardUnit:GetUnitName(), "observer");
+end
+
+function UpdateAvailableWardSpot(bot, sType)
 	if sType == "mandate" then
 		for i = 1, #MWardSpot
 		do
-			local exist = false;
-			for _,ward in pairs(WardList)
-			do	
-				local wardLoc = ward:GetLocation();
-				if MWardSpot[i].x == wardLoc.x then
-					exist = true;
-				end
-			end
-			if exist then
-				--bot:Action_ClearActions(false);
+			if IsWardExistInWardRange(MWardSpot[i]) then
 				table.remove(MWardSpot, i);
 				return
 			end
@@ -244,16 +258,7 @@ function UpdateAvailableWardSpot(bot, sType)
 	elseif sType == "tower_fall" then
 		for i = 1, #MWardSpotTowerFall
 		do
-			local exist = false;
-			for _,ward in pairs(WardList)
-			do	
-				local wardLoc = ward:GetLocation();
-				if MWardSpotTowerFall[i].x == wardLoc.x then
-					exist = true;
-				end
-			end
-			if exist then
-				--bot:Action_ClearActions(false);
+			if IsWardExistInWardRange(MWardSpotTowerFall[i])  then
 				table.remove(MWardSpotTowerFall, i);
 				return
 			end
@@ -293,16 +298,7 @@ function IsThereAWardSpot()
 	local s = nil;
 	for i = 1, #SPots
 	do
-		local exist = false;
-		local WardList = GetUnitList(UNIT_LIST_ALLIED_WARDS);
-		for _,ward in pairs(WardList)
-		do	
-			local wardLoc = ward:GetLocation();
-			if SPots[i].x == wardLoc.x then
-				exist = true;
-			end
-		end
-		if not exist then
+		if not IsWardExistInWardRange(SPots[i]) then
 			s = SPots[i];
 			break
 		end
@@ -315,16 +311,7 @@ function IsThereAWardSpotForTowerFall()
 	local s = nil;
 	for i = 1, #SPots
 	do
-		local exist = false;
-		local WardList = GetUnitList(UNIT_LIST_ALLIED_WARDS);
-		for _,ward in pairs(WardList)
-		do	
-			local wardLoc = ward:GetLocation();
-			if SPots[i].x == wardLoc.x then
-				exist = true;
-			end
-		end
-		if not exist then
+		if not IsWardExistInWardRange(SPots[i]) then
 			s = SPots[i];
 			break
 		end
@@ -332,28 +319,18 @@ function IsThereAWardSpotForTowerFall()
 	return s ~= nil;
 end
 
-function IsWardExistInSpot(spot)
-	local WardList = GetUnitList(UNIT_LIST_ALLIED_WARDS);
-	for _,ward in pairs(WardList)
-	do	
-		local wardLoc = ward:GetLocation();
-		if spot.x == wardLoc.x then
-			return true;
-		end
-	end
-	return false;
-end
 
 --check if the condition is suitable for warding
 function IsSuitableToWard(npcBot)
-	local Enemies = npcBot:GetNearbyHeroes(800, true, BOT_MODE_NONE);
+	local Enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
 	if ( ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
 		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
 		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
 		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
 		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT
-		or Enemies ~= nil and #Enemies > 1	
+		or Enemies ~= nil and #Enemies >= 2
+		or ( Enemies ~= nil and #Enemies == 1 and Enemies[1] ~= nil and IsStronger(npcBot, Enemies[1]) )
 		) 
 	then
 		return false;
@@ -361,6 +338,11 @@ function IsSuitableToWard(npcBot)
 	return true;
 end
 
+function IsStronger(bot, enemy)
+	local BPower = bot:GetEstimatedDamageToTarget(true, enemy, 4.0, DAMAGE_TYPE_ALL);
+	local EPower = enemy:GetEstimatedDamageToTarget(true, bot, 4.0, DAMAGE_TYPE_ALL);
+	return EPower > BPower;
+end
 
 function SwapItemForWarding() 
 	local bot = GetBot();
@@ -393,21 +375,31 @@ function PutWardOnBackPack()
 	end
 end
 
+function IsBoots(item)
+	for _,boot in pairs(Boots)
+	do
+		if item == boot then
+			return true;
+		end	
+	end
+	return false;
+end
+
 function getLessValuableItemSlot()
 	local npcBot = GetBot();
 	local minPrice = 10000;
 	local minIdx = -1;
-		for i=0, 5 do
-			if  npcBot:GetItemInSlot(i) ~= nil and npcBot:GetItemInSlot(i):GetName() ~= "item_aegis"  then
-				local _item = npcBot:GetItemInSlot(i):GetName()
-				if( GetItemCost(_item) < minPrice ) then
-					minPrice = GetItemCost(_item)
-					minIdx = i;
-				end
+	for i=0, 5 do
+		if  npcBot:GetItemInSlot(i) ~= nil and npcBot:GetItemInSlot(i):GetName() ~= "item_aegis"  then
+			local _item = npcBot:GetItemInSlot(i):GetName()
+			if( GetItemCost(_item) < minPrice ) then
+				minPrice = GetItemCost(_item)
+				minIdx = i;
 			end
 		end
-		
-		return minIdx;
+	end
+	
+	return minIdx;
 end
 
 function getMostValuableBPSlot()

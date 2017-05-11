@@ -1,23 +1,27 @@
+local npcBot = nil;
 local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 200;
 local ProxRange = 1000;
 function  MinionThink(  hMinionUnit ) 
-if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
-	AttackDesire, AttackTarget = ConsiderAttacking(hMinionUnit); 
-	MoveDesire, Location = ConsiderMove(hMinionUnit); 
-	
-	if (AttackDesire > 0)
-	then
-		hMinionUnit:Action_AttackUnit( AttackTarget, true );
-		return
+		
+	if npcBot == nil then npcBot = GetBot(); end
+
+	if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
+		AttackDesire, AttackTarget = ConsiderAttacking(hMinionUnit); 
+		MoveDesire, Location = ConsiderMove(hMinionUnit); 
+		
+		if (AttackDesire > 0)
+		then
+			hMinionUnit:Action_AttackUnit( AttackTarget, true );
+			return
+		end
+		if (MoveDesire > 0)
+		then
+			hMinionUnit:Action_MoveToLocation( Location );
+			return
+		end
 	end
-	if (MoveDesire > 0)
-	then
-		hMinionUnit:Action_MoveToLocation( Location );
-		return
-	end
-end
 end
 
 function CanBeAttacked( npcTarget )
@@ -25,7 +29,7 @@ function CanBeAttacked( npcTarget )
 end
 
 function ConsiderAttacking(hMinionUnit)
-	local npcBot = GetBot();
+	
 	local target = npcBot:GetTarget();
 	local AR = hMinionUnit:GetAttackRange();
 	local AD = hMinionUnit:GetAttackDamage();
@@ -116,7 +120,6 @@ end
 
 function ConsiderMove(hMinionUnit)
 
-	local npcBot = GetBot();
 	local target = npcBot:GetTarget()
 	
 	if AttackDesire > 0 then

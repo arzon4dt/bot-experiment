@@ -1,8 +1,11 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -19,19 +22,27 @@ local castTSDesire = 0;
 local castRADesire = 0;
 local castSoulRingDesire = 0;
 local castBoTDesire = 0;
+
+local abilityFB = nil;
+local abilitySC = nil;
+local abilityTS = nil;
+local abilityRA = nil;
+
 local timeCast = 0;
 local channleTime = 3;
+local npcBot = nil;
+
 function AbilityUsageThink()
-	
-	local npcBot = GetBot();
+
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:HasModifier("modifier_tinker_rearm")  ) then return end
+	if mutil.CanNotUseAbility(npcBot) or npcBot:HasModifier("modifier_tinker_rearm") then return end
 
-	abilityFB = npcBot:GetAbilityByName( "tinker_laser" );
-	abilitySC = npcBot:GetAbilityByName( "tinker_heat_seeking_missile" );
-	abilityTS = npcBot:GetAbilityByName( "tinker_march_of_the_machines" );
-	abilityRA = npcBot:GetAbilityByName( "tinker_rearm" );
+	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "tinker_laser" ) end
+	if abilitySC == nil then abilitySC = npcBot:GetAbilityByName( "tinker_heat_seeking_missile" ) end
+	if abilityTS == nil then abilityTS = npcBot:GetAbilityByName( "tinker_march_of_the_machines" ) end
+	if abilityRA == nil then abilityRA = npcBot:GetAbilityByName( "tinker_rearm" ) end
 	-- Consider using each ability
 	castFBDesire, castFBTarget = ConsiderFireblast();
 	castSCDesire = ConsiderSlithereenCrush();
@@ -78,7 +89,6 @@ function AbilityUsageThink()
 end
 
 function IsItemAvailable(item_name)
-	local npcBot = GetBot();
     for i = 0, 5 do
         local item = npcBot:GetItemInSlot(i);
 		if (item~=nil) then
@@ -91,7 +101,6 @@ function IsItemAvailable(item_name)
 end
 
 function TravelOffCD()
-	local npcBot = GetBot();
 	local bot1=IsItemAvailable("item_travel_boots");
 	local bot2=IsItemAvailable("item_travel_boots_2");
 	if bot1~=nil then
@@ -103,16 +112,7 @@ function TravelOffCD()
 	return true;
 end
 
-function CanCastFireblastOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-function CanCastSlithereenCrushOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
 function ConsiderSoulRing()
-	
-	local npcBot = GetBot();
 	
 	local sr=IsItemAvailable("item_soul_ring")
 	
@@ -135,11 +135,7 @@ end
 
 
 function ConsiderBoT()
-	local RB = Vector(-7200,-6666)
-	local DB = Vector(7137,6548)
-	
-	local npcBot = GetBot();
-	
+
 	local bot=IsItemAvailable("item_travel_boots")
 	
 	if bot == nil then
@@ -153,12 +149,8 @@ function ConsiderBoT()
 	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
     if npcBot:GetMana() < abilityRA:GetManaCost() and npcBot:DistanceFromFountain() > 0
 	then
-		if GetTeam( ) == TEAM_DIRE then
-			return BOT_ACTION_DESIRE_HIGH, bot, DB;
-		end
-		if GetTeam( ) == TEAM_RADIANT then
-			return BOT_ACTION_DESIRE_HIGH, bot, RB;
-		end
+	    local location = mutil.GetTeamFountain();
+		return BOT_ACTION_DESIRE_HIGH, bot, location;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, {}, {};
@@ -166,8 +158,6 @@ end
 
 
 function ConsiderFireblast()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityFB:IsFullyCastable() ) then 
@@ -182,56 +172,46 @@ function ConsiderFireblast()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	if npcBot:GetActiveMode() == BOT_MODE_LANING then
+	if npcBot:GetActiveMode() == BOT_MODE_LANING and currManaP > 0.55  
+	then
 		local laneCreeps = npcBot:GetNearbyLaneCreeps(nCastRange, true);
 		for _,creep in pairs(laneCreeps)
 		do
-			if creep:GetHealth() <= nDamage and currManaP > 0.45  then
+			if creep:GetHealth() <= nDamage  then
 				return BOT_ACTION_DESIRE_LOW, creep;
 			end
 		end
 	end
 	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastFireblastOnTarget( npcTargetToKill ))
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
-		if ( npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PURE ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange + 200 ) )
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcTargetToKill;
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
 		end
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
 			then
-				if ( CanCastFireblastOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-				end
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
 		end
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			if ( CanCastFireblastOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange + 200)
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end
 	end
 	
@@ -240,8 +220,6 @@ function ConsiderFireblast()
 end
 
 function ConsiderSlithereenCrush()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilitySC:IsFullyCastable() ) then 
@@ -258,54 +236,33 @@ function ConsiderSlithereenCrush()
 	--------------------------------------
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 )  and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
 			then
-				if ( CanCastSlithereenCrushOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE;
-				end
+				return BOT_ACTION_DESIRE_MODERATE;
 			end
 		end
 	end
 
+	if mutil.IsInTeamFight(npcBot, 1200)
+	then
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), 1200, 500, 0, 0 );
+		if  locationAoE.count >= 2 then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		end
+	end
+	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
 		then
-			if ( CanCastSlithereenCrushOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius )
-			then
-				return BOT_ACTION_DESIRE_HIGH;
-			end
-		end
-	end
-
-	-- if we're in creep wave and in range of enemy hero
-	if ( npcBot:GetActiveMode() ~= BOT_MODE_LANING) 
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
-		local npcTarget = tableNearbyEnemyHeroes[1];
-
-		if ( npcTarget ~= nil ) 
-		then
-			if ( CanCastSlithereenCrushOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < (nRadius - 100))
-			then
-				local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), 0, nRadius, 0.0, 100000 );
-				if ( locationAoE.count >= 3 ) then
-					return BOT_ACTION_DESIRE_MODERATE;
-				end
-			end
+			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
 
@@ -336,27 +293,19 @@ function ConsiderTombStone()
 	-- Mode based usage
 	--------------------------------------
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_FARM or
-         npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
-
 		if ( locationAoE.count >= 3 and (npcBot:GetMana() / npcBot:GetMaxMana()) > 0.45 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, npcBot:GetXUnitsInFront(nCastRange/2);
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius - 200, true, BOT_MODE_NONE );
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 ) 
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcBot:GetXUnitsInFront(nCastRange/2);
 		end
@@ -386,25 +335,17 @@ function ConsiderRearm()
 		return BOT_ACTION_DESIRE_MODERATE;
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( botMana >= nManaCost and npcTarget ~= nil and not abilityFB:IsCooldownReady() and not abilitySC:IsCooldownReady() and GetUnitToUnitDistance( npcBot, npcTarget ) < 1000  ) 
+		if ( botMana >= nManaCost and mutil.IsValidTarget(npcTarget) and not abilityFB:IsCooldownReady() and not abilitySC:IsCooldownReady() 
+		     and mutil.IsInRange(npcTarget, npcBot, 1000)   ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
 		if ( botMana >= nManaCost and not abilityTS:IsCooldownReady()  ) 
 		then

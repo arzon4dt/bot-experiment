@@ -1,4 +1,5 @@
 --local minion = dofile( GetScriptDirectory().."/MinionUtility" )
+local npcBot = nil;
 local castRTDesire = 0;
 local castSRDesire = 0;
 local RetreatDesire = 0;
@@ -6,6 +7,7 @@ local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 0;
 local ProxRange = 1100;
+
 local BearItem = {
 	"item_stout_shield",
 	"item_boots",
@@ -14,9 +16,11 @@ local BearItem = {
 }
 function  MinionThink(  hMinionUnit ) 
 
+if npcBot == nil then npcBot = GetBot(); end
+
 if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
 	if string.find(hMinionUnit:GetUnitName(), "npc_dota_lone_druid_bear") then
-		local npcBot = GetBot();
+		
 		if ( hMinionUnit:IsUsingAbility() or hMinionUnit:IsChanneling() or not hMinionUnit:IsAlive() ) then return end
 			
 		abilityFG = npcBot:GetAbilityByName( "lone_druid_spirit_bear" );	
@@ -66,7 +70,7 @@ end
 
 
 function BearPurchaseItem(hMinionUnit)
-	local npcBot = GetBot();
+	
 	if ( BearItem == nil or #(BearItem) == 0 ) then
 		hMinionUnit:SetNextItemPurchaseValue( 0 );
 		return;
@@ -90,8 +94,6 @@ end
 
 function ConsiderReturn(hMinionUnit)
 
-	local npcBot = GetBot();
-	
 	if RetreatDesire > 0 then
 		return BOT_ACTION_DESIRE_NONE;
 	end
@@ -118,8 +120,6 @@ function ConsiderReturn(hMinionUnit)
 end
 
 function ConsiderSavageRoar(hMinionUnit)
-
-	local npcBot = GetBot();
 
 	if abilityES:GetLevel() < 1 then
 		return BOT_ACTION_DESIRE_NONE;
@@ -208,7 +208,7 @@ function ConsiderRetreat(hMinionUnit)
 end	
 
 function ConsiderAttacking(hMinionUnit)
-	local npcBot = GetBot();
+
 	local target = npcBot:GetTarget();
 	local AR = hMinionUnit:GetAttackRange();
 	local OAR = npcBot:GetAttackRange();
@@ -303,7 +303,6 @@ end
 
 function ConsiderMove(hMinionUnit)
 
-	local npcBot = GetBot();
 	local target = npcBot:GetTarget()
 	
 	if AttackDesire > 0 then

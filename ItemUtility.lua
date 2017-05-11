@@ -203,13 +203,13 @@ ItemModule["item_pipe"] = { "item_hood_of_defiance"; "item_headdress"; "item_rec
 
 ItemModule["item_poor_mans_shield"] = { "item_stout_shield"; "item_slippers"; "item_slippers" }
 
-ItemModule["item_power_treads_agi"] = { "item_boots_of_elves"; "item_boots"; "item_gloves" }
+ItemModule["item_power_treads_agi"] = { "item_boots"; "item_boots_of_elves"; "item_gloves" }
 
-ItemModule["item_power_treads_int"] = { "item_robe"; "item_boots"; "item_gloves" }
+ItemModule["item_power_treads_int"] = { "item_boots"; "item_robe"; "item_gloves" }
 
-ItemModule["item_power_treads_str"] = { "item_belt_of_strength"; "item_boots"; "item_gloves" }
+ItemModule["item_power_treads_str"] = { "item_boots"; "item_belt_of_strength"; "item_gloves" }
 
-ItemModule["item_power_treads"] = { "item_belt_of_strength"; "item_boots"; "item_gloves" }
+ItemModule["item_power_treads"] = { "item_boots"; "item_belt_of_strength"; "item_gloves" }
 
 ItemModule["item_radiance"] = { "item_relic"; "item_recipe_radiance" }
 
@@ -245,7 +245,7 @@ ItemModule["item_soul_booster"] = { "item_point_booster"; "item_vitality_booster
 
 ItemModule["item_soul_ring"] = { "item_ring_of_regen"; "item_sobi_mask"; "item_recipe_soul_ring" }
 
-ItemModule["item_tranquil_boots"] = { "item_ring_of_protection"; "item_ring_of_regen"; "item_boots" }
+ItemModule["item_tranquil_boots"] = { "item_ring_of_protection"; "item_boots"; "item_ring_of_regen" }
 
 ItemModule["item_urn_of_shadows"] = { "item_gauntlets"; "item_gauntlets"; "item_sobi_mask"; "item_recipe_urn_of_shadows" }
 

@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -19,18 +21,24 @@ local castSADesire = 0;
 local castWWDesire = 0;
 local castDPDesire = 0;
 
+local abilityST = nil;
+local abilitySA = nil;
+local abilityWW = nil;
+local abilityDP = nil;
+
+local npcBot = nil;
 
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityST = npcBot:GetAbilityByName( "clinkz_strafe" );
-	abilitySA = npcBot:GetAbilityByName( "clinkz_searing_arrows" );
-	abilityWW = npcBot:GetAbilityByName( "clinkz_wind_walk" );
-	abilityDP = npcBot:GetAbilityByName( "clinkz_death_pact" );
+	if abilityST == nil then abilityST = npcBot:GetAbilityByName( "clinkz_strafe" ) end
+	if abilitySA == nil then abilitySA = npcBot:GetAbilityByName( "clinkz_searing_arrows" ) end
+	if abilityWW == nil then abilityWW = npcBot:GetAbilityByName( "clinkz_wind_walk" ) end
+	if abilityDP == nil then abilityDP = npcBot:GetAbilityByName( "clinkz_death_pact" ) end
 	-- Consider using each ability
 	if abilitySA:IsTrained() then
 		ToggleSearingArrow();
@@ -43,47 +51,34 @@ function AbilityUsageThink()
 	
 	if castSTDesire > 0
 	then
-		
 		npcBot:Action_UseAbility(abilityST);
 	end
 	
 	if castSADesire > 0 
 	then
-		
 		npcBot:Action_UseAbilityOnEntity(abilitySA, castSATarget);
 	end
 	
 	if castWWDesire > 0
 	then
-		
 		npcBot:Action_UseAbility(abilityWW);
 	end
 	
 	if castDPDesire > 0
 	then
-		
 		npcBot:Action_UseAbilityOnEntity(abilityDP, castDPTarget);
 	end
 	
 end
 
-function CanCastSearingArrowOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-function CanCastDeathPactOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
 function ToggleSearingArrow()
 
-	local npcBot = GetBot();
-	
 	local currManaP = npcBot:GetMana() / npcBot:GetMaxMana();
 	local npcTarget = npcBot:GetTarget();
 	
 	if ( npcTarget ~= nil and 
 		( npcTarget:IsHero() or npcTarget:IsTower() or npcTarget:GetUnitName() == "npc_dota_roshan" ) and 
-		CanCastSearingArrowOnTarget( npcTarget ) and 
+		mutil.CanCastOnNonMagicImmune(npcTarget) and 
 		currManaP > .25 
 		) 
 	then
@@ -100,17 +95,13 @@ end
 
 function ConsiderStarfe()
 
-	local npcBot = GetBot();
-	
 	if ( not abilityST:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
 	local attackRange = npcBot:GetAttackRange()
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT ) 
+	if mutil.IsPushing(npcBot)
 	then
 		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( attackRange, true );
 		if tableNearbyEnemyTowers[1] ~= nil 
@@ -121,23 +112,19 @@ function ConsiderStarfe()
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN ) 
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
-		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and GetUnitToUnitDistance(  npcTarget, npcBot  ) < attackRange  )
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, attackRange)  )
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			return BOT_ACTION_DESIRE_LOW;
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < attackRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, attackRange)
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -151,8 +138,6 @@ end
 
 function ConsiderSearingArrows()
 
-	local npcBot = GetBot();
-	
 	if ( not abilitySA:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
@@ -175,9 +160,18 @@ function ConsiderSearingArrows()
 		end
 	end
 	
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, attackRange)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
+		end
+	end
+	
 	if npcBot:GetActiveMode() == BOT_MODE_LANING then
 		local NearbyEnemyHeroes = npcBot:GetNearbyHeroes(attackRange, true, BOT_MODE_NONE);
-		if NearbyEnemyHeroes[1] ~=  nil and CanCastSearingArrowOnTarget(NearbyEnemyHeroes[1]) and currManaP > 0.65  then
+		if NearbyEnemyHeroes[1] ~=  nil and mutil.CanCastOnNonMagicImmune(NearbyEnemyHeroes[1]) and currManaP > 0.65  then
 			return BOT_ACTION_DESIRE_LOW, NearbyEnemyHeroes[1];
 		end
 	end
@@ -188,15 +182,14 @@ function ConsiderSearingArrows()
 end
 
 function ConsiderWindWalk()
-	local npcBot = GetBot();
-
+	
 	if ( not abilityWW:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
 	local attackRange = npcBot:GetAttackRange()
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 then
@@ -204,18 +197,12 @@ function ConsiderWindWalk()
 		end
 	end
 
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK  ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil ) 
+		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, attackRange + 300) 
 		then
-			local dist = GetUnitToUnitDistance( npcBot, npcTarget );
-			if ( dist > 2 * attackRange and dist <= 3000 )
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
+			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 	
@@ -224,8 +211,15 @@ function ConsiderWindWalk()
 end
 
 function ConsiderDeathPack()
-	local npcBot = GetBot();
+
 	if ( not abilityDP:IsFullyCastable() ) then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+	
+	local currManaP = npcBot:GetMana() / npcBot:GetMaxMana();
+	
+	if currManaP < 0.15
+	then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
@@ -237,15 +231,15 @@ function ConsiderDeathPack()
 		do
 			local CreepHP = creeps:GetHealth();
 			if CreepHP > maxHP and ( creeps:GetHealth() / creeps:GetMaxHealth() > .75 
-				and CanCastDeathPactOnTarget(creeps) ) and not creeps:IsAncientCreep()
+				and mutil.CanCastOnNonMagicImmune(creeps) ) and not creeps:IsAncientCreep()
 			then
 				NCreep = creeps;
 				maxHP = CreepHP;
 			end
 		end
 	end
-	local currManaP = npcBot:GetMana() / npcBot:GetMaxMana();
-	if NCreep ~= nil and currManaP > 0.20 then
+	
+	if NCreep ~= nil then
 		return BOT_ACTION_DESIRE_LOW, NCreep;
 	end	
 

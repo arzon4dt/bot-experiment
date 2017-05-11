@@ -1,5 +1,10 @@
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -18,25 +23,31 @@ local castCHDesire = 0;
 local castCH2Desire = 0;
 local castCHRDesire = 0;
 local castCHR2Desire = 0;
+
+local abilitySC = nil;
+local abilityTC = nil;
+local abilityCH = nil;
+local abilityCH2 = nil;
+local abilityCHR = nil;
+local abilityCHR2 = nil;
+
 local ultLoc = 0;
 local ultLoc2 = 0;
+local npcBot = nil;
 
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
-	
-	
+	if npcBot == nil then npcBot = GetBot(); end
 	-- Check if we're already using an ability
 	
-	
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilitySC = npcBot:GetAbilityByName( "shredder_whirling_death" );
-	abilityTC = npcBot:GetAbilityByName( "shredder_timber_chain" );
-	abilityCH = npcBot:GetAbilityByName( "shredder_chakram" );
-	abilityCH2 = npcBot:GetAbilityByName( "shredder_chakram_2" );
-	abilityCHR = npcBot:GetAbilityByName( "shredder_return_chakram" );
-	abilityCHR2 = npcBot:GetAbilityByName( "shredder_return_chakram_2" );
+	if abilitySC == nil then abilitySC = npcBot:GetAbilityByName( "shredder_whirling_death" ) end
+	if abilityTC == nil then abilityTC = npcBot:GetAbilityByName( "shredder_timber_chain" ) end
+	if abilityCH == nil then abilityCH = npcBot:GetAbilityByName( "shredder_chakram" ) end
+	if abilityCH2 == nil then abilityCH2 = npcBot:GetAbilityByName( "shredder_chakram_2" ) end
+	if abilityCHR == nil then abilityCHR = npcBot:GetAbilityByName( "shredder_return_chakram" ) end
+	if abilityCHR2 == nil then abilityCHR2 = npcBot:GetAbilityByName( "shredder_return_chakram_2" ) end
 
 	-- Consider using each ability
 	castSCDesire = ConsiderSlithereenCrush();
@@ -46,8 +57,6 @@ function AbilityUsageThink()
 	castCHRDesire = ConsiderChakramReturn();
 	castCHR2Desire = ConsiderChakramReturn2();
 	ClosingDesire, Target = ConsiderClosing();
-	
-	
 	
 	if ( castCHRDesire > 0 ) 
 	then
@@ -99,19 +108,6 @@ function AbilityUsageThink()
 		return
 	end
 	
-end
-
-function CanCastSlithereenCrushOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-function CanCastDecayOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-function enemyDisabled(npcTarget)
-	if npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) then
-		return true;
-	end
-	return false;
 end
 
 function GetBestTree(npcBot, enemy, nCastRange, hitRadios)
@@ -207,7 +203,7 @@ function GetUltLoc(npcBot, enemy, nManaCost, nCastRange, s)
 		dest=utils.VectorTowards(y,utils.Fountain(GetOpposingTeam()),180);
 	end
 
-	if enemyDisabled(enemy) then
+	if mutil.IsDisabled(true, enemy) then
 		dest=enemy:GetLocation();
 	end
 	
@@ -217,22 +213,15 @@ end
 
 function ConsiderClosing()
 
-	local npcBot = GetBot();
-
 	-- Make sure it's castable
 	if ( not npcBot:HasModifier("modifier_shredder_chakram_disarm") ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if  mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcBot, npcTarget ) < 1000 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1000) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 		end
@@ -243,8 +232,6 @@ function ConsiderClosing()
 end
 
 function ConsiderSlithereenCrush()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilitySC:IsFullyCastable() ) then 
@@ -262,20 +249,19 @@ function ConsiderSlithereenCrush()
 	--------------------------------------
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and CanCastSlithereenCrushOnTarget( npcEnemy )  ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE;
 			end
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
 		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 ) then
@@ -284,32 +270,22 @@ function ConsiderSlithereenCrush()
 	end
 
 	-- If we're farming and can kill 3+ creeps with LSA
-	if ( npcBot:GetActiveMode() == BOT_MODE_FARM or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT ) 
+	if mutil.IsPushing(npcBot)
 	then
 		local NearbyCreeps = npcBot:GetNearbyLaneCreeps(nRadius, true);
-		if NearbyCreeps ~= nil and #NearbyCreeps >= 3 and npcBot:GetMana()/npcBot:GetMaxMana() > 0.6 then 
+		if NearbyCreeps ~= nil and #NearbyCreeps >= 3 and npcBot:GetMana()/npcBot:GetMaxMana() > 0.65 then 
 			return BOT_ACTION_DESIRE_LOW;
 		end
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
 
-		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
 		then
-			if ( CanCastSlithereenCrushOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius )
-			then
-				return BOT_ACTION_DESIRE_HIGH;
-			end
+			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
 
@@ -320,8 +296,6 @@ end
 
 function ConsiderTimberChain()
 
-	local npcBot = GetBot();
-	
 	-- Make sure it's castable
 	if ( not abilityTC:IsFullyCastable() ) 
 	then 
@@ -334,9 +308,9 @@ function ConsiderTimberChain()
 	local nDamage = abilityTC:GetSpecialValueInt("damage");
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and npcBot:DistanceFromFountain() > 1000  ) 
+	if mutil.IsRetreating(npcBot) and npcBot:DistanceFromFountain() > 1000
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 then
 			local BRTree = GetBestRetreatTree(npcBot, nCastRange);
 			if BRTree ~= nil then
@@ -345,34 +319,12 @@ function ConsiderTimberChain()
 		end
 	end
 	
-	
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastDecayOnTarget( npcTargetToKill ) )
-	then
-		if ( npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PURE ) > npcTargetToKill:GetHealth() and 
-			GetUnitToUnitDistance( npcTargetToKill, npcBot ) < nCastRange  ) and 
-			not utils.AreTreesBetween( npcTargetToKill:GetLocation(),nRadius )
-		then
-			local BTree = GetBestTree(npcBot, npcTargetToKill, nCastRange, nRadius);
-			if BTree ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, BTree, "tree";
-			end
-		end
-	end
-	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and 
-			GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange and 
-			CanCastDecayOnTarget( npcTarget ) and
-			not utils.AreTreesBetween( npcTarget:GetLocation(),nRadius )
-			) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) and
+			not utils.AreTreesBetween( npcTarget:GetLocation(),nRadius ) ) 
 		then
 			
 			local BTree = GetBestTree(npcBot, npcTarget, nCastRange, nRadius);
@@ -388,8 +340,6 @@ end
 
 function ConsiderChakram()
 
-	local npcBot = GetBot();
-	
 	-- Make sure it's castable
 	if ( not abilityCH:IsFullyCastable() ) 
 	then 
@@ -406,24 +356,9 @@ function ConsiderChakram()
 
 	--------------------------------------
 	-- Mode based usage
-	--------------------------------------
-
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastDecayOnTarget( npcTargetToKill ) )
-	then
-		if ( npcTargetToKill:IsHero() and  npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PURE ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange - 300 ) )
-		then
-			local Loc = GetUltLoc(npcBot, npcTargetToKill, nManaCost, nCastRange, nSpeed)
-			if Loc ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, Loc;
-			end
-			--return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed)+nCastPoint);
-		end
-	end
-	
+	-------------------------------------
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -436,15 +371,9 @@ function ConsiderChakram()
 	end
 	
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-
 		if ( locationAoE.count >= 3 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
@@ -453,15 +382,10 @@ function ConsiderChakram()
 
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange - 300 and CanCastDecayOnTarget( npcTarget ) ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange-200) 
 		then
 			local Loc = GetUltLoc(npcBot, npcTarget, nManaCost, nCastRange, nSpeed)
 			if Loc ~= nil then
@@ -476,8 +400,6 @@ end
 
 function ConsiderChakram2()
 
-	local npcBot = GetBot();
-	
 	-- Make sure it's castable
 	if ( not npcBot:HasScepter() or not abilityCH2:IsFullyCastable() ) 
 	then 
@@ -495,23 +417,8 @@ function ConsiderChakram2()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastDecayOnTarget( npcTargetToKill ) )
-	then
-		if ( npcTargetToKill:IsHero() and  npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PURE ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange - 300 ) )
-		then
-			local Loc = GetUltLoc(npcBot, npcTargetToKill, nManaCost, nCastRange, nSpeed)
-			if Loc ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, Loc;
-			end
-			--return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed)+nCastPoint);
-		end
-	end
-	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -524,15 +431,9 @@ function ConsiderChakram2()
 	end
 	
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-
 		if ( locationAoE.count >= 3 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
@@ -541,15 +442,10 @@ function ConsiderChakram2()
 
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange - 300 and CanCastDecayOnTarget( npcTarget ) ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange-200) 
 		then
 			local Loc = GetUltLoc(npcBot, npcTarget, nManaCost, nCastRange, nSpeed)
 			if Loc ~= nil then
@@ -563,8 +459,7 @@ function ConsiderChakram2()
 end
 
 function ConsiderChakramReturn()
-	local npcBot = GetBot();
-	
+
 	-- Make sure it's castable
 	if ( ultLoc == 0 or not abilityCHR:IsFullyCastable() or abilityCHR:IsHidden() ) then 
 		return BOT_ACTION_DESIRE_NONE;
@@ -574,12 +469,7 @@ function ConsiderChakramReturn()
 	local nDamage = abilityCH:GetSpecialValueInt("pass_damage");
 	local nManaCost = abilityCH:GetManaCost( );
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if  mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
 	then
 		local nUnits = 0;
 		local nLowHPUnits = 0;
@@ -599,12 +489,7 @@ function ConsiderChakramReturn()
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_RETREAT or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if  npcBot:GetActiveMode() == BOT_MODE_RETREAT or mutil.IsGoingOnSomeone(npcBot) 
 	then
 		local nUnits = 0;
 		local nLowHPUnits = 0;
@@ -628,8 +513,7 @@ function ConsiderChakramReturn()
 end
 
 function ConsiderChakramReturn2()
-	local npcBot = GetBot();
-	
+
 	-- Make sure it's castable
 	if ( not npcBot:HasScepter() or ultLoc2 == 0 or not abilityCHR2:IsFullyCastable() or abilityCHR2:IsHidden() ) then 
 		return BOT_ACTION_DESIRE_NONE;
@@ -639,12 +523,7 @@ function ConsiderChakramReturn2()
 	local nDamage = abilityCH:GetSpecialValueInt("pass_damage");
 	local nManaCost = abilityCH:GetManaCost( );
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
 	then
 		local nUnits = 0;
 		local nLowHPUnits = 0;
@@ -664,12 +543,7 @@ function ConsiderChakramReturn2()
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_RETREAT or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if npcBot:GetActiveMode() == BOT_MODE_RETREAT or mutil.IsGoingOnSomeone(npcBot) 
 	then
 		local nUnits = 0;
 		local nLowHPUnits = 0;

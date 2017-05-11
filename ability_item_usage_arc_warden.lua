@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -19,17 +21,24 @@ local castMFDesire = 0;
 local castWBDesire = 0;
 local castPRDesire = 0;
 
+local abilityWA = nil;
+local abilityMF = nil;
+local abilityWB = nil;
+local abilityPR = nil;
+
+local npcBot = nil;
+
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityWA = npcBot:GetAbilityByName( "arc_warden_spark_wraith" );
-	abilityMF = npcBot:GetAbilityByName( "arc_warden_magnetic_field" );
-	abilityWB = npcBot:GetAbilityByName( "arc_warden_tempest_double" );
-	abilityPR = npcBot:GetAbilityByName( "arc_warden_flux" );
+	if abilityWA == nil then abilityWA = npcBot:GetAbilityByName( "arc_warden_spark_wraith" ) end
+	if abilityMF == nil then abilityMF = npcBot:GetAbilityByName( "arc_warden_magnetic_field" ) end
+	if abilityWB == nil then abilityWB = npcBot:GetAbilityByName( "arc_warden_tempest_double" ) end
+	if abilityPR == nil then abilityPR = npcBot:GetAbilityByName( "arc_warden_flux" ) end
 
 	-- Consider using each ability
 	castPRDesire, castPRTarget = ConsiderFlux();
@@ -64,25 +73,9 @@ function AbilityUsageThink()
 
 end
 
-function CanCastSparkWraithOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-
-function CanCastFluxOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-function enemyDisabled(npcTarget)
-	if npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) then
-		return true;
-	end
-	return false;
-end
 
 function ConsiderSparkWraith()
 
-	local npcBot = GetBot();
 	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
 		print(npcBot:GetActiveMode());
 	end]]--
@@ -107,67 +100,40 @@ function ConsiderSparkWraith()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
-	-- If mana is full and we're laning just hit hero
-	if ( npcBot:GetActiveMode() == BOT_MODE_LANING and 
-		npcBot:GetMana() == npcBot:GetMaxMana() ) 
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-		if(tableNearbyEnemyHeroes[1] ~= nil) then
-			--return BOT_ACTION_DESIRE_LOW, tableNearbyEnemyHeroes[1]:GetLocation();
-			return BOT_ACTION_DESIRE_MODERATE, tableNearbyEnemyHeroes[1]:GetExtrapolatedLocation( nDelay );
-		end
-	end
-	
 	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastSparkWraithOnTarget( npcTargetToKill ) )
+	local npcTarget = npcBot:GetTarget();
+	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget)
 	then
-		if ( npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange ) )
+		if ( mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
 		then
-			--return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetLocation();
-			return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill:GetExtrapolatedLocation( nDelay );
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nDelay );
+		end
+	end
+
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
 		end
 	end
 	
-	-- If we're farming and can kill 3+ creeps with LSA
-	if ( npcBot:GetActiveMode() == BOT_MODE_FARM ) then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), 1000, nRadius, 0, nDamage );
-
-		if ( locationAoE.count >= 3 ) then
-		--print("WA Farm");
-			return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc;
-		end
-	end
-
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), 1000, nRadius, 0, 0 );
-
-		if ( locationAoE.count >= 1 ) then
-		--print("WA Farm");
+		if ( locationAoE.count >= 2 ) then
 			return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc;
 		end
 	end
 
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
-		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
-			if ( CanCastSparkWraithOnTarget( npcTarget ) )
-			then
-				--return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nDelay );
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nDelay );
 		end
 	end
 --
@@ -177,7 +143,6 @@ end
 
 function ConsiderMagneticField()
 
-	local npcBot = GetBot();
 	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
 		print(npcBot:GetActiveMode());
 	end]]--
@@ -202,7 +167,7 @@ function ConsiderMagneticField()
 	--------------------------------------
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -214,18 +179,24 @@ function ConsiderMagneticField()
 		end
 	end
 
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcBot:GetLocation();
+		end
+	end
 	
 	-- If we're farming and can kill 3+ creeps with LSA
 	if ( npcBot:GetActiveMode() == BOT_MODE_FARM ) then
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), 600, nRadius, 0, 0 );
-		if ( locationAoE.count >= 3 and not npcTarget:HasModifier("modifier_arc_warden_magnetic_field") ) then
-		--print("WA Farm");
+		if ( locationAoE.count >= 3 and not npcBot:HasModifier("modifier_arc_warden_magnetic_field") ) then
 			return BOT_ACTION_DESIRE_HIGH, npcBot:GetLocation();
 		end
 	end
 
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local locationAoE = npcBot:FindAoELocation( false, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2 ) then
@@ -234,36 +205,26 @@ function ConsiderMagneticField()
 	end
 
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 600, true );
-		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 600, true );
-		if ( #tableNearbyEnemyCreeps >= 3 or #tableNearbyEnemyTowers >= 1 ) 
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 800, true );
+		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 800, true );
+		if ( tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 3 ) or ( tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers >= 1 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, npcBot:GetLocation();
 		end
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and  mutil.IsInRange(npcTarget, npcBot, nCastRange)  
 		then
 			local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_ATTACK );
 			for _,npcAlly in pairs( tableNearbyAttackingAlliedHeroes )
 			do
-				if ( GetUnitToUnitDistance(npcAlly, npcTarget) < nCastRange and not npcAlly:HasModifier("modifier_arc_warden_magnetic_field")  ) 
+				if ( mutil.IsInRange(npcAlly, npcBot, nCastRange) and not npcAlly:HasModifier("modifier_arc_warden_magnetic_field")  ) 
 				then
 					return BOT_ACTION_DESIRE_MODERATE, npcAlly:GetLocation();
 				end
@@ -275,8 +236,6 @@ function ConsiderMagneticField()
 end
 
 function ConsiderFlux()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityPR:IsFullyCastable() ) then 
@@ -290,27 +249,23 @@ function ConsiderFlux()
 	local nDamage = nDot * nDuration;
 	
 	-- If a mode has set a target, and we can kill them, do it
-	--local npcTarget = npcBot:GetTarget();
-	if ( npcTarget ~= nil and CanCastFluxOnTarget( npcTarget )  )
+	local npcTarget = npcBot:GetTarget();
+	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and  
+	   mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 	then
-		if ( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > npcTarget:GetHealth() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange )
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
-		end
+		return BOT_ACTION_DESIRE_HIGH, npcTarget;
 	end
 	
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-
 		local npcMostDangerousEnemy = nil;
 		local nMostDangerousDamage = 0;
 
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE  );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastFluxOnTarget( npcEnemy ) )
+			if ( mutil.CanCastOnNonMagicImmune(npcEnemy) )
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -327,22 +282,21 @@ function ConsiderFlux()
 		end
 	end
 
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
+		end
+	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
-		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
-			if ( CanCastFluxOnTarget( npcTarget ) and not enemyDisabled(npcTarget) )
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end
 	end
 	
@@ -364,27 +318,22 @@ function ConsiderTempestDouble()
 
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
-			local npcTarget = npcBot:GetTarget();
-			if ( npcTarget ~= nil  )
-			then
-				return BOT_ACTION_DESIRE_LOW;
-			end
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 800)  )
+		then
+			return BOT_ACTION_DESIRE_LOW;
+		end
 	end
 	
 	--------------------------------------
 	-- Global high-priorty usage
 	--------------------------------------
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if  mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 600, true );
-		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 600, true );
-		if ( #tableNearbyEnemyCreeps >= 3 or #tableNearbyEnemyTowers >= 1 ) 
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 800, true );
+		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 800, true );
+		if ( tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 3 ) or ( tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers >= 1 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW;
 		end
@@ -394,13 +343,12 @@ function ConsiderTempestDouble()
 	--------------------------------------
 
 
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( GetUnitToUnitDistance( npcEnemy, npcBot ) < 600 ) 
+			if mutil.IsInRange(npcTarget, npcBot, 1000)
 			then
 				return BOT_ACTION_DESIRE_MODERATE;
 			end
@@ -409,14 +357,10 @@ function ConsiderTempestDouble()
 	
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < 600 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1000) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -425,13 +369,3 @@ function ConsiderTempestDouble()
 	return BOT_ACTION_DESIRE_NONE;
 end
 
--- attempt to disable buybacks for clones to prevent a clone buying in alone
-if DotaTime() < 0 then
-	
-	--print("I would still like buy in permission plz")
-	return
-end
-
-function  BuybackUsageThink()
-	--print("Clones shouldn't cheat")
-end

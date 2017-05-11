@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -13,21 +15,24 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+--[[function ItemUsageThink() 
+	ability_item_usage_generic.ItemUsageThink() 
+end]]--
 
 local castDCDesire = 0;
 local castACDesire = 0;
+local npcBot = nil;
+local abilityDC = nil;
+local abilityAC = nil;
 
 function AbilityUsageThink()
-
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
-	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
+	
+	if abilityDC == nil then abilityDC = npcBot:GetAbilityByName( "abaddon_death_coil" ) end
+	if abilityAC == nil then abilityAC = npcBot:GetAbilityByName( "abaddon_aphotic_shield" ) end
 
-	abilityDC = npcBot:GetAbilityByName( "abaddon_death_coil" );
-	abilityAC = npcBot:GetAbilityByName( "abaddon_aphotic_shield" );
-
-	-- Consider using each ability
 	castACDesire, castACTarget = ConsiderAphoticShield();
 	castDCDesire, castDCTarget = ConsiderDeathCoil();
 
@@ -42,29 +47,10 @@ function AbilityUsageThink()
 		npcBot:Action_UseAbilityOnEntity( abilityDC, castDCTarget );
 		return;
 	end
-	
-	
-
 end
 
-
-function CanCastDeathCoilOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-function CanCastAphoticShieldOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
-function isDisabled(npcTarget)
-	if npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) or npcTarget:IsSilenced( )  then
-		return true;
-	end
-	return false;
-end
 
 function ConsiderDeathCoil()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityDC:IsFullyCastable() ) then 
@@ -77,17 +63,14 @@ function ConsiderDeathCoil()
 	local nSelfDamage = abilityDC:GetSpecialValueInt("self_damage");
 	
 	-- If we're seriously retreating, see if we can suicide
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) and npcBot:GetHealth() <= nSelfDamage  ) 
 			then
-				if ( CanCastDeathCoilOnTarget( npcEnemy ) and npcBot:GetHealth() <= nSelfDamage ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-				end
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
 		end
 	end
@@ -96,7 +79,7 @@ function ConsiderDeathCoil()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and CanCastDeathCoilOnTarget( npcEnemy ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
 			then
 				return BOT_ACTION_DESIRE_LOW, npcEnemy
 			end
@@ -105,28 +88,26 @@ function ConsiderDeathCoil()
 	
 	-- If a mode has set a target, and we can kill them, do it
 	local npcTarget = npcBot:GetTarget();
-	if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastDeathCoilOnTarget( npcTarget ) )
+	if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) )
 	then
-		if ( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > npcTarget:GetHealth() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange )
+		if mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
 	end
 	
 	-- If we're in a teamfight, use it on the protect ally
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local lowHpAlly = nil;
 		local nLowestHealth = 1000;
-
 		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
 		for _,npcAlly in pairs( tableNearbyAllies )
 		do
-			if ( npcAlly:GetUnitName() ~= npcBot:GetUnitName() and CanCastDeathCoilOnTarget( npcAlly ) )
+			if ( npcAlly:GetUnitName() ~= npcBot:GetUnitName() and mutil.CanCastOnNonMagicImmune(npcAlly) )
 			then
 				local nAllyHP = npcAlly:GetHealth();
-				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.5 ) or isDisabled(npcAlly) )
+				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.5 ) or mutil.IsDisabled(false, npcAlly) )
 				then
 					nLowestHealth = nAllyHP;
 					lowHpAlly = npcAlly;
@@ -141,20 +122,11 @@ function ConsiderDeathCoil()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
-		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
-			if ( CanCastDeathCoilOnTarget( npcTarget ) )
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
 	end
 	
@@ -164,8 +136,6 @@ end
 
 function ConsiderAphoticShield()
 
-	local npcBot = GetBot();
-
 	-- Make sure it's castable
 	if ( not abilityAC:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
@@ -174,7 +144,7 @@ function ConsiderAphoticShield()
 	-- Get some of its values
 	local nCastRange = abilityAC:GetCastRange();
 
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -187,20 +157,18 @@ function ConsiderAphoticShield()
 	end
 	
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-
 		local lowHpAlly = nil;
-		local nLowestHealth = 1000;
+		local nLowestHealth = 10000;
 
 		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
 		for _,npcAlly in pairs( tableNearbyAllies )
 		do
-			if ( CanCastAphoticShieldOnTarget( npcAlly ) )
+			if ( npcAlly:GetUnitName() ~= npcBot:GetUnitName() and mutil.CanCastOnMagicImmune(npcAlly) )
 			then
 				local nAllyHP = npcAlly:GetHealth();
-				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 ) or isDisabled(npcAlly) )
+				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 ) or mutil.IsDisabled(false, npcAlly) )
 				then
 					nLowestHealth = nAllyHP;
 					lowHpAlly = npcAlly;
@@ -215,14 +183,10 @@ function ConsiderAphoticShield()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
 			local closestAlly = nil;
 			local nDist = 10000;
@@ -230,10 +194,10 @@ function ConsiderAphoticShield()
 			local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
 			for _,npcAlly in pairs( tableNearbyAllies )
 			do
-				if ( CanCastAphoticShieldOnTarget( npcAlly ) )
+				if ( mutil.CanCastOnMagicImmune(npcAlly) )
 				then
 					local nAllyDist = GetUnitToUnitDistance(npcTarget, npcAlly);
-					if ( ( nAllyDist < nDist ) or isDisabled(npcAlly) )
+					if ( ( nAllyDist < nDist ) or mutil.IsDisabled(false, npcAlly) )
 					then
 						nDist = nAllyDist;
 						closestAlly = npcAlly;

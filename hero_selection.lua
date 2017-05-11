@@ -2,7 +2,11 @@ local role = require(GetScriptDirectory() .. "/RoleUtility");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
-	'npc_dota_hero_terrorblade';
+	--[['npc_dota_hero_terrorblade',
+	'npc_dota_hero_ember_spirit',
+	'npc_dota_hero_earth_spirit',
+	'npc_dota_hero_phoenix',]]--
+	'npc_dota_hero_monkey_king';
 };
 
 local UnImplementedHeroes = {
@@ -16,7 +20,7 @@ local UnImplementedHeroes = {
 -- quickMode eliminates the 30s delay before picks begin
 -- it also eliminates the delay between bot picks
 local quickMode = false;
-local testMode =  false;
+local testMode =  true;
 
 local allBotHeroes = {
 	'npc_dota_hero_morphling',
@@ -153,8 +157,7 @@ local Min = -5;
 local Max = 25;
 local CMTestMode = false;
 local UnavailableHeroes = {
-	"npc_dota_hero_techies",
-	"npc_dota_hero_treant"
+	"npc_dota_hero_techies"
 }
 local HeroLanes = {
 	[1] = LANE_MID,
@@ -264,7 +267,6 @@ function RandomHero()
     end
 	return hero;
 end
-
 
 function BansHero()
 	if not IsPlayerBot(GetCMCaptain()) or not IsPlayerInHeroSelectionControl(GetCMCaptain()) then
@@ -455,36 +457,19 @@ function AllPickLogic()
 	 if GameTime() < 46 and not IsHumansDonePicking() then return; end 
 	 -- pick for radiant 
 	 local idx = 0;
-	 for _,i in pairs(GetTeamPlayers(TEAM_RADIANT)) 
+	 for _,i in pairs(GetTeamPlayers(GetTeam())) 
 	 do 
-		if IsPlayerInHeroSelectionControl(i) then 
-			if IsPlayerBot(i) then 
-				if testMode then
-					hero = GetRandomHero() 
-				else
-					hero = PickRightHero(idx) 
-				end
-				SelectHero(i, hero); 
-			end 
+		if IsPlayerInHeroSelectionControl(i) and IsPlayerBot(i) then 
+			if testMode then
+				hero = GetRandomHero() 
+			else
+				hero = PickRightHero(idx) 
+			end
+			SelectHero(i, hero); 
 		end
 		idx = idx + 1;
 	end 
 	idx = 0;
-	-- pick for dire 
-	for _,i in pairs(GetTeamPlayers(TEAM_DIRE)) 
-	do 
-		if IsPlayerInHeroSelectionControl(i) then 
-			if IsPlayerBot(i) then 
-				if testMode then
-					hero = GetRandomHero() 
-				else
-					hero = PickRightHero(idx) 
-				end
-				SelectHero(i, hero); 
-			end 
-		end 
-		idx = idx + 1;
-	end
 end
 
 function PickRightHero(slot)

@@ -13,7 +13,7 @@ X["items"] = {
 				"item_magic_stick",
 				"item_circlet",
 				"item_boots",
-				"item_ring_of_protection",
+				"item_wind_lace",
 				"item_ring_of_regen",
 				"item_blink",
 				"item_vitality_booster",

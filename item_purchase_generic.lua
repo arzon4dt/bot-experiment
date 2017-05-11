@@ -1,5 +1,8 @@
 --BotsInit = require( "game/botsinit" );
 --local MyModule = BotsInit.CreateGeneric();
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or GetBot():IsIllusion() then
+	return;
+end
 
 local purchase ="NOT IMPLEMENTED";
 
@@ -19,6 +22,10 @@ local hero_roles = role["hero_roles"];
 local supportExist = nil;
 local invisEnemyExist = false;
 local enemyInvisCheck = false;
+local buyBOT = false;
+local buyBOT2 = false;
+local buyMS = false;
+local buyRD = false;
 
 local earlyBoots = { 
 	"item_phase_boots", 
@@ -36,7 +43,8 @@ local invisHeroes = {
 	['npc_dota_hero_invoker'] = 1,
 	['npc_dota_hero_sand_king'] = 1,
 	['npc_dota_hero_treant'] = 1,
-	['npc_dota_hero_broodmother'] = 1
+	['npc_dota_hero_broodmother'] = 1,
+	['npc_dota_hero_weaver'] = 1
 } 
 
  local earlyGameItem = {
@@ -50,15 +58,19 @@ local invisHeroes = {
 		 "item_magic_wand",
 		 "item_bottle",  
 	 	 "item_ring_of_aquila", 
-		 "item_urn_of_shadows"
-		 --"item_tpscroll"
+		 "item_urn_of_shadows",
+		 "item_tpscroll"
 		 --"item_soul_ring", 
 		 --"item_ward_observer",
 	}
 
 function ItemPurchaseThink()
-
+		
 	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
+		return;
+	end
+	
+	if npcBot:IsIllusion() or npcBot:IsInvulnerable() then
 		return;
 	end
 	
@@ -95,7 +107,6 @@ function ItemPurchaseThink()
 			PurchaseDust();	
 		end
 		if GetCourier(0) == nil then
-			
 			PurchaseCourier();
 		end
 		UpgradeCourier();
@@ -108,12 +119,13 @@ function ItemPurchaseThink()
 	PurchaseRainDrop();
 	SellEarlyGameItem();
 	
+	if #(npcBot.tableItemsToBuy) == 0 then
 		PurchaseBOT();
-	
 		PurchaseMoonShard();
-		UseMoonShard();
-		
 		PurchaseBOT2();
+	end
+	
+	UseMoonShard();
 	
 	sellBoots();
 	
@@ -126,11 +138,12 @@ function ItemPurchaseThink()
 		return;
 	end
 	
-	GeneralItemPurchasing()
-
+	MyItemPurchase();
+	
 end	
 
 function IsSupportExist()
+
 	if role.CanBeSupport(npcBot:GetUnitName()) then
 		return true;
 	end
@@ -152,95 +165,37 @@ function IsSupportExist()
 	return false;
 end
 
-function GeneralItemPurchasing()
-
+function MyItemPurchase()
 	local sNextItem = npcBot.tableItemsToBuy[1];
 	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-
 	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-
-		if ( IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) ) then
-			if ( npcBot:DistanceFromSecretShop() == 0 or npcBot:DistanceFromSideShop() == 0 ) then
-				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( npcBot.tableItemsToBuy, 1 );
-					npcBot.secretShopMode = false;
-					npcBot.sideShopMode = false;
-				end
-			elseif ( npcBot:DistanceFromSecretShop() <= npcBot:DistanceFromSideShop() ) then
-				if ( not npcBot.secretShopMode and IsSuitablePurchaseActiveMode() ) then
-					npcBot.secretShopMode = true;
-					npcBot.sideShopMode = false;
-				end
-			elseif ( npcBot:DistanceFromSecretShop() > npcBot:DistanceFromSideShop() ) then
-				if ( not npcBot.sideShopMode and IsSuitablePurchaseActiveMode() ) then
-					npcBot.secretShopMode = false;
-					npcBot.sideShopMode = true;
-				end
-			end
-		elseif ( IsItemPurchasedFromSecretShop( sNextItem ) and not IsItemPurchasedFromSideShop( sNextItem ) ) then
-			if ( npcBot:DistanceFromSecretShop() == 0 ) then
-				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( npcBot.tableItemsToBuy, 1 );
-					npcBot.secretShopMode = false;
-					npcBot.sideShopMode = false;
-				end
-			else
-				if ( not npcBot.secretShopMode and IsSuitablePurchaseActiveMode() ) then
-					npcBot.secretShopMode = true;
-					npcBot.sideShopMode = false;
-				end
-			end
-		elseif ( not IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) ) then
-			if ( npcBot:DistanceFromSideShop() == 0 ) then
-				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( npcBot.tableItemsToBuy, 1 );
-					npcBot.secretShopMode = false;
-					npcBot.sideShopMode = false;
-				end
-			elseif ( npcBot:DistanceFromSideShop() < 2500 ) then
-				if ( not npcBot.sideShopMode and IsSuitablePurchaseActiveMode() ) then
-					npcBot.secretShopMode = false;
-					npcBot.sideShopMode = true;
-				end
-			else
-				if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-					table.remove( npcBot.tableItemsToBuy, 1 );
-					npcBot.secretShopMode = false;
-					npcBot.sideShopMode = false;
-				end
-			end
-		else
+		if not CanDoSecretOrSideShop(sNextItem)   
+		then
 			if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
 				table.remove( npcBot.tableItemsToBuy, 1 );
-				npcBot.secretShopMode = false;
-				npcBot.sideShopMode = false;
 			end
 		end
+	end
+end
+
+function CanDoSecretOrSideShop(sNextItem)
+	local CanPurchaseFromSecret =  IsItemPurchasedFromSecretShop(sNextItem);
+	local CanPurchaseFromSide = IsItemPurchasedFromSideShop(sNextItem);
+	if  npcBot:DistanceFromSideShop() < 2000 
+	then
+		if CanPurchaseFromSecret and CanPurchaseFromSide then
+			return true;
+		elseif not CanPurchaseFromSecret and CanPurchaseFromSide then
+			return true;
+		end
 	else
-		npcBot.secretShopMode = false;
-		npcBot.sideShopMode = false;
+		if CanPurchaseFromSecret then
+			return true;
+		end
 	end
-
+	return false;
 end
 
-function IsSuitablePurchaseActiveMode()
-
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT
-		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
-		or npcBot:GetActiveMode() == BOT_MODE_ROSHAN
-		or npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP
-		or npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID
-		or npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT 
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) then
-		return false;
-	end
-
-	return true;
-
-end
 
 function SwapBoots()
 	
@@ -260,6 +215,7 @@ function SwapBoots()
 		if lessValItem ~= -1
 		then
 			npcBot:ActionImmediate_SwapItems( itemSlot, lessValItem );
+			return
 		end
 	end
 	
@@ -268,17 +224,17 @@ end
 function getLessValuableItemSlot()
 	local minPrice = 10000;
 	local minIdx = -1;
-		for i=0, 5 do
-			if  npcBot:GetItemInSlot(i) ~= nil and npcBot:GetItemInSlot(i):GetName() ~= "item_aegis"  then
-				local _item = npcBot:GetItemInSlot(i):GetName()
-				if( GetItemCost(_item) < minPrice ) then
-					minPrice = GetItemCost(_item)
-					minIdx = i;
-				end
+	for i=0, 5 do
+		if  npcBot:GetItemInSlot(i) ~= nil and npcBot:GetItemInSlot(i):GetName() ~= "item_aegis"  then
+			local _item = npcBot:GetItemInSlot(i):GetName()
+			if( GetItemCost(_item) < minPrice ) then
+				minPrice = GetItemCost(_item)
+				minIdx = i;
 			end
 		end
-		
-		return minIdx;
+	end
+	
+	return minIdx;
 end
 
 function IsBoots(item)
@@ -308,11 +264,11 @@ function getMostValuableBPSlot()
 end
 
 function SellEarlyGameItem()
-	if ( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 ) and DotaTime() > 30*60 then
+	if ( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 ) and DotaTime() > 30*60 and GetEmptySlotAmount() < 4 then
 		for _,item in pairs(earlyGameItem)
 		do
 			local itemSlot = npcBot:FindItemSlot(item);
-			if itemSlot >= 0 and GetEmptySlotAmount() <= 4 then
+			if itemSlot >= 0 then
 				if item ~= "item_stout_shield" and item ~= "item_tpscroll" and item ~= "item_soul_ring" and item ~= "item_quelling_blade" then
 					npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(itemSlot));
 					return;
@@ -395,20 +351,17 @@ function PurchaseCourier()
 end
 
 function PurchaseWard()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);	
+
 	local minute = math.floor(DotaTime() / 60);
-		if( GetItemStockCount( "item_ward_observer" ) > 0 and 
-			npcBot:GetGold() >= GetItemCost( "item_ward_observer" ) and
-			GetEmptySlotAmount() >= 2 and
-			GetItemCharges("item_ward_observer") < 2  and
-			not HasItem(npcCourier, "item_ward_observer") 
-			) 
-		then
-			npcBot:ActionImmediate_PurchaseItem("item_ward_observer"); 
-		end
+	if( GetItemStockCount( "item_ward_observer" ) > 0 and 
+		npcBot:GetGold() >= GetItemCost( "item_ward_observer" ) and
+		GetEmptySlotAmount() >= 2 and
+		GetItemCharges("item_ward_observer") < 2  and
+		npcBot:GetCourierValue() == 0
+		) 
+	then
+		npcBot:ActionImmediate_PurchaseItem("item_ward_observer"); 
+	end
 end
 
 function GetItemCharges(_item)
@@ -425,17 +378,12 @@ end
 
 
 function PurchaseDust()
-	
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);	
 	if ( DotaTime() > 2*60 ) 
 	then
 		if( npcBot:GetGold() >= GetItemCost( "item_dust" ) and
 			GetEmptySlotAmount() >= 4 and
 			GetItemCharges("item_dust") < 1 and 
-			not HasItem(npcCourier, "item_dust") 
+			npcBot:GetCourierValue() == 0
 		) 
 		then
 			npcBot:ActionImmediate_PurchaseItem("item_dust"); 
@@ -446,26 +394,32 @@ end
 function IsInvisEnemyExist()
 
 	if not enemyInvisCheck then
-		local globalEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
-		for _, enemy in pairs(globalEnemies) do
-			if enemy ~= nil and invisHeroes[enemy:GetUnitName()] == 1 then
-				enemyInvisCheck = true;
-				return true;
+	    local invEnemyExs = false;
+		local globalEnemies = GetTeamPlayers(GetOpposingTeam())
+		for _,id in pairs(globalEnemies) do
+			if invisHeroes[GetSelectedHeroName(id)] == 1 
+			then
+				invEnemyExs = true;
+				break;
 			end
 		end
+		enemyInvisCheck = true;
+		return invEnemyExs;
 	end
 	
 	if DotaTime() > 15*60 then
-		local tableEnemies = npcBot:GetNearbyHeroes(1000, true, BOT_MODE_NONE)
-		for _,enemy in pairs(tableEnemies)
+		local globalEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
+		for _,enemy in pairs(globalEnemies)
 		do
-			local SASlot = enemy:FindItemSlot("item_shadow_amulet");
-			local GCSlot = enemy:FindItemSlot("item_glimmer_cape");
-			local ISSlot = enemy:FindItemSlot("item_invis_sword");
-			local SESlot = enemy:FindItemSlot("item_silver_edge");
-			if SASlot >= 0 or GCSlot >= 0 or ISSlot >= 0 or SESlot >= 0 then
-				return true;
-			end	
+			if enemy ~= nil and not enemy:IsNull() then
+				local SASlot = enemy:FindItemSlot("item_shadow_amulet");
+				local GCSlot = enemy:FindItemSlot("item_glimmer_cape");
+				local ISSlot = enemy:FindItemSlot("item_invis_sword");
+				local SESlot = enemy:FindItemSlot("item_silver_edge");
+				if SASlot >= 0 or GCSlot >= 0 or ISSlot >= 0 or SESlot >= 0 then
+					return true;
+				end	
+			end
 		end
 	end
 	
@@ -473,22 +427,13 @@ function IsInvisEnemyExist()
 end
 
 function PurchaseRainDrop()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);
-	if ( DotaTime() > 3*60 and DotaTime() < 10*60 ) 
+	if( not buyRD and GetItemStockCount( "item_infused_raindrop" ) > 0 and 
+		npcBot:GetGold() >= GetItemCost( "item_infused_raindrop" ) 
+	) 
 	then
-		if( GetItemStockCount( "item_infused_raindrop" ) > 0 and 
-			npcBot:GetGold() >= GetItemCost( "item_infused_raindrop" ) and
-			GetEmptySlotAmount() >= 4 and
-			not HasItem(npcBot, "item_infused_raindrop") and 
-			not HasItem(npcCourier, "item_infused_raindrop") 
-		) 
-		then
-			npcBot:ActionImmediate_PurchaseItem("item_infused_raindrop"); 
-		end
-	end	
+		npcBot:ActionImmediate_PurchaseItem("item_infused_raindrop"); 
+		buyRD = true;
+	end
 end
 
 function UpgradeCourier()
@@ -510,19 +455,14 @@ function activateCourier( )
 end
 
 function PurchaseTP()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);
-	if( GetEmptySlotAmount() > 3 and 
-		not HasItem(npcBot, "item_tpscroll") and 
-		not HasItem(npcCourier, "item_tpscroll") and 
-		not HasItem(npcCourier, "item_travel_boots") and 
-		not HasItem( npcBot, "item_travel_boots") and
-		not HasItem(npcCourier, "item_travel_boots_2") and 
-		not HasItem( npcBot, "item_travel_boots_2") and
+	if( DotaTime() > 60 and
 		npcBot:GetGold() >= GetItemCost( "item_tpscroll" ) and 
-		DotaTime() > 60 ) 
+		GetEmptySlotAmount() > 3 and 
+	    npcBot:GetCourierValue() == 0 and
+		not HasItem(npcBot, "item_tpscroll") and 
+		not HasItem( npcBot, "item_travel_boots") and
+		not HasItem( npcBot, "item_travel_boots_2") 
+	) 
 	then
 		npcBot:ActionImmediate_PurchaseItem("item_tpscroll");
 	end
@@ -536,20 +476,11 @@ function HasItem( hUnit, sItem )
 end
 
 function PurchaseMoonShard()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);
-	if #(npcBot.tableItemsToBuy) == 0 and 
-		npcBot:GetGold() >= GetItemCost( "item_hyperstone" ) and
-		not npcBot:HasModifier("modifier_item_moon_shard_consumed") and
-		not HasItem( npcBot, "item_moon_shard" ) and
-		not HasItem( npcBot, "item_recipe_assault" ) and
-		not HasItem( npcCourier, "item_recipe_assault" ) and
-		GetEmptySlotAmount() >= 1 and
-		HasItem( npcBot, "item_travel_boots")
+	if  buyBOT and not buyMS
 	then
 		table.insert(npcBot.tableItemsToBuy, "item_hyperstone");
+		table.insert(npcBot.tableItemsToBuy, "item_hyperstone");
+		buyMS = true;
 	end
 end
 
@@ -563,36 +494,23 @@ function UseMoonShard()
 end
 
 function PurchaseBOT()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);
-	if #(npcBot.tableItemsToBuy) == 0 and 
-		npcBot:GetGold() >= GetItemCost( "item_recipe_travel_boots" ) + GetItemCost( "item_boots" ) and
-		not HasItem( npcBot, "item_travel_boots") and
-		not HasItem( npcCourier, "item_travel_boots") and
-		not HasItem( npcBot, "item_travel_boots_2") and
-		not HasItem( npcCourier, "item_travel_boots_2") 
+	if not buyBOT
 	then
-		npcBot:ActionImmediate_PurchaseItem("item_recipe_travel_boots");
-		npcBot:ActionImmediate_PurchaseItem("item_boots");
+	    if HasItem( npcBot, "item_travel_boots" ) then
+			buyBOT = true;
+		else	
+			table.insert(npcBot.tableItemsToBuy, "item_boots");
+			table.insert(npcBot.tableItemsToBuy, "item_recipe_travel_boots");
+			buyBOT = true;
+		end
 	end
 end
 
 function PurchaseBOT2()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);
-	if npcBot:GetGold() >= GetItemCost( "item_recipe_travel_boots" ) and 
-	   HasItem(npcBot, "item_travel_boots") and 
-	   npcBot:HasModifier("modifier_item_moon_shard_consumed") and 
-	   not HasItem(npcBot, "item_travel_boots_2") and
-	   not HasItem(npcBot, "item_recipe_travel_boots") and
-	   not HasItem(npcCourier, "item_recipe_travel_boots")
+	if buyBOT and buyMS and not buyBOT2 
 	then
-		npcBot:ActionImmediate_PurchaseItem("item_recipe_travel_boots");
-		return;
+		table.insert(npcBot.tableItemsToBuy, "item_recipe_travel_boots");
+		buyBOT2 = true;
 	end
 end
 

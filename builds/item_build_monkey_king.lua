@@ -12,27 +12,28 @@ X["items"] = {
 				"item_branches",
 				"item_magic_stick",
 				"item_circlet",
-				"item_belt_of_strength",
 				"item_boots",
-				"item_gloves",
-				"item_ogre_axe",
-				"item_quarterstaff",
-				"item_robe",
-				"item_sobi_mask",
-				"item_blade_of_alacrity",
-				"item_boots_of_elves",
-				"item_recipe_yasha",
-				"item_ogre_axe",
+				"item_blades_of_attack",
+				"item_blades_of_attack",
+				"item_javelin",
 				"item_belt_of_strength",
-				"item_recipe_sange",
-				"item_blink",
+				"item_recipe_basher",
+				"item_blight_stone",
+				"item_mithril_hammer",
+				"item_mithril_hammer",
 				"item_ogre_axe",
 				"item_mithril_hammer",
 				"item_recipe_black_king_bar",
+				"item_ring_of_health",
+				"item_vitality_booster",
+				"item_recipe_abyssal_blade",
 				"item_hyperstone",
 				"item_platemail",
 				"item_chainmail",
-				"item_recipe_assault"
+				"item_recipe_assault",
+				"item_demon_edge",
+				"item_javelin",
+				"item_javelin"
 			};
 
 -- Set up Skill build
@@ -54,9 +55,9 @@ local ABILITY8 = "special_bonus_strength_25"
 --use -1 for levels that shouldn't level a skill
 X["skills"] = {
     SKILL_W,    SKILL_E,    SKILL_Q,    SKILL_Q,    SKILL_Q,
-    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    talents[1],
-    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    talents[4],
-    SKILL_W,    "-1",       SKILL_R,    "-1",   	talents[5],
+    SKILL_R,    SKILL_Q,    SKILL_W,    SKILL_W,    talents[1],
+    SKILL_W,    SKILL_R,    SKILL_E,    SKILL_E,    talents[4],
+    SKILL_E,    "-1",       SKILL_R,    "-1",   	talents[5],
     "-1",   	"-1",   	"-1",       "-1",       talents[8]
 };
 

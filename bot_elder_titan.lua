@@ -2,13 +2,14 @@ local castSCDesire = 0;
 local ReturnDesire = 0;
 local MoveDesire = 0;
 local ReturnTime = 0;
+local npcBot = nil;
 
 function  MinionThink(  hMinionUnit ) 
-	--print(hMinionUnit:GetUnitName());
-	local npcBot = GetBot();
+
+	if npcBot == nil then npcBot = GetBot(); end
+	
 if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
 	if hMinionUnit:GetUnitName() == "npc_dota_elder_titan_ancestral_spirit" and npcBot:IsAlive() then
-	
 		if ( npcBot:IsUsingAbility() or hMinionUnit:IsUsingAbility() or npcBot:IsChanneling() or hMinionUnit:IsChanneling() ) then return end
 	
 		abilitySC = npcBot:GetAbilityByName( "elder_titan_echo_stomp" );
@@ -16,7 +17,6 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		MoveDesire, Location = ConsiderMove(hMinionUnit); 
 		ReturnDesire = Return(hMinionUnit); 
 		castSCDesire = ConsiderSlithereenCrush(hMinionUnit);
-		
 		
 		if ( MoveDesire > 0  )
 		then
@@ -36,7 +36,6 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 			ReturnTime = DotaTime();
 			return;
 		end
-		
 	end
 end
 	
@@ -62,8 +61,6 @@ function Return(hMinionUnit)
 end
 
 function ConsiderSlithereenCrush(hMinionUnit)
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilitySC:IsFullyCastable() ) then 
@@ -145,7 +142,6 @@ function ConsiderMove(hMinionUnit)
 	then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
-	
 	
 	local radius = 350;
 	local RB = Vector(-7200,-6666)

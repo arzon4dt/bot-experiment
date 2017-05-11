@@ -9,7 +9,7 @@ X["items"] = {
                 "item_tango",
 				"item_branches",
 				"item_branches",
-				"item_ring_of_protection",
+				"item_wind_lace",
 				"item_magic_stick",
 				"item_circlet",
 				"item_boots",

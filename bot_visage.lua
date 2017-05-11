@@ -1,10 +1,13 @@
 local utils = require(GetScriptDirectory() ..  "/util")
+local npcBot = nil;
 local castSFDesire = 0;
 local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 0;
 local ProxRange = 900;
 function  MinionThink(  hMinionUnit ) 
+
+if npcBot == nil then npcBot = GetBot(); end
 
 if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
 	if string.find(hMinionUnit:GetUnitName(), "npc_dota_visage_familiar") then
@@ -58,7 +61,7 @@ function IsDisabled(npcTarget)
 end
 
 function ConsiderStoneForm(hMinionUnit)
-	local npcBot = GetBot();
+	
 	if not abilitySF:IsFullyCastable() or 
 	   hMinionUnit:HasModifier("modifier_visage_summon_familiars_stone_form_buff") 	
 	then
@@ -107,7 +110,6 @@ function ConsiderAttacking(hMinionUnit)
 		return BOT_ACTION_DESIRE_NONE, {};
 	end	
 	
-	local npcBot = GetBot();
 	local target = npcBot:GetTarget();
 	local AR = hMinionUnit:GetAttackRange();
 	local OAR = npcBot:GetAttackRange();
@@ -202,8 +204,6 @@ end
 
 function ConsiderMove(hMinionUnit)
 
-	local npcBot = GetBot();
-	
 	if hMinionUnit:HasModifier("modifier_visage_summon_familiars_stone_form_buff") or not npcBot:IsAlive() or GetUnitToUnitDistance(hMinionUnit, npcBot) < 100
 	then
 		return BOT_ACTION_DESIRE_NONE, {};
@@ -232,8 +232,7 @@ function ConsiderRetreat(hMinionUnit)
 	
 	local RB = Vector(-7200,-6666)
 	local DB = Vector(7137,6548)
-	local npcBot = GetBot();
-	
+
 	if not npcBot:IsAlive() then
 		if GetTeam( ) == TEAM_DIRE then
 			location = DB;

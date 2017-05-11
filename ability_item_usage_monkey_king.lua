@@ -1,8 +1,14 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
+
+if GetBot():IsInvulnerable() then
+	return;
+end
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -17,86 +23,117 @@ end
 local castBSDesire = 0;
 local castTDDesire = 0;
 local castPSDesire = 0;
+local castPSEDesire = 0;
+local castMCDesire = 0;
+local castUTDesire = 0;
 local castWCDesire = 0;
+
+local abilityBS = nil;
+local abilityTD = nil;
+local abilityPS = nil;
+local abilityPSE = nil;
+local abilityMC = nil;
+local abilityUT = nil;
+local abilityWC = nil;
+
+local PSLoc = {0, 0, 0};
+local Ancient = GetAncient(GetTeam());
+
+local npcBot = nil;
 
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
+	
+	if abilityPSE == nil then abilityPSE = npcBot:GetAbilityByName( "monkey_king_primal_spring_early" ) end
+	
+	castPSEDesire = ConsiderPrimalSpringEarly();
+	
+	if ( castPSEDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityPSE );
+		return;
+	end	
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityBS = npcBot:GetAbilityByName( "monkey_king_boundless_strike" );
-	abilityTD = npcBot:GetAbilityByName( "monkey_king_tree_dance" );
-	abilityPS = npcBot:GetAbilityByName( "monkey_king_primal_spring" );
-	abilityWC = npcBot:GetAbilityByName( "monkey_king_wukongs_command" );
+	if abilityBS == nil then abilityBS = npcBot:GetAbilityByName( "monkey_king_boundless_strike" ) end
+	if abilityTD == nil then abilityTD = npcBot:GetAbilityByName( "monkey_king_tree_dance" ) end
+	if abilityPS == nil then abilityPS = npcBot:GetAbilityByName( "monkey_king_primal_spring" ) end
+	if abilityMC == nil then abilityMC = npcBot:GetAbilityByName( "monkey_king_mischief" ) end
+	if abilityUT == nil then abilityUT = npcBot:GetAbilityByName( "monkey_king_untransform" ) end
+	if abilityWC == nil then abilityWC = npcBot:GetAbilityByName( "monkey_king_wukongs_command" ) end
 	
 	-- Consider using each ability
 	castWCDesire, castWCLocation = ConsiderWukongCommand();
 	castBSDesire, castBSLocation = ConsiderBoundlessStrike();
 	castTDDesire, castTDTarget = ConsiderTreeDance();
+	castMCDesire                 = ConsiderMischief();
+	castUTDesire                 = ConsiderUntransform();
 	castPSDesire, castPSLocation = ConsiderPrimalSpring();
-
+	
+	if ( castMCDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityMC );
+		return;
+	end
+	
+	if ( castUTDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityUT );
+		return;
+	end
+	
 	if ( castWCDesire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnLocation( abilityWC, castWCLocation );
 		return;
 	end
 	
 	if ( castBSDesire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnLocation( abilityBS, castBSLocation );
 		return;
 	end
 	
 	if ( castTDDesire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnTree( abilityTD, castTDTarget );
 		return;
 	end
 		
 	if ( castPSDesire > 0 ) 
 	then
-		
+		PSLoc = castPSLocation;
 		npcBot:Action_UseAbilityOnLocation( abilityPS, castPSLocation );
 		return;
 	end	
 
 end
 
-function CanCastBoundlessStrikeOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-function enemyDisabled(npcTarget)
-	if npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) then
-		return true;
+function GetFurthestTree(trees)
+	if Ancient == nil then return nil end; 
+	local furthest = nil;
+	local fDist = 10000;
+	for _,tree in pairs(trees)
+	do
+		local dist = GetUnitToLocationDistance(Ancient, GetTreeLocation(tree));
+		if dist < fDist then
+			furthest = tree;
+			fDist = dist;
+		end
 	end
-	return false;
+	return furthest;
 end
 
 function ConsiderBoundlessStrike()
 
-	local npcBot = GetBot();
-	
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityBS:IsFullyCastable() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
-	
---
-	-- If we want to cast Laguna Blade at all, bail
-	--[[if ( castPRDesire > 0 ) 
-	then
-		return BOT_ACTION_DESIRE_NONE, 0;
-	end]]--
 
 	-- Get some of its values
 	local nCastRange = abilityBS:GetCastRange();
@@ -118,7 +155,7 @@ function ConsiderBoundlessStrike()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange , true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( GetUnitToUnitDistance( npcEnemy, npcBot ) < nCastRange  - (nCastRange / 3)  ) 
+			if (mutil.CanCastOnNonMagicImmune(npcEnemy) and mutil.IsInRange(npcEnemy, npcBot, nCastRange-200)) 
 			then
 				--return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation( );
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( nCastPoint );
@@ -131,48 +168,34 @@ function ConsiderBoundlessStrike()
 	--------------------------------------
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 600, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance( npcEnemy, npcBot ) < nCastRange ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation( );
 			end
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( GetUnitToUnitDistance(npcEnemy, npcBot) < nCastRange ) 
-			then
-				--return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( nCastPoint );
-			end
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, 200, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange  - (nCastRange / 3) ) 
+		if (  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange-200) ) 
 		then
-			if ( CanCastBoundlessStrikeOnTarget( npcTarget ) )
-			then
-				--return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
 		end
 	end
 --
@@ -180,10 +203,7 @@ function ConsiderBoundlessStrike()
 end
 
 function ConsiderTreeDance()
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
+
 	-- Make sure it's castable
 	if ( not abilityTD:IsFullyCastable() or not abilityPS:IsFullyCastable() ) 
 	then 
@@ -202,16 +222,24 @@ function ConsiderTreeDance()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsRetreating(npcBot) and abilityPS:IsFullyCastable() and npcBot:DistanceFromFountain() > 1000 and #tableNearbyEnemyHeroes >= 1
+	then
+		local tableNearbyTrees = npcBot:GetNearbyTrees( nCastRange );
+		local furthest = GetFurthestTree(tableNearbyTrees);
+		if furthest ~= nil then
+			return BOT_ACTION_DESIRE_MODERATE, furthest;
+		end
+	end
+	
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( GetUnitToUnitDistance(npcEnemy, npcBot) < nCastRange ) 
+			if ( mutil.IsInRange(npcEnemy, npcBot, nCastRange) ) 
 			then
-				local tableNearbyTrees = npcBot:GetNearbyTrees( nCastRange );
-				if #tableNearbyTrees > 0 then
+				local tableNearbyTrees = npcEnemy:GetNearbyTrees( nCastRange );
+				if tableNearbyTrees ~= nil and #tableNearbyTrees >= 1  then
 					return BOT_ACTION_DESIRE_MODERATE, tableNearbyTrees[1];
 				end
 			end
@@ -219,18 +247,13 @@ function ConsiderTreeDance()
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange  - (nCastRange / 3) ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
-			local tableNearbyTrees = npcBot:GetNearbyTrees( nCastRange );
-			if #tableNearbyTrees > 0 then
+			local tableNearbyTrees = npcTarget:GetNearbyTrees( nCastRange );
+			if tableNearbyTrees ~= nil and #tableNearbyTrees >= 1  then
 				return BOT_ACTION_DESIRE_MODERATE, tableNearbyTrees[1];
 			end
 		end
@@ -241,24 +264,20 @@ end
 
 
 function ConsiderPrimalSpring()
-
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
-	-- Make sure it's castable
-	
-	--local nt = npcBot:GetNearbyTrees(20)
-	--print(#nt)
 	
 	if ( not abilityPS:IsFullyCastable() or abilityPS:IsHidden() or abilityTD:GetCooldownTimeRemaining() > 1.4 ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
+	local trees = npcBot:GetNearbyTrees(50);
+	if trees == nil or #trees == 0 then
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
 	
 	-- Get some of its values
 	local nCastRange = abilityPS:GetSpecialValueInt("max_distance");
+	local nRadius = abilityPS:GetSpecialValueInt("impact_radius");
 	local nCastPoint = abilityPS:GetChannelTime( );
 	
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
@@ -269,36 +288,29 @@ function ConsiderPrimalSpring()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsRetreating(npcBot) and #tableNearbyEnemyHeroes >= 1
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( GetUnitToUnitDistance(npcEnemy, npcBot) < nCastRange ) 
-			then
-				if enemyDisabled(npcEnemy) then
-					return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation();
-				else
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( nCastPoint );
-				end
-			end
+		local location = npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
+		return BOT_ACTION_DESIRE_MODERATE, location;
+	end
+	
+	
+	if mutil.IsInTeamFight(npcBot, 1200)
+	then		
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
-			if enemyDisabled(npcTarget) then
+			if mutil.IsDisabled(true, npcTarget) or npcTarget:GetMovementDirectionStability() < 1.0 then
 				return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation( );
 			else
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
@@ -309,11 +321,93 @@ function ConsiderPrimalSpring()
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
+function ConsiderPrimalSpringEarly()
+
+	if ( not abilityPSE:IsFullyCastable() or abilityPSE:IsHidden()  ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	
+	local trees = npcBot:GetNearbyTrees(50);
+	if trees == nil or #trees == 0 then
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	local nRadius = 375;
+	
+	if mutil.IsRetreating(npcBot)
+	then
+		return BOT_ACTION_DESIRE_MODERATE
+	end
+	
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and 
+		  ( GetUnitToLocationDistance(npcTarget, PSLoc) >= ( 375 - 100 ) or npcTarget:GetHealth() <= 175 )
+		then
+			return BOT_ACTION_DESIRE_MODERATE;
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE;
+	
+end
+
+function ConsiderMischief()
+	
+	if ( not abilityMC:IsFullyCastable() or abilityMC:IsHidden() ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+	
+
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemy = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
+		if #tableNearbyEnemy >= 1 then
+			return BOT_ACTION_DESIRE_MODERATE
+		end
+	end
+	
+	if mutil.IsDefending(npcBot) then
+		local tableNearbyAlly = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
+		local tower = npcBot:GetNearbyTowers(1000, false);
+		if tower ~= nil and tableNearbyAlly ~= nil and #tower >= 1 and #tableNearbyAlly >= 2 then
+			return BOT_ACTION_DESIRE_MODERATE
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE;
+end
+
+function ConsiderUntransform()
+
+	if ( not abilityUT:IsFullyCastable() or abilityUT:IsHidden() ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 1200)
+		then
+			return BOT_ACTION_DESIRE_MODERATE
+		end
+	end
+
+	if mutil.IsRetreating(npcBot) and not npcBot:WasRecentlyDamagedByAnyHero(4.0) 
+	then
+		return BOT_ACTION_DESIRE_MODERATE
+	end
+	
+	return BOT_ACTION_DESIRE_NONE;
+end
+
 function ConsiderWukongCommand()
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
+
 	-- Make sure it's castable
 	if ( not abilityWC:IsFullyCastable() ) 
 	then 
@@ -324,15 +418,14 @@ function ConsiderWukongCommand()
 	local nCastRange = abilityWC:GetSpecialValueInt("cast_range");
 	local nRadius = abilityWC:GetSpecialValueInt("second_radius");
 
+	
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 10000 );
-
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
 		if ( locationAoE.count >= 2 ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc;
@@ -340,19 +433,14 @@ function ConsiderWukongCommand()
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+(nRadius/2))
 		then
-			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-			if #tableNearbyEnemyHeroes >= 2 then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
+			if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 then
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation(0.5);
 			end
 		end
 	end

@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -13,21 +15,26 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+
 local castTWDesire = 0;
 local castTDDesire = 0;
 local castCSDesire = 0;
 
+local abilityTW = nil;
+local abilityTD = nil;
+local abilityCS = nil;
+
+local npcBot = nil;
+
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
-	
-	
+	if npcBot == nil then npcBot = GetBot(); end
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityTW = npcBot:GetAbilityByName( "faceless_void_time_walk" );
-	abilityTD = npcBot:GetAbilityByName( "faceless_void_time_dilation" );
-	abilityCS = npcBot:GetAbilityByName( "faceless_void_chronosphere" );
+	if abilityTW == nil then abilityTW = npcBot:GetAbilityByName( "faceless_void_time_walk" ) end
+	if abilityTD == nil then abilityTD = npcBot:GetAbilityByName( "faceless_void_time_dilation" ) end
+	if abilityCS == nil then abilityCS = npcBot:GetAbilityByName( "faceless_void_chronosphere" ) end
 
 	-- Consider using each ability
 	castTWDesire, castTWLocation = ConsiderTimeWalk();
@@ -56,19 +63,13 @@ end
 
 function ConsiderTimeWalk()
 
-	local RB = Vector(-7200,-6666)
-	local DB = Vector(7137,6548)
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityTW:IsFullyCastable() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	if ( npcBot:HasModifier("modifier_faceless_void_chronosphere") ) 
+	if ( npcBot:HasModifier("modifier_faceless_void_chronosphere_selfbuff") ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
@@ -78,36 +79,21 @@ function ConsiderTimeWalk()
 	local nCastPoint = abilityTW:GetCastPoint( );
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1  ) )
 		then
-				local location = npcBot:GetXUnitsInFront( nCastRange );
-				if GetOpposingTeam( ) == TEAM_DIRE then
-					location = RB;
-				end
-				if GetOpposingTeam( ) == TEAM_RADIANT then
-					location = DB;
-				end
-				return BOT_ACTION_DESIRE_MODERATE, location;
+			local location = mutil.GetTeamFountain();
+			return BOT_ACTION_DESIRE_HIGH, location;
 		end	
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
-			--[[if npcTarget:IsFacingUnit( npcBot, 15 ) then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
-			else
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetXUnitsInFront(200);
-			end]]--
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot) / 3000) + nCastPoint );
 		end
 	end
@@ -118,10 +104,6 @@ end
 
 function ConsiderTimeDilation()
 
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityTD:IsFullyCastable() ) 
 	then 
@@ -137,36 +119,31 @@ function ConsiderTimeDilation()
 	local nRadius = abilityTD:GetSpecialValueInt("radius");
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and GetUnitToUnitDistance(npcEnemy, npcBot) < nRadius ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE;
 			end
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius - 100, true, BOT_MODE_NONE );
-		if (#tableNearbyEnemyHeroes >= 2) then
+		if (tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2) then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nRadius / 2 and #tableNearbyEnemyHeroes >= 2 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -178,10 +155,6 @@ end
 
 function ConsiderChrono()
 
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityCS:IsFullyCastable() ) 
 	then 
@@ -193,45 +166,38 @@ function ConsiderChrono()
 	local nCastRange = abilityCS:GetCastRange();
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and 
-				GetUnitToUnitDistance(npcEnemy, npcBot) < nCastRange and 
-				#tableNearbyAllyHeroes > 1 ) 
-			then
-				return BOT_ACTION_DESIRE_LOW, npcEnemy:GetLocation();
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+(nRadius/2), true, BOT_MODE_NONE );
+		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
+		if tableNearbyAllyHeroes ~= nil and  #tableNearbyAllyHeroes >= 2 then
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) 
+				then
+					return BOT_ACTION_DESIRE_LOW, npcEnemy:GetLocation();
+				end
 			end
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 1 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( GetUnitToUnitDistance(npcEnemy, npcBot) < nCastRange ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
-			end
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 2 ) then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + ( nRadius / 2 ), true, BOT_MODE_NONE );
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange and #tableNearbyEnemyHeroes >= 2 ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+(nRadius/2)) )   
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( nRadius, false, BOT_MODE_NONE );
+			if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 then
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+			end
 		end
 	end
 	

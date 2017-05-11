@@ -1,6 +1,5 @@
 local X = {}
 local utility = require(GetScriptDirectory() ..  "/util")
-
 local castEntityTarget = 0;
 local castPointTarget = 0;
 local castAoeTarget = 0;
@@ -21,9 +20,9 @@ local BlinkLikeAbility = {
 }
 
 local ClearPathAbilities = {
-		'pudge_meat_hook',
-		'rattletrap_hookshot',
-		'mirana_arrow'
+	'pudge_meat_hook',
+	'rattletrap_hookshot',
+	'mirana_arrow'
 }
 
 function X.CastStolenSpells(ability)
@@ -73,11 +72,12 @@ function X.CheckFlag(bitfield, flag)
 end
 
 function X.IsEngagingTarget(npcBot)
-	return  npcBot:GetActiveMode() == BOT_MODE_ROAM or
-			npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-			npcBot:GetActiveMode() == BOT_MODE_GANK or
-			npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-			npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
+	local mode =  npcBot:GetActiveMode();
+	return  mode == BOT_MODE_ROAM or
+			mode == BOT_MODE_TEAM_ROAM or
+			mode == BOT_MODE_GANK or
+			mode == BOT_MODE_ATTACK or
+			mode == BOT_MODE_DEFEND_ALLY
 end
 
 function X.IsRetreating(npcBot)
@@ -117,6 +117,24 @@ function X.ConsiderEntityTarget(ability)
 	
 	if nCastRange < nAttackRange then
 		nCastRange = nCastRange + 200;
+	end
+	
+	if ability:GetName() == "tiny_toss" then
+		if X.IsEngagingTarget(npcBot) 
+		then
+			local npcTarget = npcBot:GetTarget();
+			if ( npcTarget ~= nil and npcTarget:IsHero() and X.CanCastOnMagicImmune(npcTarget) and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+			then
+				local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 275, false, BOT_MODE_NONE );
+				local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 275, true, BOT_MODE_NONE );
+				local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 275, true );
+				local tableNearbyAllyCreeps = npcBot:GetNearbyLaneCreeps( 275, false );
+				if tableNearbyAllyHeroes ~= nil or tableNearbyEnemyHeroes ~= nil or tableNearbyAllyCreeps ~= nil or tableNearbyEnemyCreeps ~= nil 
+				then
+					return BOT_ACTION_DESIRE_MODERATE, npcTarget, 'unit';
+				end
+			end
+		end
 	end
 	
 	if X.CheckFlag(ability:GetTargetTeam(), ABILITY_TARGET_TEAM_ENEMY) and 
@@ -455,56 +473,5 @@ function X.ConsiderNoTarget(ability)
 
 end
 
-function X.GeneralPointTargetUsage(ability, npcBot, nCastRange)
-	
-	--[[if X.CheckFlag(ability:GetTargetTeam(), ABILITY_TARGET_TEAM_ENEMY) and 
-	   X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_HERO) and 
-	   X.CheckFlag(ability:GetTargetFlags(), ABILITY_TARGET_FLAG_MAGIC_IMMUNE_ENEMIES)  
-	then
-		if  X.IsEngagingTarget(npcBot)
-		then
-			local npcTarget = npcBot:GetTarget();
-			if ( npcTarget ~= nil and npcTarget:IsHero() and X.CanCastOnMagicImmune(npcTarget) and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
-			end
-		end
-	elseif X.CheckFlag(ability:GetTargetTeam(), ABILITY_TARGET_TEAM_ENEMY) and 
-	       X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_HERO) and 
-	       not X.CheckFlag(ability:GetTargetFlags(), ABILITY_TARGET_FLAG_MAGIC_IMMUNE_ENEMIES)  
-	then
-		if X.IsEngagingTarget(npcBot)
-		then
-			local npcTarget = npcBot:GetTarget();
-			if ( npcTarget ~= nil and npcTarget:IsHero() and X.CanCastOnNonMagicImmune(npcTarget) and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
-			end
-		end
-	elseif X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_TREE) then]]--
-	if X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_TREE) then
-		if X.IsEngagingTarget(npcBot)
-		then
-			local npcTarget = npcBot:GetTarget();
-			if ( npcTarget ~= nil and npcTarget:IsHero() and X.CanCastOnNonMagicImmune(npcTarget) and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
-			then
-				local nearbyTrees = npcBot:GetNearbyTrees(nCastRange)
-				if nearbyTrees[1] ~= nil then
-					return BOT_ACTION_DESIRE_MODERATE, GetTreeLocation(nearbyTrees[1])
-				end
-			end
-		end
-	else
-		if X.IsEngagingTarget(npcBot)
-		then
-			local npcTarget = npcBot:GetTarget();
-			if ( npcTarget ~= nil and npcTarget:IsHero() and X.CanCastOnNonMagicImmune(npcTarget) and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
-			end
-		end
-	end
-	
-end
 
 return X

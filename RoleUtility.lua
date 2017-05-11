@@ -1373,33 +1373,83 @@ X["hero_roles"] = {
 	}
 }
 
+X["phase_boots"] = {
+		["npc_dota_hero_abaddon"] = 1,
+		["npc_dota_hero_alchemist"] = 1,
+		["npc_dota_hero_gyrocopter"] = 1,
+		["npc_dota_hero_medusa"] = 1,
+		["npc_dota_hero_phantom_assassin"] = 1,
+		["npc_dota_hero_sniper"] = 1,
+		["npc_dota_hero_spectre"] = 1,
+		["npc_dota_hero_tiny"] = 1,
+		["npc_dota_hero_troll_warlord"] = 1,
+		["npc_dota_hero_alchemist"] = 1,
+		["npc_dota_hero_life_stealer"] = 1,
+		["npc_dota_hero_monkey_king"] = 1,
+		["npc_dota_hero_ember_spirit"] = 1,
+		["npc_dota_hero_juggernaut"] = 1,
+		["npc_dota_hero_lone_druid"] = 1,
+		["npc_dota_hero_razor"] = 1,
+		["npc_dota_hero_templar_assassin"] = 1,
+		["npc_dota_hero_ursa"] = 1,
+		["npc_dota_hero_doom_bringer"] = 1,
+		["npc_dota_hero_kunkka"] = 1,
+		["npc_dota_hero_legion_commander"] = 1,
+		["npc_dota_hero_night_stalker"] = 1,
+		["npc_dota_hero_bloodseeker"] = 1,
+		["npc_dota_hero_broodmother"] = 1,
+		["npc_dota_hero_mirana"] = 1,
+		["npc_dota_hero_invoker"] = 1,
+		["npc_dota_hero_lina"] = 1,
+		["npc_dota_hero_furion"] = 1,
+		["npc_dota_hero_windrunner"] = 1
+	}
+
+
 function X.IsCarry(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["carry"] > 0;
 end
 function X.IsDisabler(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["disabler"] > 0;
 end
 function X.IsDurable(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["durable"] > 0;
 end
 function X.HasEscape(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["escape"] > 0;
 end
 function X.IsInitiator(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["initiator"] > 0;
 end
 function X.IsJungler(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["jungler"] > 0;
 end
 function X.IsNuker(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["nuker"] > 0;
 end
 function X.IsSupport(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["support"] > 0;
 end
 function X.IsPusher(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["pusher"] > 0;
 end
+
+function X.IsMelee(attackRange)
+	return attackRange <= 320;
+end
+
+function X.BetterBuyPhaseBoots(hero)
+	return X["phase_boots"][hero] == 1;
+end	
 
 function X.GetRoleLevel(hero, role)
 	return X["hero_roles"][hero][role];

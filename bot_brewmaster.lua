@@ -1,6 +1,4 @@
 local utils = require(GetScriptDirectory() ..  "/util")
-local inspect = require(GetScriptDirectory() ..  "/inspect")
-local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
 
 local CastDMDesire = 0
 local CastCYDesire = 0
@@ -11,11 +9,12 @@ local MoveDesire = 0
 local RetreatDesire = 0
 local castSCDesire = 0;
 local castCHDesire = 0;
+local radius = 1000;
 
 function  MinionThink(  hMinionUnit ) 
 
 if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
-	local radius = 1000;
+	
 	if string.find(hMinionUnit:GetUnitName(), "npc_dota_brewmaster_storm") then
 		
 		if ( hMinionUnit:IsUsingAbility() ) then return end
@@ -58,11 +57,13 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		if (AttackDesire > 0)
 		then
 			hMinionUnit:Action_AttackUnit( AttackTarget, true );
+			return
 		end
 		
 		if (MoveDesire > 0)
 		then
 			hMinionUnit:Action_MoveToLocation( Location );
+			return
 		end
 		
 	end
@@ -96,7 +97,6 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		end
 		if (AttackDesire > 0)
 		then
-			--hMinionUnit:Action_MoveToLocation( AttackTarget:GetLocation() );
 			hMinionUnit:Action_AttackUnit( AttackTarget, true );
 			return
 		end
@@ -116,10 +116,12 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		if (AttackDesire > 0)
 		then
 			hMinionUnit:Action_AttackUnit( AttackTarget, true );
+			return
 		end
 		if (MoveDesire > 0)
 		then
 			hMinionUnit:Action_MoveToLocation( Location );
+			return
 		end
 		
 	end
@@ -132,10 +134,12 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		if (AttackDesire > 0)
 		then
 			hMinionUnit:Action_AttackUnit( AttackTarget, true );
+			return
 		end
 		if (MoveDesire > 0)
 		then
 			hMinionUnit:Action_MoveToLocation( GetBot():GetLocation() + RandomVector(100) );
+			return
 		end
 		
 	end

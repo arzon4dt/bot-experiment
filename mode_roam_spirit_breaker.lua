@@ -1,78 +1,171 @@
-----------------------------------------------------------------------------
---	Ranked Matchmaking AI v1.0a
---	Author: adamqqq		Email:adamqqq@163.com
-----------------------------------------------------------------------------
-----------------------------------------------------------------------------------------------------
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
+local npcBot = GetBot();
+local roamDistance = 600;
+local npcTarget = nil;
+local RADBase = Vector(-7200,-6666);
+local DIREBase = Vector(7137,6548);
+
 function GetDesire()
-	local npcBot = GetBot();
-	if(npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness"))
-	then
-		npcBot:Action_ClearActions(false)
-		return 1.0
+	
+	if npcBot:IsIllusion() then
+		return BOT_MODE_DESIRE_NONE;
 	end
 	
-	return 0
+	if npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness")
+	then
+		return BOT_MODE_DESIRE_ABSOLUTE;
+	end
+	
+	if npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() 
+	then
+		return BOT_MODE_DESIRE_NONE;
+	end
+	
+	local target = FindTarget();
+	
+	if target ~= nil   
+	then
+	    npcTarget = target;	
+		return npcBot:GetHealth() / npcBot:GetMaxHealth()
+	end
+	
+	return BOT_MODE_DESIRE_NONE;
+	
+end
+
+function OnStart()
+	npcBot:SetTarget(npcTarget);
+end
+
+function OnEnd()
+	npcBot:SetTarget(nil);
+	npcTarget = nil;
 end
 
 function Think()
-	local npcBot = GetBot();
 	
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") )
-	then 
-		return
-	end
-	
-	local npcEnemy = npcBot:GetTarget();
-	if ( npcEnemy ~= nil and npcEnemy:IsAlive()) 
+	if npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness")
 	then
-		local d=GetUnitToUnitDistance(npcBot,npcEnemy)
-		if(d<600)
-		then
-			npcBot:Action_AttackUnit(npcEnemy,true);
+		if ConsiderCancelCharge() then
+			npcBot:Action_MoveToLocation(npcBot:GetLocation() + RandomVector(200));
+			return;
 		else
-			npcBot:Action_MoveToUnit(npcEnemy);
+			return;
 		end
-	else
-		local enemys = npcBot:GetNearbyHeroes(1200,true,BOT_MODE_NONE)
-		local WeakestEnemy,HeroHealth=GetWeakestUnit(enemys)
-		local allys = npcBot:GetNearbyHeroes( 1200, false, BOT_MODE_NONE );
-		for i,npcAlly in pairs(allys) 
-		do	
-			local target=npcAlly:GetTarget()
-			if(target~=nil)
-			then
-				npcBot:SetTarget(target)
-				npcBot:Action_AttackUnit(target,true);
-				return
-			end
-		end
-		npcBot:SetTarget(WeakestEnemy)
-		npcBot:Action_AttackUnit(WeakestEnemy,true);
 	end
 	
-	return
+	local target = FindTarget();
+	
+	if target ~= nil   
+	then
+		npcBot:Action_MoveToLocation(target:GetLocation());
+		return;
+	end
+
 end
 
-function GetWeakestUnit(EnemyUnits)
-	
-	if EnemyUnits==nil or #EnemyUnits==0 then
-		return nil,10000;
+function GetBase(Team)
+	if Team == TEAM_RADIANT then
+		return RADBase;
+	else
+		return DIREBase;
 	end
-	
-	local WeakestUnit=nil;
-	local LowestHealth=10000;
-	for _,unit in pairs(EnemyUnits) 
-	do
-		if unit~=nil and unit:IsAlive() 
+end
+
+function ConsiderCancelCharge()
+	local target = npcBot:GetTarget();
+	if target ~= nil 
+	then
+		local targetAlly = target:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
+		local Ally = target:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+		if Ally ~= nil 
 		then
-			if unit:GetHealth()<LowestHealth 
-			then
-				LowestHealth=unit:GetHealth();
-				WeakestUnit=unit;
-			end
+			return false
+		elseif GetUnitToLocationDistance(target, GetBase(GetOpposingTeam())) < 2500 or ( targetAlly ~= nil and #targetAlly >= 2 ) 
+		then
+			--print(tostring(#targetAlly))
+			--print("Cancel")
+			return true;
 		end
 	end
-	
-	return WeakestUnit,LowestHealth
+	return false;
 end
-----------------------------------------------------------------------------------------------------
+
+function IsValidTarget(target)
+	return  target ~= nil 
+			and target:IsAlive() 
+			and target:CanBeSeen() 
+			and target:IsHero() 
+			and not target:IsIllusion() 
+			and GetUnitToUnitDistance(target, npcBot) > roamDistance
+end
+
+function FindLowHPTarget()
+	local enemyheroes = GetUnitList(UNIT_LIST_ENEMY_HEROES );
+	for _,enemy in pairs(enemyheroes)
+	do
+		if enemy:GetHealth() < 100 + ( enemy:GetLevel() * 10 ) then
+			return enemy;
+		end
+	end
+	return nil;
+end
+
+function FindSuroundedEnemy()
+	local enemyheroes = GetUnitList(UNIT_LIST_ENEMY_HEROES );
+	for _,enemy in pairs(enemyheroes)
+	do
+		local allyNearby = enemy:GetNearbyHeroes(1200, false, BOT_MODE_ATTACK);
+		if allyNearby ~= nil and #allyNearby >= 2 then
+			return enemy;
+		end
+	end
+	return nil;
+end
+
+function FindAllyTarget()
+	local allyheroes = GetUnitList(UNIT_LIST_ALLIED_HEROES);
+	for _,ally in pairs(allyheroes)
+	do
+		local target = ally:GetTarget();
+		if IsValidTarget(target) then
+			return target;
+		end
+	end
+	return nil;
+end
+
+function FindTarget()
+	
+	local target  = nil;
+	
+	target = npcBot:GetTarget();
+	
+	if IsValidTarget(target) then
+		return target;	
+	end
+	
+	target = FindLowHPTarget();
+	
+	if IsValidTarget(target) then
+		return target;
+	end
+	
+	target = FindSuroundedEnemy();
+	
+	if IsValidTarget(target) then
+		return target;
+	end
+	
+	target = FindAllyTarget();
+	
+	if IsValidTarget(target) then
+		return target;
+	end
+	
+	return target;
+	
+end

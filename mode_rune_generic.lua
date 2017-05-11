@@ -1,5 +1,10 @@
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local role = require(GetScriptDirectory() .. "/RoleUtility");
 local hero_roles = role["hero_roles"];
+local bot = GetBot();
 local minute = 0;
 local sec = 0;
 local movementSpeed = 0;
@@ -16,10 +21,28 @@ local ListRune = {
 
 function GetDesire()
 
-	local bot = GetBot();
-	
+	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() then
+		return BOT_MODE_DESIRE_NONE;
+	end
+
 	if bot:GetActiveMode() == BOT_MODE_WARD then
 		return ( 0.0 );
+	end
+	
+	for _,r in pairs(ListRune)
+	do
+		if IsHumanPlayerNearby(bot, r) then
+			return ( 0.0 );
+		end
+	end
+	
+	for _,rune in pairs(ListRune)
+	do
+		if not IsPingedByHumanPlayer(rune) and GetUnitToLocationDistance( bot , GetRuneSpawnLocation(rune)) < ProxDist/2 and IsTheClosestOne(bot, rune) and
+		   ( GetRuneStatus( rune ) == RUNE_STATUS_AVAILABLE )  
+		then
+			return BOT_MODE_DESIRE_HIGH;
+		end
 	end
 	
 	if not IsSuitableToPick(bot) then
@@ -33,14 +56,6 @@ function GetDesire()
 	elseif DotaTime() > 0 then
 		minute = math.floor(DotaTime() / 60)
 		sec = DotaTime() % 60
-		
-		for _,r in pairs(ListRune)
-		do
-			if IsHumanPlayerNearby(bot, r) then
-				--print("Don't pick rune")
-				return ( 0.0 );
-			end
-		end
 		
 		for _,rune in pairs(ListRune)
 		do
@@ -70,7 +85,7 @@ function GetDesire()
 end
 
 function Think()
-	local bot = GetBot();
+	--local bot = GetBot();
 
 	local PriorityHeroesNearby = false;
 	local PriorityHeroes = "";
@@ -178,12 +193,10 @@ function IsPingedByHumanPlayer(rune)
 			table.insert(listPings, ping);
 		end
 	end
-	--print("NUM PING"..#listPings)
+	
 	for _,p in pairs(listPings)
 	do
 		if p ~= nil and GetDistance(p.location, RLoc) < 1000 and GameTime() - p.time < PingTimeGap then
-			--print( tostring(GameTime()) - p.time) 
-			--print("Pinged")
 			return true;
 		end
 	end
@@ -233,7 +246,7 @@ function HasBottle(bot)
 end
 
 function IsSuitableToPick(npcBot)
-	local Enemies = npcBot:GetNearbyHeroes(1000, true, BOT_MODE_NONE);
+	local Enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
 	if ( ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
 		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
@@ -250,8 +263,8 @@ function IsSuitableToPick(npcBot)
 end
 
 function IsStronger(bot, enemy)
-	local BPower = bot:GetOffensivePower();
-	local EPower = enemy:GetOffensivePower();
+	local BPower = bot:GetEstimatedDamageToTarget(true, enemy, 4.0, DAMAGE_TYPE_ALL);
+	local EPower = enemy:GetEstimatedDamageToTarget(true, bot, 4.0, DAMAGE_TYPE_ALL);
 	return EPower > BPower;
 end
 

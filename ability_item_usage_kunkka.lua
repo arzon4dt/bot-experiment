@@ -1,5 +1,11 @@
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -30,10 +36,11 @@ local abilityTO = "";
 local abilityXS = "";
 local abilityRT = "";
 local abilityGS = "";
+local npcBot = nil;
 
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	if not npcBot:IsAlive() then
 		Combo1Time = 0;
@@ -131,7 +138,6 @@ function GetTowardsFountainLocation( unitLoc, distance )
 end
 
 function ConsiderCombo1()
-	local npcBot = GetBot()
 	
 	if not abilityTO:IsFullyCastable() or not abilityXS:IsFullyCastable() or not abilityGS:IsFullyCastable()
 	then
@@ -148,11 +154,7 @@ function ConsiderCombo1()
 	
 	local nCastRange = abilityXS:GetCastRange();
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
 		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and 
@@ -167,8 +169,6 @@ function ConsiderCombo1()
 end
 
 function ConsiderCombo2()
-	local npcBot = GetBot()
-	
 	if not abilityTO:IsFullyCastable() or not abilityXS:IsFullyCastable() or abilityGS:IsFullyCastable()
 	then
 		return BOT_ACTION_DESIRE_NONE, nil, {};
@@ -184,17 +184,11 @@ function ConsiderCombo2()
 	
 	local nCastRange = abilityXS:GetCastRange();
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
 		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and GetUnitToUnitDistance(npcTarget, npcBot) < nCastRange ) 
 		then
-			
-			--return BOT_ACTION_DESIRE_HIGH, npcTarget, npcTarget:GetLocation();
 			return BOT_ACTION_DESIRE_HIGH, npcTarget, npcTarget:GetXUnitsInFront( 75 )
 		end
 	end
@@ -203,7 +197,6 @@ function ConsiderCombo2()
 end
 
 function ConsiderCombo3()
-	local npcBot = GetBot()
 	
 	if not abilityGS:IsFullyCastable() or not abilityXS:IsFullyCastable() or abilityTO:IsFullyCastable()
 	then
@@ -220,11 +213,7 @@ function ConsiderCombo3()
 	
 	local nCastRange = abilityXS:GetCastRange();
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
 		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and 
@@ -238,7 +227,6 @@ function ConsiderCombo3()
 end
 
 function ConsiderTorrent()
-	local npcBot = GetBot()
 	
 	if not abilityTO:IsFullyCastable() or Combo1 > 0 or Combo2 > 0 or Combo3 > 0
 	then
@@ -248,9 +236,17 @@ function ConsiderTorrent()
 	local nCastPoint = abilityTO:GetCastPoint();
 	local nDelay = abilityTO:GetSpecialValueFloat("delay");
 	
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 600)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
+		end
+	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -271,11 +267,7 @@ function ConsiderTorrent()
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
 		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and GetUnitToUnitDistance(npcTarget, npcBot) < 600 ) 
@@ -288,7 +280,6 @@ function ConsiderTorrent()
 end
 
 function ConsiderXMark()
-	local npcBot = GetBot()
 	
 	if not abilityXS:IsFullyCastable() or Combo1 > 0 or Combo2 > 0 or Combo3 > 0
 	then
@@ -297,7 +288,7 @@ function ConsiderXMark()
 	
 	local nCastRange = abilityXS:GetCastRange();
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -322,7 +313,6 @@ function ConsiderXMark()
 end
 
 function ConsiderGhostShip()
-	local npcBot = GetBot()
 	
 	if not abilityGS:IsFullyCastable() or Combo1 > 0 or Combo2 > 0 or Combo3 > 0
 	then
@@ -332,7 +322,7 @@ function ConsiderGhostShip()
 	local nCastRange = abilityGS:GetCastRange();
 	local nRadius = abilityGS:GetSpecialValueInt("ghostship_width");
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -353,8 +343,7 @@ function ConsiderGhostShip()
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange/2, nRadius, 0, 0 );
 		if ( locationAoE.count >= 3 ) 

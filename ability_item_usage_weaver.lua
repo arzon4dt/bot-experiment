@@ -1,5 +1,10 @@
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -18,10 +23,11 @@ local castSDDesire = 0;
 local abilityDC = "";
 local abilityPC = "";
 local abilitySD = "";
+local npcBot = nil;
 
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
 	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
@@ -59,17 +65,8 @@ function AbilityUsageThink()
 
 end
 
-function CanCastDecayOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
-
 function ConsiderDecay()
 
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityDC:IsFullyCastable() ) 
 	then 
@@ -86,7 +83,7 @@ function ConsiderDecay()
 	-- Mode based usage
 	--------------------------------------
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -98,16 +95,20 @@ function ConsiderDecay()
 		end
 	end
 	
-	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
-		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-		if ( locationAoE.count >= 4 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65 ) 
+		local npcTarget = npcBot:GetTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
+		end
+	end
+	
+	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
+	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65
+	then
+		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 3 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
@@ -115,15 +116,11 @@ function ConsiderDecay()
 
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
 
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange and CanCastDecayOnTarget( npcTarget ) ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
 		end
@@ -136,8 +133,6 @@ end
 
 function ConsiderPounce()
 
-	local npcBot = GetBot();
-
 	-- Make sure it's castable
 	if ( not abilityPC:IsFullyCastable() or castSDDesire > 0 ) then 
 		return BOT_ACTION_DESIRE_NONE;
@@ -148,7 +143,7 @@ function ConsiderPounce()
 	local nAttackRange = npcBot:GetAttackRange(); 
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1  ) )
@@ -158,21 +153,13 @@ function ConsiderPounce()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, nAttackRange+200) and 
+		   mutil.IsInRange(npcTarget, npcBot, 2000)
 		then
-			local dist = GetUnitToUnitDistance( npcBot, npcTarget ); 
-			if ( dist > nAttackRange + 200 and dist < 2000  )
-			then
-				return BOT_ACTION_DESIRE_HIGH;
-			end
+			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
 
@@ -182,8 +169,6 @@ end
 
 function ConsiderShadowDance()
 
-	local npcBot = GetBot();
-
 	-- Make sure it's castable
 	if ( not abilitySD:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
@@ -192,26 +177,29 @@ function ConsiderShadowDance()
 	-- Mode based usage
 	--------------------------------------
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.15 and abilityPC:GetCooldownTimeRemaining() < 3 then
 			return BOT_ACTION_DESIRE_MODERATE, "-1";
 		end
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.25 ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, "-1";
+		if npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.25
+		then
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
+				then
+					return BOT_ACTION_DESIRE_MODERATE, "-1";
+				end
 			end
 		end
 	end
 
-	if npcBot:HasScepter() then
+	if npcBot:HasScepter() 
+	then
 		local tableNearbyFriendlyHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 		for _,myFriend in pairs(tableNearbyFriendlyHeroes) do
-			if myFriend:GetActiveMode() == BOT_MODE_RETREAT and myFriend:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
-				myFriend:WasRecentlyDamagedByAnyHero(2.0) and myFriend:GetHealth() / myFriend:GetMaxHealth() < 0.25
+			if mutil.IsRetreating(myFriend) and myFriend:WasRecentlyDamagedByAnyHero(2.0) and myFriend:GetHealth() / myFriend:GetMaxHealth() < 0.25
 			then
 				return BOT_ACTION_DESIRE_MODERATE, myFriend;
 			end

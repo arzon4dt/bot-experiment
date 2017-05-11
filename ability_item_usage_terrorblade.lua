@@ -4,6 +4,10 @@ local utils = require(GetScriptDirectory() ..  "/util")
 --local inspect = require(GetScriptDirectory() ..  "/inspect")
 --local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
 
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
 end

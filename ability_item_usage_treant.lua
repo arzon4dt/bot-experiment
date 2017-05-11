@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -18,16 +20,22 @@ local castLSDesire = 0;
 local castLADesire = 0;
 local castOGDesire = 0;
 
+local abilityLS = nil;
+local abilityLA = nil;
+local abilityOG = nil;
+
+local npcBot = nil;
+
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityLS = npcBot:GetAbilityByName( "treant_leech_seed" );
-	abilityLA = npcBot:GetAbilityByName( "treant_living_armor" );
-	abilityOG = npcBot:GetAbilityByName( "treant_overgrowth" );
+	if abilityLS == nil then abilityLS = npcBot:GetAbilityByName( "treant_leech_seed" ) end
+	if abilityLA == nil then abilityLA = npcBot:GetAbilityByName( "treant_living_armor" ) end
+	if abilityOG == nil then abilityOG = npcBot:GetAbilityByName( "treant_overgrowth" ) end
 
 	-- Consider using each ability
 	castLSDesire, castLSTarget = ConsiderLeechSeed();
@@ -55,19 +63,7 @@ function AbilityUsageThink()
 
 end
 
-function CanCastLeechSeedOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-function CanCastLivingArmorOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-function CanCastOvergrowthOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
 function ConsiderLeechSeed()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityLS:IsFullyCastable() ) then 
@@ -83,48 +79,35 @@ function ConsiderLeechSeed()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
-	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and CanCastLeechSeedOnTarget( npcTargetToKill ) )
-	then
-		if ( npcTargetToKill:GetActualIncomingDamage( (nDuration*nDOT), DAMAGE_TYPE_MAGICAL ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange + 200 ) )
-		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill;
-		end
-	end
-	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
 			then
-				if ( CanCastLeechSeedOnTarget( npcEnemy ) ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-				end
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
 		end
 	end
 
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
+		end
+	end
+	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot) 
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			if ( CanCastLeechSeedOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange)
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
 	end
 	
@@ -134,7 +117,6 @@ end
 
 
 function ConsiderLivingArmor()
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityLA:IsFullyCastable() ) then 
@@ -143,37 +125,31 @@ function ConsiderLivingArmor()
 	
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 600, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
-				if ( CanCastLivingArmorOnTarget( npcBot ) ) 
-				then
-					return BOT_ACTION_DESIRE_HIGH, npcBot;
-				end
+				return BOT_ACTION_DESIRE_HIGH, npcBot;
 			end
 		end
 	end
 
 	-- If we're pushing or defending a lane
-	if ( npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) 
+	if mutil.IsDefending(npcBot)
 	then
 		local tableNearbyFriendlyTowers = npcBot:GetNearbyTowers( 400, false );
-			for _,myTower in pairs(tableNearbyFriendlyTowers) do
-				if ( GetUnitToUnitDistance( myTower, npcBot  ) < 400 ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, myTower;
-				end
+		for _,myTower in pairs(tableNearbyFriendlyTowers) do
+			if ( GetUnitToUnitDistance( myTower, npcBot  ) < 400 ) 
+			then
+				return BOT_ACTION_DESIRE_MODERATE, myTower;
 			end
+		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1300, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1300, false, BOT_MODE_NONE );
 		for _,npcAlly in pairs( tableNearbyAllyHeroes )
@@ -186,20 +162,12 @@ function ConsiderLivingArmor()
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 600)
 		then
-			if ( CanCastLivingArmorOnTarget( npcBot ) )
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcBot;
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcBot;
 		end
 	end
 
@@ -208,8 +176,7 @@ function ConsiderLivingArmor()
 	do
 		local Player = GetTeamMember(i);
 		if Player:IsAlive() and Player:GetHealth()/Player:GetMaxHealth() < 0.65 and 
-		   Player:GetActiveMode() == BOT_MODE_RETREAT and Player:GetActiveModeDesire() >= BOT_ACTION_DESIRE_HIGH and 
-		   Player:DistanceFromFountain() > 0  
+		   mutil.IsRetreating(Player) and Player:DistanceFromFountain() > 0  
 		then
 			return BOT_ACTION_DESIRE_MODERATE, Player;
 		end
@@ -232,7 +199,6 @@ end
 
 
 function ConsiderOvergrowth()
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityOG:IsFullyCastable() ) then 
@@ -242,7 +208,7 @@ function ConsiderOvergrowth()
 	local nRadius = abilityOG:GetSpecialValueInt( "radius" );
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -254,21 +220,21 @@ function ConsiderOvergrowth()
 		end
 	end
 	
+	if mutil.IsInTeamFight(npcBot, 1200)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 then
+			return BOT_ACTION_DESIRE_HIGH;
+		end
+	end
+	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius - 400 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius - 200)
 		then
-			if ( CanCastOvergrowthOnTarget( npcTarget ) )
-			then
-				return BOT_ACTION_DESIRE_HIGH;
-			end
+			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
 	

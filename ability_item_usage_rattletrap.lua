@@ -1,3 +1,8 @@
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
+
 --require(GetScriptDirectory() ..  "/ability_item_usage_generic")
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
@@ -18,28 +23,6 @@ end
 local courierTime = 0
 
 ----------------------------------------------------------------------------------------------------
---rattletrap_battery_assault
---rattletrap_hookshot
---rattletrap_power_cogs
---rattletrap_rocket_flare
-
---[[
-	local us = GetTeamPlayers( GetTeam() )
-	local them
-	if math.abs(GetTeam() - 3) then
-		them = GetTeamPlayers( 3 )
-	else
-		them = GetTeamPlayers( 2 )
-	end
-	local test = {}
-	for _,v in pairs(them) do
-		table.insert(test, GetSelectedHeroName( v ))
-	end
-	print(assert(inspect.inspect(test)))
-
-	local test = GetBot():GetNearbyHeroes( 35000, true, BOT_MODE_NONE )
-	print(assert(inspect.inspect(test)))
-	]]
 
 local castbaDesire = 0;
 local castcogsDesire = 0;
@@ -417,17 +400,12 @@ function ConsiderCogs()
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( nRadius, false, BOT_MODE_NONE );
-		for _,npcTarget in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcTarget, 2.0 ) ) 
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 and tableNearbyEnemyHeroes[1] ~= nil ) 
+		then
+			if ( GetUnitToUnitDistance(npcBot,tableNearbyEnemyHeroes[1] ) > nRadius+100 and tableNearbyAllyHeroes ~= nil and #tableNearbyAllyHeroes < 2 ) 
 			then
-				if ( CanCastBAOnTarget( npcTarget ) and GetUnitToUnitDistance(npcBot,npcTarget) > nRadius and tableNearbyAllyHeroes == nil ) 
-				then
-				--print("retreat Net")
-					return BOT_ACTION_DESIRE_MODERATE
-				end
+				return BOT_ACTION_DESIRE_MODERATE
 			end
-
 		end
 	end
 
@@ -439,7 +417,6 @@ function ConsiderCogs()
 		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
 	then
 		local npcTarget = npcBot:GetTarget();
-
 		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < nRadius) 
 		then
 			local distance = GetUnitToUnitDistance(npcTarget, npcBot);

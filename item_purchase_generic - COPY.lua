@@ -283,19 +283,21 @@ function FillStartingItem()
 			InsertItemToTable(0, 'item_tango');
 			InsertItemToTable(0, 'item_flask');
 		end
-		if hero_roles[BotName]['support'] == 1 then
+		if role.CanBeSupport(BotName) then
 			InsertItemToTable(0, 'item_clarity');
 		end
-		if AttackRange <= 320 then
-			InsertItemToTable(0, 'item_stout_shield');
+		if role.IsMelee(AttackRange) then
+			if string.find(BotName, "tidehunter") then 
+			  InsertItemToTable(0, 'item_stout_shield');
+			end  
 			InsertItemToTable(0, 'item_quelling_blade');
+			BuyStartingStatItem();
 		end
 	end
 end
 --FILLING EARLY ITEM TABLE
 function FillEarlyItem()
 	if #Bot.EarlyItem == 0 and ( Bot.tableItemsToBuy == nil or #(Bot.tableItemsToBuy) == 0 ) then
-		BuyStartingStatItem();
 		BuyBottle();
 		InsertItemToTable(1, 'item_magic_wand');
 		BuyEarlyBoots();
@@ -332,15 +334,21 @@ function BuyEarlyBoots()
 		else
 			InsertItemToTable(1, 'item_tranquil_boots');
 		end
-	elseif role.CanBeSafeLaneCarry(BotName) or role.CanBeOfflaner(BotName) then
-		if AttackRange <= 320 then
-			if rollStat then
+	elseif role.CanBeMidlaner(BotName) or role.CanBeSafeLaneCarry(BotName) or role.CanBeOfflaner(BotName) then
+		if role.IsCarry(BotName) and role.IsMelee(AttackRange) then
+			if role.BetterBuyPhaseBoots(BotName) and rollStat then
 				InsertItemToTable(1, 'item_phase_boots')
 			else
 				ChooseTheRightPT();
 			end
-		else
+		elseif role.IsCarry(BotName) and not role.IsMelee(AttackRange) then
 			ChooseTheRightPT();
+		elseif role.IsInitiator(BotName) then
+			if rollStat then
+				InsertItemToTable(1, 'item_arcane_boots');
+			else
+				InsertItemToTable(1, 'item_tranquil_boots');
+			end
 		end
 	end
 end

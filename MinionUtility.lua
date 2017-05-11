@@ -1,5 +1,6 @@
 local BotsInit = require( "game/botsinit" );
 local MyModule = BotsInit.CreateGeneric();
+local npcBot = nil; 
 local MoveDesire = 0;
 local AttackDesire = 0;
 local RetreatDesire = 0;
@@ -18,6 +19,8 @@ local castFADesire = 0;
 
 
 function  MinionThink(  hMinionUnit ) 
+	
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
 		if hMinionUnit:IsIllusion() then
@@ -471,7 +474,6 @@ end
 
 function ConsiderMove(hMinionUnit)
 
-	local npcBot = GetBot();
 	local target = npcBot:GetTarget()
 	
 	if AttackDesire > 0 then
@@ -495,7 +497,6 @@ function ConsiderRetreat(hMinionUnit)
 	
 	local RB = Vector(-7200,-6666)
 	local DB = Vector(7137,6548)
-	local npcBot = GetBot();
 	
 	if not npcBot:IsAlive() then
 		if GetTeam( ) == TEAM_DIRE then
@@ -511,8 +512,6 @@ end
 
 --------THUNDER CLAP
 function ConsiderThunderClap(hMinionUnit)
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityTC:IsNull() or not abilityTC:IsFullyCastable() ) then 
@@ -561,8 +560,6 @@ end
 
 --------WAR STOMP
 function ConsiderWarStomp(hMinionUnit)
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityWS:IsNull() or not abilityWS:IsFullyCastable() ) then 
@@ -613,8 +610,6 @@ end
 ----------------SHOCK WAVE
 function ConsiderShockWave(hMinionUnit)
 
-	local npcBot = GetBot();
-	
 	-- Make sure it's castable
 	if ( abilitySW:IsNull() or not abilitySW:IsFullyCastable() ) 
 	then 
@@ -687,7 +682,6 @@ end
 
 ------------MANA BURN
 function ConsiderManaBurn(hMinionUnit)
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityMB:IsNull() or not abilityMB:IsFullyCastable() ) then 
@@ -743,7 +737,6 @@ end
 
 ------------PURGE
 function ConsiderPurge(hMinionUnit)
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityPG:IsNull() or not abilityPG:IsFullyCastable() ) then 
@@ -787,7 +780,6 @@ end
 
 ------------Ensnare
 function ConsiderEnsnare(hMinionUnit)
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityES:IsNull() or not abilityES:IsFullyCastable() ) then 
@@ -831,7 +823,6 @@ end
 
 ------------BOULDER
 function ConsiderBoulder(hMinionUnit)
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityHB:IsNull() or not abilityHB:IsFullyCastable() ) then 
@@ -887,7 +878,6 @@ end
 
 ------------BOULDER 2
 function ConsiderBoulder2(hMinionUnit)
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityHB2:IsNull() or not abilityHB2:IsFullyCastable() ) then 
@@ -943,7 +933,6 @@ end
 
 ------------CHAIN LIGHTNING
 function ConsiderChainLighting(hMinionUnit)
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityCL:IsNull() or not abilityCL:IsFullyCastable() ) then 
@@ -998,7 +987,6 @@ function ConsiderChainLighting(hMinionUnit)
 end
 
 function ConsiderFrostArmor()
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( abilityFA:IsNull() or not abilityFA:IsFullyCastable() ) then 

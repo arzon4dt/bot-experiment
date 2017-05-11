@@ -1,8 +1,12 @@
+local npcBot = nil;
+
 function  MinionThink(  hMinionUnit ) 
-	---print(hMinionUnit:GetUnitName())
+	
+	if npcBot == nil then npcBot = GetBot(); end
+	
 if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 	
 	if hMinionUnit:GetUnitName() ==  "npc_dota_templar_assassin_psionic_trap" and hMinionUnit ~= nil and hMinionUnit:GetHealth() > 0 then
-		local npcBot = GetBot();
+		
 		local abilitySTP = hMinionUnit:GetAbilityByName( "templar_assassin_self_trap" );
 		local abilityTP = npcBot:GetAbilityByName( "templar_assassin_trap" );
 		local nRadius = abilitySTP:GetSpecialValueInt("trap_radius");

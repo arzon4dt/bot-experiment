@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -18,15 +20,22 @@ local castFBDesire = 0;
 local castTDDesire = 0;
 local castBSDesire = 0;
 
+local abilityFB = nil;
+local abilityTD = nil;
+local abilityBS = nil;
+
+local npcBot = nil;
+
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
-	abilityFB = npcBot:GetAbilityByName( "enchantress_enchant" );
-	abilityTD = npcBot:GetAbilityByName( "enchantress_natures_attendants" );
-	abilityBS = npcBot:GetAbilityByName( "enchantress_impetus" );
+	if mutil.CanNotUseAbility(npcBot) then return end
+	
+	if abilityBS == nil then abilityFB = npcBot:GetAbilityByName( "enchantress_enchant" ) end
+	if abilityTD == nil then abilityTD = npcBot:GetAbilityByName( "enchantress_natures_attendants" ) end
+	if abilityBS == nil then abilityBS = npcBot:GetAbilityByName( "enchantress_impetus" ) end
 
 	-- Consider using each ability
 	castFBDesire, castFBTarget = ConsiderFireblast();
@@ -52,16 +61,7 @@ function AbilityUsageThink()
 
 end
 
-function CanCastFireblastOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-function CanCastBurningSpearOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
 function ConsiderFireblast()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityFB:IsFullyCastable() ) then 
@@ -76,12 +76,12 @@ function ConsiderFireblast()
 	--------------------------------------
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and CanCastFireblastOnTarget( npcEnemy ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
@@ -90,7 +90,7 @@ function ConsiderFireblast()
 	
 	local maxHP = 0;
 	local NCreep = nil;
-	local tableNearbyNeutrals = npcBot:GetNearbyNeutralCreeps( 1000 );
+	local tableNearbyNeutrals = npcBot:GetNearbyNeutralCreeps( 1200 );
 	if tableNearbyNeutrals ~= nil and #tableNearbyNeutrals >= 3 then
 		for _,neutral in pairs(tableNearbyNeutrals)
 		do
@@ -108,17 +108,10 @@ function ConsiderFireblast()
 	end	
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if  npcTarget ~= nil and 
-			npcTarget:IsHero() and 
-			CanCastFireblastOnTarget( npcTarget ) and 
-			GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange + 200 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + 200)
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
@@ -131,10 +124,6 @@ end
 
 function ConsiderTimeDilation()
 
-	local npcBot = GetBot();
-	--[[if npcBot:GetActiveMode() ~= 0 and npcBot:GetActiveMode() ~= 1 then
-		print(npcBot:GetActiveMode());
-	end]]--
 	-- Make sure it's castable
 	if ( not abilityTD:IsFullyCastable() ) 
 	then 
@@ -142,9 +131,9 @@ function ConsiderTimeDilation()
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and ( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.65 ) 
+	if mutil.IsRetreating(npcBot) or ( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.5 
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 )) 
@@ -154,11 +143,10 @@ function ConsiderTimeDilation()
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
-		if (tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 and ( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.65) then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+		if (tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 and ( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.55) then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
@@ -167,7 +155,6 @@ function ConsiderTimeDilation()
 end
 
 function ConsiderBurningSpear()
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityBS:IsFullyCastable() ) then 
@@ -176,17 +163,13 @@ function ConsiderBurningSpear()
 	
 	-- Get some of its values
 	local nCastRange = abilityBS:GetCastRange();
+	local nAttackRange = npcBot:GetAttackRange();
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastBurningSpearOnTarget( npcTarget ) and GetUnitToUnitDistance(npcTarget,npcBot) > 250 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nAttackRange + 200) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end

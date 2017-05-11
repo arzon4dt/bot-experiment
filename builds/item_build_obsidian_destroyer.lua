@@ -55,8 +55,8 @@ local ABILITY8 = "special_bonus_unique_outworld_devourer"
 --use -1 for levels that shouldn't level a skill
 X["skills"] = {
     SKILL_W,    SKILL_E,    SKILL_W,    SKILL_E,    SKILL_W,
-    SKILL_R,    SKILL_W,    SKILL_E,    SKILL_Q,    talents[1],
-    SKILL_E,    SKILL_R,    SKILL_Q,    SKILL_Q,    talents[3],
+    SKILL_Q,    SKILL_W,    SKILL_Q,    SKILL_E,    talents[1],
+    SKILL_R,    SKILL_E,    SKILL_R,    SKILL_Q,    talents[3],
     SKILL_Q,    "-1",       SKILL_R,    "-1",   	talents[5],
     "-1",   	"-1",   	"-1",       "-1",       talents[7]
 };

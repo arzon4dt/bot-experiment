@@ -1,9 +1,11 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
 local skills = require(GetScriptDirectory() ..  "/SkillsUtility")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -20,27 +22,28 @@ local castSEDesire = 0;
 local castIBDesire = 0;
 local castDMDesire = 0;
 
+local abilityDV = nil;
+local abilitySE = nil;
+local abilityIB = nil;
+local abilityDM = nil;
+local ability3 = nil;
+local ability4 = nil;
+
+local npcBot = nil;
+
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
-	
-	--[[for i = 0, 24, 1
-	do 
-		local ability = npcBot:GetAbilityInSlot(i);
-		if ability ~= nil then
-			print(i..ability:GetName());
-		end
-	end]]--
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
 	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
 
-	abilityDV = npcBot:GetAbilityByName( "doom_bringer_devour" );
-	abilitySE = npcBot:GetAbilityByName( "doom_bringer_scorched_earth" );
-	abilityIB = npcBot:GetAbilityByName( "doom_bringer_infernal_blade" );
-	abilityDM = npcBot:GetAbilityByName( "doom_bringer_doom" );
-	ability3 = npcBot:GetAbilityInSlot(3);
-	ability4 = npcBot:GetAbilityInSlot(4);
+	if abilityDV == nil then abilityDV = npcBot:GetAbilityByName( "doom_bringer_devour" ) end
+	if abilitySE == nil then abilitySE = npcBot:GetAbilityByName( "doom_bringer_scorched_earth" ) end
+	if abilityIB == nil then abilityIB = npcBot:GetAbilityByName( "doom_bringer_infernal_blade" ) end
+	if abilityDM == nil then abilityDM = npcBot:GetAbilityByName( "doom_bringer_doom" ) end
+	ability3 = npcBot:GetAbilityInSlot(3) 
+	ability4 = npcBot:GetAbilityInSlot(4)
 	
 	-- Consider using each ability
 	castDVDesire, castDVTarget = ConsiderDevour();
@@ -76,30 +79,15 @@ function AbilityUsageThink()
 	
 end
 
-function CanCastInfernalBladeOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-function CanCastDoomOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
-end
-
-function enemyDisabled(npcTarget)
-	if npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) then
-		return true;
-	end
-	return false;
-end
-
 
 function ConsiderDevour()
-	local npcBot = GetBot();
-
+	
 	-- Make sure it's castable
 	if ( not abilityDV:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	if npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH then
+	if mutil.IsRetreating(npcBot) then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	-- Get some of its values
@@ -114,12 +102,12 @@ function ConsiderDevour()
 	end
 	
 	
-	local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 3 * nCastRange, true );
+	local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 1200, true );
 	if ( not npcBot:HasModifier("modifier_doom_bringer_devour") ) 
 	then
 		for _,npcCreep in pairs( tableNearbyEnemyCreeps )
 		do
-			if ( CanCastInfernalBladeOnTarget( npcCreep ) and 
+			if ( mutil.CanCastOnNonMagicImmune(npcCreep) and 
 				( ( not canEatAncient and not npcCreep:IsAncientCreep() ) or canEatAncient )
 			) 
 			then
@@ -133,22 +121,19 @@ end
 
 function ConsiderScorchedEarth()
 
-	local npcBot = GetBot();
-
 	-- Make sure it's castable
 	if ( not abilitySE:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
-
 	-- Get some of its values
 	local nRadius = abilitySE:GetSpecialValueInt( "radius" );
-	local nCastRange = 0;
+	local nCastRange = 1000;
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
@@ -159,28 +144,20 @@ function ConsiderScorchedEarth()
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius - 200 ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
-
 
 	return BOT_ACTION_DESIRE_NONE;
 
 end
 
 function ConsiderInfernalBlade()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityIB:IsFullyCastable() ) then 
@@ -199,36 +176,20 @@ function ConsiderInfernalBlade()
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 	do
-		if ( npcEnemy:IsChanneling() ) 
+		if ( npcEnemy:IsChanneling() and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 		end
 	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastInfernalBladeOnTarget( npcTargetToKill ) and not enemyDisabled(npcTargetToKill) )
-	then
-		if ( npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange + 200 ) )
-		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTargetToKill;
-		end
-	end
+
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			if ( CanCastInfernalBladeOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange + 200 and not enemyDisabled(npcTarget))
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
 	end
 	
@@ -237,8 +198,6 @@ function ConsiderInfernalBlade()
 end
 
 function ConsiderDoom()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityDM:IsFullyCastable() ) then 
@@ -254,8 +213,7 @@ function ConsiderDoom()
 	-- Mode based usage
 	--------------------------------------
 	-- If we're in a teamfight, use it on the scariest enemy
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 
 		local npcMostDangerousEnemy = nil;
@@ -264,7 +222,7 @@ function ConsiderDoom()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastDoomOnTarget( npcEnemy ) )
+			if ( mutil.CanCastOnMagicImmune(npcEnemy) )
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -285,32 +243,22 @@ function ConsiderDoom()
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 	do
-		if ( npcEnemy:IsChanneling() ) 
+		if ( npcEnemy:IsChanneling() and  mutil.CanCastOnMagicImmune(npcEnemy) ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 		end
 	end
 	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTargetToKill = npcBot:GetTarget();
-	if ( npcTargetToKill ~= nil and npcTargetToKill:IsHero() and CanCastDoomOnTarget( npcTargetToKill ) and not enemyDisabled(npcTargetToKill) )
-	then
-		if ( npcTargetToKill:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_PURE ) > npcTargetToKill:GetHealth() and GetUnitToUnitDistance( npcTargetToKill, npcBot ) < ( nCastRange + 200 ) )
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcTargetToKill;
-		end
-	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 800, false, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
-			then
-				if ( CanCastDoomOnTarget( npcEnemy )  and #tableNearbyAllyHeroes >= 2 ) 
+		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
+		if tableNearbyAllyHeroes ~= nil and #tableNearbyAllyHeroes >= 2 then
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and  mutil.CanCastOnMagicImmune(npcEnemy)  ) 
 				then
 					return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 				end
@@ -319,19 +267,12 @@ function ConsiderDoom()
 	end
 
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if  mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
-			if ( CanCastDoomOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange + 200 and not enemyDisabled(npcTarget))
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end
 	end
 	

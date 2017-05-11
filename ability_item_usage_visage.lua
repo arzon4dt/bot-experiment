@@ -1,8 +1,10 @@
---require(GetScriptDirectory() ..  "/ability_item_usage_generic")
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
---local inspect = require(GetScriptDirectory() ..  "/inspect")
---local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -18,16 +20,22 @@ local castESDesire = 0;
 local castVODesire = 0;
 local castFGDesire = 0;
 
+local abilityES = nil;
+local abilityVO = nil;
+local abilityFG = nil;
+
+local npcBot = nil;
+
 function AbilityUsageThink()
 
-	local npcBot = GetBot();
+	if npcBot == nil then npcBot = GetBot(); end
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
-	abilityES = npcBot:GetAbilityByName( "visage_grave_chill" );
-	abilityVO = npcBot:GetAbilityByName( "visage_soul_assumption" );
-	abilityFG = npcBot:GetAbilityByName( "visage_summon_familiars" );
+	if abilityES == nil then abilityES = npcBot:GetAbilityByName( "visage_grave_chill" ) end
+	if abilityVO == nil then abilityVO = npcBot:GetAbilityByName( "visage_soul_assumption" ) end
+	if abilityFG == nil then abilityFG = npcBot:GetAbilityByName( "visage_summon_familiars" ) end
 	
 	
 	-- Consider using each ability
@@ -55,31 +63,13 @@ function AbilityUsageThink()
 	
 end
 
-function CanCastEtherShockOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-function CanCastVoodooOnTarget( npcTarget )
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
-end
-
-function enemyDisabled(npcTarget)
-	if npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) then
-		return true;
-	end
-	return false;
-end
-
 
 function ConsiderEtherShock()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityES:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
-
 
 	-- Get some of its values
 	local nCastRange = abilityES:GetCastRange();
@@ -87,12 +77,12 @@ function ConsiderEtherShock()
 	-- Mode based usage
 	--------------------------------------
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and CanCastVoodooOnTarget( npcEnemy )  ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
@@ -100,13 +90,12 @@ function ConsiderEtherShock()
 	end
 	
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastEtherShockOnTarget( npcEnemy ) and GetUnitToUnitDistance( npcEnemy, npcBot ) < nCastRange + 200 ) 
+			if mutil.CanCastOnNonMagicImmune(npcEnemy) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
@@ -114,19 +103,12 @@ function ConsiderEtherShock()
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) 
 		then
-			if ( CanCastEtherShockOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange + 200)
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
 	end
 	
@@ -135,8 +117,6 @@ function ConsiderEtherShock()
 end
 
 function ConsiderVoodoo()
-
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityVO:IsFullyCastable() ) then 
@@ -164,43 +144,32 @@ function ConsiderVoodoo()
 	-- Mode based usage
 	--------------------------------------
 	-- If a mode has set a target, and we can kill them, do it
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 	do
-		local distance = GetUnitToUnitDistance(npcEnemy, npcBot);
-		if ( npcEnemy:GetActualIncomingDamage( nTotalDamage, DAMAGE_TYPE_MAGICAL ) >= npcEnemy:GetHealth() and 
-			distance < nCastRange + 200 and
-			npcEnemy:IsHero() and
-			CanCastVoodooOnTarget(npcEnemy)
-			)
+		if mutil.CanKillTarget(npcEnemy, nTotalDamage, DAMAGE_TYPE_MAGICAL ) and mutil.CanCastOnNonMagicImmune(npcEnemy) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 		end
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	if mutil.IsRetreating(npcBot)
 	then
-		--local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) and SAStack == nStackLimit ) 
 			then
-				if ( CanCastVoodooOnTarget( npcEnemy ) and SAStack == nStackLimit ) 
-				then
-					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-				end
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
 		end
 	end
 	
-	local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
-	if ( #tableNearbyAttackingAlliedHeroes >= 2 ) 
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( CanCastVoodooOnTarget( npcEnemy ) and GetUnitToUnitDistance( npcEnemy, npcBot ) < nCastRange + 200 and SAStack == nStackLimit ) 
+			if mutil.IsValidTarget(npcEnemy) and mutil.CanCastOnNonMagicImmune(npcEnemy) and SAStack == nStackLimit
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
@@ -208,19 +177,13 @@ function ConsiderVoodoo()
 	end
 	
 	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) 
+		   and SAStack == nStackLimit
 		then
-			if ( CanCastVoodooOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange + 200 and SAStack == nStackLimit )
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-			end
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end
 	end
 	
@@ -229,7 +192,6 @@ function ConsiderVoodoo()
 end
 
 function ConsiderFleshGolem()
-	local npcBot = GetBot();
 
 	-- Make sure it's castable
 	if ( not abilityFG:IsFullyCastable() ) then 

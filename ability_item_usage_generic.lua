@@ -1,5 +1,7 @@
---[[_G._savedEnv = getfenv()
-module( "ability_item_usage_generic", package.seeall )]]--
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
+	return;
+end
+
 local BotsInit = require( "game/botsinit" );
 local MyModule = BotsInit.CreateGeneric();
 
@@ -18,8 +20,13 @@ local BotAbilityPriority = build["skills"];
 local IdleTime = 0;
 local AllowedIddle = 15;
 local npcBot = GetBot();
+local TimeDeath = nil;
 
 function AbilityLevelUpThink()  
+	
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() then
+		return;
+	end
 	
 	if DotaTime() > 0 then
 		UnImplementedItemUsage()
@@ -31,93 +38,24 @@ function AbilityLevelUpThink()
 		print(npcBot:GetUnitName().." Unpassaable")
 	end]]--
 	
-	if npcBot:GetAbilityPoints()<1 or #BotAbilityPriority==0 or  (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
+	if npcBot:GetAbilityPoints() < 1 or #BotAbilityPriority == 0 or  (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
 		return;
 	end
 	
-	--if (npcBot:GetAbilityPoints() > 0) then 
-	if npcBot:GetAbilityPoints() > 0 and BotAbilityPriority[1] ~= "-1" and BotAbilityPriority[1] ~= nil then
+	if BotAbilityPriority[1] ~= "-1" 
+	then
 		local sNextAbility = npcBot:GetAbilityByName(BotAbilityPriority[1])
-		if (sNextAbility~=nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel()) then
-			--npcBot:Action_Chat(BotAbilityPriority[1],true);
-			if string.find(npcBot:GetUnitName(), "troll_warlord") and BotAbilityPriority[1] == "troll_warlord_whirling_axes_ranged" then
+		if ( sNextAbility ~= nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel() ) 
+		then
+			if string.find(npcBot:GetUnitName(), "troll_warlord") and BotAbilityPriority[1] == "troll_warlord_whirling_axes_ranged" 
+			then
 				if sNextAbility:IsHidden() then
 					npcBot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
 				else
 					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
 				end
-			elseif string.find(npcBot:GetUnitName(), "tusk") and BotAbilityPriority[1] == "tusk_snowball" then
-				if sNextAbility:IsHidden() then
-					return;
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end	
-			elseif string.find(npcBot:GetUnitName(), "alchemist") and BotAbilityPriority[1] == "alchemist_unstable_concoction" then
-				if sNextAbility:IsHidden() then
-					npcBot:ActionImmediate_LevelAbility("alchemist_unstable_concoction_throw");
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "ancient_apparition") and BotAbilityPriority[1] == "ancient_apparition_ice_blast" then
-				if sNextAbility:IsHidden() then
-					npcBot:ActionImmediate_LevelAbility("ancient_apparition_ice_blast_release");
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "kunkka") and BotAbilityPriority[1] == "kunkka_x_marks_the_spot" then
-				if sNextAbility:IsHidden() then
-					npcBot:ActionImmediate_LevelAbility("kunkka_return");
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end	
-			elseif string.find(npcBot:GetUnitName(), "keeper_of_the_light") and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
-				if sNextAbility:IsHidden() then
-					npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "elder_titan") and BotAbilityPriority[1] == "elder_titan_ancestral_spirit" then
-				if sNextAbility:IsHidden() then
-					return;
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "lone_druid") and BotAbilityPriority[1] == "lone_druid_true_form" then
-				if sNextAbility:IsHidden() then
-					npcBot:ActionImmediate_LevelAbility("lone_druid_true_form_druid");
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "wisp") and BotAbilityPriority[1] == "wisp_tether" then
-				if sNextAbility:IsHidden() then
-					return;
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end	
-			elseif string.find(npcBot:GetUnitName(), "life_stealer") then
-				if sNextAbility:IsHidden() then
-					return;
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "naga_siren") and BotAbilityPriority[1] == "naga_siren_song_of_the_siren" then
-				if sNextAbility:IsHidden() then
-					return;
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "shredder") and BotAbilityPriority[1] == "shredder_chakram" then
-				if sNextAbility:IsHidden() then
-					return;
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end		
-			elseif string.find(npcBot:GetUnitName(), "morphling") and BotAbilityPriority[1] == "morphling_replicate" then
-				if sNextAbility:IsHidden() then
-					return;
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end			
+			elseif sNextAbility:IsHidden() then
+				return;	
 			else
 				npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
 			end
@@ -126,40 +64,77 @@ function AbilityLevelUpThink()
 	else
 		table.remove( BotAbilityPriority, 1 )
 	end	
-	--end
+	
 end
 
 function CanBuybackUpperRespawnTime( respawnTime )
-	if ( not npcBot:IsAlive() and respawnTime ~= nil and npcBot:GetRespawnTime() >= respawnTime
-		and npcBot:GetBuybackCooldown() <= 0 and npcBot:GetGold() > npcBot:GetBuybackCost() ) then
-		return true;
-	end
-
-	return false;
-
+	return npcBot:GetRespawnTime() > respawnTime;
 end
---GXC BUYBACK LOGIC	
+
+function IsThereHeroNearby(building)
+	local heroes = GetUnitList(UNIT_LIST_ENEMY_HEROES);
+	local nearbynum = 0;
+	for _,hero in pairs(heroes)
+	do
+		if GetUnitToUnitDistance(building, hero) <= 1300 then
+			nearbynum = nearbynum + 1;
+		end
+	end
+	return nearbynum >= 2;
+end
+
+function CanBB()
+	return not npcBot:IsAlive() and npcBot:GetBuybackCooldown() == 0 and npcBot:GetGold() >= npcBot:GetBuybackCost();
+end
+
+function GetRemainingRespawnTime()
+	if TimeDeath == nil then
+		return 0;
+	else
+		return npcBot:GetRespawnTime() - ( DotaTime() - TimeDeath );
+	end
+end
+
 function BuybackUsageThink() 
-	if npcBot:IsIllusion() then
-		return;
-	end	
 	
-	-- no buyback, no need to use GetUnitList() for performance considerations
-	if ( not CanBuybackUpperRespawnTime(10) ) then
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() then
+		return;
+	end
+	
+	if npcBot:IsAlive() and TimeDeath ~= nil then
+		TimeDeath = nil;
+	end
+	
+	if not CanBB() then
 		return;
 	end
 
-	local tower_top_3 = GetTower( GetTeam(), TOWER_TOP_3 );
-	local tower_mid_3 = GetTower( GetTeam(), TOWER_MID_3 );
-	local tower_bot_3 = GetTower( GetTeam(), TOWER_BOT_3 );
-	local tower_base_1 = GetTower( GetTeam(), TOWER_BASE_1 );
-	local tower_base_2 = GetTower( GetTeam(), TOWER_BASE_2 );
+	if not npcBot:IsAlive() then
+		if TimeDeath == nil then
+			TimeDeath = DotaTime();
+		end
+		--print(npcBot:GetUnitName()..":"..tostring(npcBot:GetRespawnTime()).."><"..tostring(RespawnTime))
+	end
+	
+	local RespawnTime = GetRemainingRespawnTime();
+	
+	if RespawnTime < 10 then
+		return;
+	end
+	
+	local team = GetTeam();
+	
+	local tower_top_3 = GetTower( team, TOWER_TOP_3 );
+	local tower_mid_3 = GetTower( team, TOWER_MID_3 );
+	local tower_bot_3 = GetTower( team, TOWER_BOT_3 );
+	local tower_base_1 = GetTower( team, TOWER_BASE_1 );
+	local tower_base_2 = GetTower( team, TOWER_BASE_2 );
 
-	local barracks_top_melee = GetBarracks( GetTeam(), BARRACKS_TOP_MELEE );
-	local barracks_mid_melee = GetBarracks( GetTeam(), BARRACKS_MID_MELEE );
-	local barracks_bot_melee = GetBarracks( GetTeam(), BARRACKS_BOT_MELEE );
+	local barracks_top_melee = GetBarracks( team, BARRACKS_TOP_MELEE );
+	local barracks_mid_melee = GetBarracks( team, BARRACKS_MID_MELEE );
+	local barracks_bot_melee = GetBarracks( team, BARRACKS_BOT_MELEE );
 
-	local ancient = GetAncient( GetTeam() );
+	local ancient = GetAncient(team );
 
 	local buildList = {
 		tower_top_3, tower_mid_3, tower_bot_3, tower_base_1, tower_base_2,
@@ -169,23 +144,15 @@ function BuybackUsageThink()
 		ancient
 	};
 
-	for _, build in pairs(buildList) do
-		local tableNearbyEnemyHeroes = build:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) then
-			if ( build:GetHealth() / build:GetMaxHealth() < 0.5
-				and build:WasRecentlyDamagedByAnyHero(2.0) and CanBuybackUpperRespawnTime(30) ) then
-				npcBot:ActionImmediate_Buyback();
-				return;
-			end
+	for _, build in pairs(buildList) 
+	do
+		if ( build ~= nil and IsThereHeroNearby(build) ) 
+		then
+			npcBot:ActionImmediate_Buyback();
+			return;
 		end
 	end
 
-	if ( DotaTime() > 60 * 60 and CanBuybackUpperRespawnTime(30) ) then
-		npcBot:ActionImmediate_Buyback();
-	end
-
-	
 end
 --[[
 function ItemUsageThink()
@@ -199,7 +166,11 @@ function ItemUsageThink()
 end
 ]]--
 function CourierUsageThink()
-	--print("cour usage")
+
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() then
+		return;
+	end
+	
 	if GetNumCouriers() == 0 then
 		return
 	end
@@ -664,6 +635,10 @@ end
 
 function UseGlyph()
 
+	if npcBot:IsIllusion() then
+		return;
+	end	
+
 	if GetGlyphCooldown( ) > 0 then
 		return
 	end	
@@ -762,5 +737,4 @@ if(ability ~= nil and ability:GetLevel() > 0) then
 end
 
 return MyModule;
---for k,v in pairs( ability_item_usage_generic ) do	_G._savedEnv[k] = v end
 
