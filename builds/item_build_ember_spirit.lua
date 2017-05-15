@@ -7,6 +7,7 @@ brown boots / power treads at any time he will think he
 is a clone and skill/item decisions will break! ]]
 X["items"] = {
 				"item_tango",
+				"item_flask",
 				"item_branches",
 				"item_branches",
 				"item_bottle",
@@ -26,6 +27,9 @@ X["items"] = {
 				"item_mithril_hammer",
 				"item_gloves",
 				"item_recipe_maelstrom",
+				"item_platemail",
+				"item_mystic_staff",
+				"item_recipe_shivas_guard",
 				"item_broadsword",
 				"item_blades_of_attack",
 				"item_recipe_lesser_crit",
@@ -36,10 +40,7 @@ X["items"] = {
 				"item_point_booster",
 				"item_vitality_booster",
 				"item_energy_booster",
-				"item_mystic_staff",
-				"item_platemail",
-				"item_mystic_staff",
-				"item_recipe_shivas_guard"
+				"item_mystic_staff"
 			};
 
 -- Set up Skill build

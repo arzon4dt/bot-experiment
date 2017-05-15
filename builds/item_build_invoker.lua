@@ -6,25 +6,26 @@ local talents = IBUtil.FillTalenTable(npcBot);
 brown boots / power treads at any time he will think he 
 is a clone and skill/item decisions will break! ]]
 X["items"] = {
-				"item_blades_of_attack",
-				"item_tango",
-				"item_boots",
-				"item_blades_of_attack",
-				"item_point_booster",
-				"item_ogre_axe",
-				"item_staff_of_wizardry",
-				"item_blade_of_alacrity",
-				"item_wind_lace",
-				"item_staff_of_wizardry",
-				"item_void_stone",
-				"item_recipe_cyclone",
-				"item_staff_of_wizardry",
-				"item_ring_of_regen",
-				"item_recipe_force_staff",
-				"item_blink",
-				"item_void_stone",
-				"item_ultimate_orb",
-				"item_mystic_staff"
+		"item_flask",
+		"item_tango",
+		"item_blades_of_attack",
+		"item_boots",
+		"item_blades_of_attack",
+		"item_point_booster",
+		"item_ogre_axe",
+		"item_staff_of_wizardry",
+		"item_blade_of_alacrity",
+		"item_wind_lace",
+		"item_staff_of_wizardry",
+		"item_void_stone",
+		"item_recipe_cyclone",
+		"item_staff_of_wizardry",
+		"item_ring_of_regen",
+		"item_recipe_force_staff",
+		"item_blink",
+		"item_void_stone",
+		"item_ultimate_orb",
+		"item_mystic_staff"
 			};
 
 -- Set up Skill build

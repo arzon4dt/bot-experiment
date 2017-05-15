@@ -154,6 +154,51 @@ function U.IsProjectileIncoming(npcBot, range)
 	return false;
 end
 
+function U.GetMostHPPercent(listUnits, magicImmune)
+	local mostPHP = 0;
+	local mostPHPUnit = nil;
+	for _,unit in pairs(listUnits)
+	do
+		local uPHP = unit:GetHealth() / unit:GetMaxHealth()
+		if ( ( magicImmune and U.CanCastOnMagicImmune(unit) ) or ( not magicImmune and U.CanCastOnNonMagicImmune(unit) ) ) 
+			and uPHP > mostPHP  
+		then
+			mostPHPUnit = unit;
+			mostPHP = uPHP;
+		end
+	end
+	return mostPHPUnit;
+end
+
+function U.GetCanBeKilledUnit(units, nDamage, nDmgType, magicImmune)
+	local target = nil;
+	for _,unit in pairs(units)
+	do
+		if ( ( magicImmune and U.CanCastOnMagicImmune(unit) ) or ( not magicImmune and U.CanCastOnNonMagicImmune(unit) ) ) 
+			   and U.CanKillTarget(unit, nDamage, nDmgType) 
+		then
+			unitKO = target;	
+		end
+	end
+	return target;
+end
+
+function U.GetCorrectLoc(target, delay)
+	if target:GetMovementDirectionStability() < 1.0 then
+		return target:GetLocation();
+	else
+		return target:GetExtrapolatedLocation(delay);	
+	end
+end
+
+function U.GetClosestUnit(units)
+	local target = nil;
+	if units ~= nil and #units >= 1 then
+		return units[1];
+	end
+	return target;
+end
+
 function U.GetEnemyFountain()
 	local Team = GetTeam();
 	if Team == TEAM_DIRE then

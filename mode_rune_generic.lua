@@ -246,13 +246,14 @@ function HasBottle(bot)
 end
 
 function IsSuitableToPick(npcBot)
+	local mode = npcBot:GetActiveMode();
 	local Enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
-	if ( ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
-		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT
+	if ( ( mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
+		or mode == BOT_MODE_ATTACK
+		or mode == BOT_MODE_DEFEND_ALLY
+		or mode == BOT_MODE_DEFEND_TOWER_TOP
+		or mode == BOT_MODE_DEFEND_TOWER_MID
+		or mode == BOT_MODE_DEFEND_TOWER_BOT
 		or Enemies ~= nil and #Enemies >= 2
 		or ( Enemies ~= nil and #Enemies == 1 and Enemies[1] ~= nil and IsStronger(npcBot, Enemies[1]) )
 		) 

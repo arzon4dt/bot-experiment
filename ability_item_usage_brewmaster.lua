@@ -148,8 +148,8 @@ function ConsiderPrimalSplit()
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 400, true, BOT_MODE_NONE );
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 3 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -159,10 +159,13 @@ function ConsiderPrimalSplit()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
-		if mutil.IsValidTarget(npcTarget) and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 and mutil.IsInRange(npcTarget, npcBot, 400) 
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 400) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
+			local tableNearbyAlly = npcBot:GetNearbyHeroes( 1200, false, BOT_MODE_ATTACK );
+			if tableNearbyEnemyHeroes ~= nil and tableNearbyAlly ~= nil and #tableNearbyEnemyHeroes >= 2 and #tableNearbyAlly >= 2 then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
 		end
 	end
 

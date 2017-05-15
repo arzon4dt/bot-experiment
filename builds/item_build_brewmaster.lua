@@ -7,6 +7,7 @@ brown boots / power treads at any time he will think he
 is a clone and skill/item decisions will break! ]]
 X["items"] = {
 				"item_tango",
+				"item_flask",
 				"item_stout_shield",
 				"item_quelling_blade",
 				"item_branches",

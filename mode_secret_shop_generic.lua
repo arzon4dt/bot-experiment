@@ -9,7 +9,7 @@ local DIRE_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET2 )
 
 function GetDesire()
 	
-	if npcBot:IsIllusion() or npcBot:IsInvulnerable() or not npcBot:IsHero() then
+	if npcBot:IsIllusion() or not npcBot:IsHero() then
 		return BOT_MODE_DESIRE_NONE;
 	end
 	

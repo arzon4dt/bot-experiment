@@ -7,22 +7,27 @@ local requiredHeroes = {
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
 	'npc_dota_hero_monkey_king';
+	'npc_dota_hero_phoenix';
+	'npc_dota_hero_ember_spirit';
+	'npc_dota_hero_terrorblade';
+	'npc_dota_hero_earth_spirit';
 };
 
 local UnImplementedHeroes = {
-	'npc_dota_hero_terrorblade',
-	'npc_dota_hero_ember_spirit',
-	'npc_dota_hero_earth_spirit',
-	'npc_dota_hero_phoenix'
+	
 };
 
 -- change quickMode to true for testing
 -- quickMode eliminates the 30s delay before picks begin
 -- it also eliminates the delay between bot picks
 local quickMode = false;
-local testMode =  true;
+local testMode =  false;
 
 local allBotHeroes = {
+	'npc_dota_hero_ember_spirit',
+	'npc_dota_hero_earth_spirit',
+	'npc_dota_hero_phoenix',
+	'npc_dota_hero_terrorblade',
 	'npc_dota_hero_morphling',
 	'npc_dota_hero_shredder',
 	'npc_dota_hero_broodmother',

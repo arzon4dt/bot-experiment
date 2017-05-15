@@ -54,6 +54,12 @@ function AbilityLevelUpThink()
 				else
 					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
 				end
+			elseif string.find(npcBot:GetUnitName(), "keeper_of_the_light") and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
+				if sNextAbility:IsHidden() then
+					npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
+				else
+					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
+				end			
 			elseif sNextAbility:IsHidden() then
 				return;	
 			else

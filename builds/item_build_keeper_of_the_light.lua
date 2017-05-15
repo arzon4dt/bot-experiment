@@ -6,6 +6,7 @@ local talents = IBUtil.FillTalenTable(npcBot);
 brown boots / power treads at any time he will think he 
 is a clone and skill/item decisions will break! ]]
 X["items"] = {
+				"item_flask",
 				"item_tango",
 				"item_branches",
 				"item_branches",
@@ -53,9 +54,9 @@ local ABILITY8 = "special_bonus_cast_range_400"
 
 --use -1 for levels that shouldn't level a skill
 X["skills"] = {
-    SKILL_Q,    SKILL_E,    SKILL_W,    SKILL_Q,    SKILL_Q,
-    SKILL_R,    SKILL_Q,    SKILL_E,    SKILL_E,    talents[2],
-    SKILL_E,    SKILL_R,    SKILL_W,    SKILL_W,    talents[3],
+    SKILL_Q,    SKILL_E,    SKILL_E,    SKILL_W,    SKILL_Q,
+    SKILL_R,    SKILL_E,    SKILL_Q,    SKILL_E,    talents[2],
+    SKILL_Q,    SKILL_R,    SKILL_W,    SKILL_W,    talents[3],
     SKILL_W,    "-1",       SKILL_R,    "-1",   	talents[6],
     "-1",   	"-1",   	"-1",       "-1",       talents[8]
 };

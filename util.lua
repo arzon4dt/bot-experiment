@@ -414,7 +414,6 @@ function utilsModule.AreCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     return true
 end
 
-
 -- util function for printing a table
 function utilsModule.print_r(t)--print_r ( t )  
     local print_r_cache={}

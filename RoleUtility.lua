@@ -1463,7 +1463,9 @@ function X.IsRemovedFromSupportPoll(hero)
 end
 
 function X.CanBeOfflaner(hero)
-	return string.find(hero, "bounty_hunter") or ( X["hero_roles"][hero]["initiator"] > 0 and
+	return string.find(hero, "bounty_hunter") or string.find(hero, "nyx") or string.find(hero, "magnataur") or string.find(hero, "sand_king")
+           or string.find(hero, "shredder") or string.find(hero, "tusk") or string.find(hero, "dark_seer") or string.find(hero, "techies")
+		   or ( X["hero_roles"][hero]["initiator"] > 0 and
 		   X["hero_roles"][hero]["disabler"] > 0 and
 		   X["hero_roles"][hero]["durable"] > 0 and
 		   X["hero_roles"][hero]["support"] == 0 
@@ -1471,9 +1473,10 @@ function X.CanBeOfflaner(hero)
 end
 
 function X.CanBeMidlaner(hero)
-	return string.find(hero, "zuus") or string.find(hero, "templar_assassin") or ( X["hero_roles"][hero]["carry"] > 0 and
+	return string.find(hero, "zuus") or string.find(hero, "templar_assassin") or string.find(hero, "ember_spirit") or string.find(hero, "puck") 
+	       or string.find(hero, "pugna") or ( X["hero_roles"][hero]["carry"] > 0 and
 		   ( 
-		     X["hero_roles"][hero]["nuker"] > 1 or
+		     X["hero_roles"][hero]["nuker"] > 0 or
 			 X["hero_roles"][hero]["pusher"] > 0 
 			) 
 	)

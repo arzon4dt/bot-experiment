@@ -2,15 +2,20 @@ local castSCDesire = 0;
 local ReturnDesire = 0;
 local MoveDesire = 0;
 local ReturnTime = 0;
-local npcBot = nil;
+local npcBot = GetBot();
+local abilityW = "";
+local radius = 350;
+local RB = Vector(-7200,-6666)
+local DB = Vector(7137,6548)
 
 function  MinionThink(  hMinionUnit ) 
-
-	if npcBot == nil then npcBot = GetBot(); end
 	
-if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
 	if hMinionUnit:GetUnitName() == "npc_dota_elder_titan_ancestral_spirit" and npcBot:IsAlive() then
-		if ( npcBot:IsUsingAbility() or hMinionUnit:IsUsingAbility() or npcBot:IsChanneling() or hMinionUnit:IsChanneling() ) then return end
+		if abilityW == "" then abilityW = npcBot:GetAbilityByName('elder_titan_ancestral_spirit'); end
+		
+		if not abilityW:IsHidden() then return; end
+	
+		if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() ) then return end
 	
 		abilitySC = npcBot:GetAbilityByName( "elder_titan_echo_stomp" );
 		abilityRT = npcBot:GetAbilityByName( "elder_titan_return_spirit" );
@@ -18,26 +23,25 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		ReturnDesire = Return(hMinionUnit); 
 		castSCDesire = ConsiderSlithereenCrush(hMinionUnit);
 		
-		if ( MoveDesire > 0  )
-		then
-			hMinionUnit:Action_MoveToLocation( Location );
-			return
-		end
-		
 		if ( castSCDesire > 0 ) 
 		then
 			npcBot:Action_UseAbility( abilitySC );
 			return;
 		end
 		
-		if ( ReturnDesire > 0 and DotaTime() <= ReturnTime + 0.1  ) 
+		if ( ReturnDesire > 0  ) 
 		then
 			npcBot:Action_UseAbility( abilityRT );
-			ReturnTime = DotaTime();
 			return;
 		end
+		
+		if ( MoveDesire > 0  )
+		then
+			hMinionUnit:ActionPush_MoveToLocation( Location );
+			return
+		end
+		
 	end
-end
 	
 end
 
@@ -143,9 +147,6 @@ function ConsiderMove(hMinionUnit)
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	local radius = 350;
-	local RB = Vector(-7200,-6666)
-	local DB = Vector(7137,6548)
 	local NearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( radius, true, BOT_MODE_NONE );
 	
 	if NearbyEnemyHeroes[1] == nil then

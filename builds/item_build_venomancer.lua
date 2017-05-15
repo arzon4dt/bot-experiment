@@ -4,6 +4,7 @@ local npcBot = GetBot();
 local talents = IBUtil.FillTalenTable(npcBot);
 
 X["items"] = {
+				"item_flask",
 				"item_tango",
 				"item_circlet",
 				"item_slippers",

@@ -6,6 +6,7 @@ local talents = IBUtil.FillTalenTable(npcBot);
 brown boots / power treads at any time he will think he 
 is a clone and skill/item decisions will break! ]]
 X["items"] = {
+				"item_flask",
 				"item_tango",
 				"item_stout_shield",
 				"item_boots",

@@ -139,7 +139,7 @@ end
 function ConsiderIceBlast()
 
 	-- Make sure it's castable
-	if ( not abilityIB:IsFullyCastable() ) 
+	if ( not abilityIB:IsFullyCastable() or abilityIB:IsHidden() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
@@ -252,7 +252,7 @@ end
 function ConsiderIceBlastRelease()
 
 	-- Make sure it's castable
-	if ( not abilityIBR:IsFullyCastable() ) then 
+	if ( not abilityIBR:IsFullyCastable() or abilityIBR:IsHidden() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	

@@ -101,19 +101,20 @@ function ConsiderDevour()
 		end
 	end
 	
-	
-	local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 1200, true );
-	if ( not npcBot:HasModifier("modifier_doom_bringer_devour") ) 
-	then
-		for _,npcCreep in pairs( tableNearbyEnemyCreeps )
-		do
-			if ( mutil.CanCastOnNonMagicImmune(npcCreep) and 
-				( ( not canEatAncient and not npcCreep:IsAncientCreep() ) or canEatAncient )
-			) 
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcCreep;
+	if not mutil.IsRetreating(npcBot) then
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 1200, true );
+		if ( not npcBot:HasModifier("modifier_doom_bringer_devour") ) 
+		then
+			for _,npcCreep in pairs( tableNearbyEnemyCreeps )
+			do
+				if ( mutil.CanCastOnNonMagicImmune(npcCreep) and 
+					( ( not canEatAncient and not npcCreep:IsAncientCreep() ) or canEatAncient )
+				) 
+				then
+					return BOT_ACTION_DESIRE_HIGH, npcCreep;
+				end
 			end
-		end
+		end	
 	end	
 
 	return BOT_ACTION_DESIRE_NONE, 0;

@@ -7,7 +7,8 @@ brown boots / power treads at any time he will think he
 is a clone and skill/item decisions will break! ]]
 X["items"] = { 
 				--carry tiny
-                "item_tango",
+                "item_flask",
+				"item_tango",
 				"item_stout_shield",
 				"item_bottle",
 				"item_boots",

@@ -26,6 +26,7 @@ local abilityWB = nil;
 local abilityCH1 = nil;
 local abilitySC = nil;
 local abilityOG = nil;
+local abilityOGS = nil;
 
 local npcBot = nil;
 
@@ -40,12 +41,19 @@ function AbilityUsageThink()
 	if abilityCH1 == nil then abilityCH1 = npcBot:GetAbilityByName( "naga_siren_ensnare" ) end
 	if abilitySC == nil then abilitySC = npcBot:GetAbilityByName( "naga_siren_rip_tide" ) end
 	if abilityOG == nil then abilityOG = npcBot:GetAbilityByName( "naga_siren_song_of_the_siren" ) end
+	if abilityOGS == nil then abilityOGS = npcBot:GetAbilityByName( "naga_siren_song_of_the_siren_cancel" ) end
 	-- Consider using each ability
 	castWBDesire = ConsiderTempestDouble();
 	castCH1Desire, castCH1Target = ConsiderCorrosiveHaze1();
 	castSCDesire = ConsiderSlithereenCrush();
 	castOGDesire, castOGTarget = ConsiderOvergrowth();
+	castOGSDesire = ConsiderSongStop();
 	
+	if ( castOGSDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityOGS );
+		return;
+	end
 	if ( castOGDesire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityOG );
@@ -207,7 +215,7 @@ end
 function ConsiderOvergrowth()
 
 	-- Make sure it's castable
-	if ( not abilityOG:IsFullyCastable() ) then 
+	if ( not abilityOG:IsFullyCastable() or abilityOG:IsHidden() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
@@ -297,4 +305,26 @@ function ConsiderTempestDouble()
 	end
 
 	return BOT_ACTION_DESIRE_NONE;
+end
+function ConsiderSongStop()
+	-- Make sure it's castable
+	if ( not abilityOGS:IsFullyCastable() or abilityOGS:IsHidden() ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 400)
+		then
+			local allies = npcTarget:GetNearbyHeroes(350, true, BOT_MODE_NONE)
+			if allies ~= nil and #allies >= 3 
+			then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE;	
 end

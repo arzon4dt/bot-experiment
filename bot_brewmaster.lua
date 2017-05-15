@@ -1,5 +1,10 @@
 local utils = require(GetScriptDirectory() ..  "/util")
 
+local bot = GetBot();
+
+local RB = Vector(-7200,-6666)
+local DB = Vector(7137,6548)
+
 local CastDMDesire = 0
 local CastCYDesire = 0
 local CastWWDesire = 0
@@ -101,7 +106,7 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 			return
 		end
 		if (MoveDesire > 0)
-		then
+		then	
 			hMinionUnit:Action_MoveToLocation( Location );
 			return
 		end
@@ -127,7 +132,6 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 	end
 	
 	if hMinionUnit:IsIllusion() then
-		
 		AttackDesire, AttackTarget = ConsiderAttacking(hMinionUnit); 
 		MoveDesire, Location = ConsiderMove(hMinionUnit); 
 		
@@ -138,7 +142,7 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		end
 		if (MoveDesire > 0)
 		then
-			hMinionUnit:Action_MoveToLocation( GetBot():GetLocation() + RandomVector(100) );
+			hMinionUnit:Action_MoveToLocation( bot:GetLocation() + RandomVector(100) );
 			return
 		end
 		
@@ -161,72 +165,76 @@ function IsDisabled(npcTarget)
 	return false;
 end
 
+function GetFountain(enemy)
+	if enemy then
+		if GetTeam( ) == TEAM_DIRE then
+			return RB;
+		else
+			return DB;
+		end
+	else
+		if GetTeam( ) == TEAM_DIRE then
+			return DB;
+		else
+			return RB;
+		end
+	end
+end
+
 function ConsiderAttacking(hMinionUnit)
-    local radius = 1000;
+    local radius = 1600;
 	local Target = nil;
 	if IsDisabled(hMinionUnit) then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
     local NearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( radius, true, BOT_MODE_NONE );
-	if #NearbyEnemyHeroes > 0 then
-		Target = GetClosestUnit(NearbyEnemyHeroes, hMinionUnit);
+	if NearbyEnemyHeroes ~= nil and #NearbyEnemyHeroes > 0 then
+		Target = GetClosestUnit(NearbyEnemyHeroes);
 		return BOT_ACTION_DESIRE_LOW, Target;
 	end
 	local NearbyEnemyCreeps = hMinionUnit:GetNearbyLaneCreeps( radius, true );
-	if #NearbyEnemyCreeps > 0 then
-	    Target = GetClosestUnit(NearbyEnemyCreeps, hMinionUnit);
+	if  NearbyEnemyCreeps ~= nil and #NearbyEnemyCreeps > 0 then
+	    Target = GetClosestUnit(NearbyEnemyCreeps);
 		return BOT_ACTION_DESIRE_LOW, Target;
 	end
 	local NearbyEnemyTowers = hMinionUnit:GetNearbyTowers( radius, true );
-	if #NearbyEnemyTowers > 0 then
-		Target = GetClosestUnit(NearbyEnemyTowers, hMinionUnit);
+	if  NearbyEnemyTowers ~= nil and #NearbyEnemyTowers > 0 then
+		Target = GetClosestUnit(NearbyEnemyTowers);
 		return BOT_ACTION_DESIRE_LOW, Target;
 	end
 	local NearbyEnemyBarracks = hMinionUnit:GetNearbyBarracks( radius, true );
-	if #NearbyEnemyBarracks > 0 then
-		Target = GetClosestUnit(NearbyEnemyBarracks, hMinionUnit);
+	if  NearbyEnemyBarracks ~= nil and #NearbyEnemyBarracks > 0 then
+		Target = GetClosestUnit(NearbyEnemyBarracks);
 		return BOT_ACTION_DESIRE_LOW, Target;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
-function GetClosestUnit(tableNearbyEntity, hMinionUnit)
-		local closestDistance = 5000;
-		local closestEntity = tableNearbyEntity[1];
-		for _,Entity in pairs( tableNearbyEntity )
-		do
-		if Entity:CanBeSeen() and not Entity:IsInvulnerable() then
-			local distance = GetUnitToUnitDistance(Entity, hMinionUnit);
-			if ( distance < closestDistance ) 
-			then
-				closestDistance = distance;
-				closestEntity = Entity;
-			end
-		end	
+function GetClosestUnit(tableNearbyEntity)	
+	local target = tableNearbyEntity[1];
+	local minHP = tableNearbyEntity[1]:GetHealth();
+	for _,unit in pairs(tableNearbyEntity)
+	do
+		local HP = unit:GetHealth();
+		if HP < minHP then
+			target = unit;
+			minHP = HP;
 		end
-		
-		return closestEntity;
+	end
+	return target;
 end
 
 function ConsiderMove(hMinionUnit)
 	local radius = 1000;
-	local RB = Vector(-7200,-6666)
-	local DB = Vector(7137,6548)
 	local NearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( radius, true, BOT_MODE_NONE );
-	local NearbyEnemyCreeps = hMinionUnit:GetNearbyCreeps( radius, true );
+	local NearbyEnemyCreeps = hMinionUnit:GetNearbyLaneCreeps( radius, true );
 	local NearbyEnemyTowers = hMinionUnit:GetNearbyTowers( radius, true );
 	local NearbyEnemyBarracks = hMinionUnit:GetNearbyBarracks( radius, true );
 	
 	if NearbyEnemyHeroes[1] == nil and NearbyEnemyCreeps[1] == nil and NearbyEnemyTowers[1] == nil and NearbyEnemyBarracks[1] == nil then
-		local location = Vector(0, 0)
-		if GetOpposingTeam( ) == TEAM_DIRE then
-			location = DB;
-		end
-		if GetOpposingTeam( ) == TEAM_RADIANT then
-			location = RB;
-		end
+		local location = GetFountain(true)
 		return BOT_ACTION_DESIRE_LOW, location;
 	end
 	
@@ -234,18 +242,10 @@ function ConsiderMove(hMinionUnit)
 end
 
 function ConsiderRetreat(hMinionUnit)
-	local RB = Vector(-7200,-6666)
-	local DB = Vector(7137,6548)
 	local tableNearbyAllyHeroes = hMinionUnit:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-	local location = Vector(0, 0)
 	if #tableNearbyAllyHeroes == 0 and #tableNearbyEnemyHeroes >= 2 then
-		if GetOpposingTeam( ) == TEAM_DIRE then
-			location = RB;
-		end
-		if GetOpposingTeam( ) == TEAM_RADIANT then
-			location = DB;
-		end
+		local location = GetFountain(false)
 		return BOT_ACTION_DESIRE_LOW, location;
 	end
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -254,7 +254,7 @@ end
 
 function ConsiderDM(hMinionUnit)
 
-	if not abilityDM:IsFullyCastable() and abilityDM:IsHidden() then
+	if not abilityDM:IsFullyCastable() or abilityDM:IsHidden() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
@@ -262,13 +262,13 @@ function ConsiderDM(hMinionUnit)
 	local nRadius = abilityDM:GetSpecialValueInt( "radius" );
 	
 	local Allies = hMinionUnit:GetNearbyHeroes( nCastRange + nRadius, false, BOT_MODE_NONE );
-		for _,Ally in pairs( Allies )
-		do
-			if ( IsDisabled(Ally) ) 
-			then
-				return BOT_ACTION_DESIRE_LOW, Ally:GetLocation();
-			end
+	for _,Ally in pairs( Allies )
+	do
+		if ( IsDisabled(Ally) ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, Ally:GetLocation();
 		end
+	end
 	
 	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 	if #tableNearbyEnemyHeroes == 1 and tableNearbyEnemyHeroes[1]:HasModifier("modifier_brewmaster_storm_cyclone") then
@@ -281,7 +281,7 @@ end
 
 function ConsiderCY(hMinionUnit)
 
-	if not abilityCY:IsFullyCastable() and abilityCY:IsHidden() then
+	if not abilityCY:IsFullyCastable() or abilityCY:IsHidden() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
@@ -339,7 +339,7 @@ end
 
 function ConsiderCorrosiveHaze(hMinionUnit)
 
-	if not abilityCH:IsFullyCastable() then
+	if not abilityCH:IsFullyCastable() or abilityCH:IsHidden() or not bot:HasScepter() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
@@ -389,7 +389,7 @@ end
 
 function ConsiderWW(hMinionUnit)
 
-	if not abilityWW:IsFullyCastable() and abilityWW:IsHidden() then
+	if not abilityWW:IsFullyCastable() or abilityWW:IsHidden() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
@@ -410,7 +410,7 @@ end
 function ConsiderSlithereenCrush(hMinionUnit)
 
 	-- Make sure it's castable
-	if ( not abilitySC:IsFullyCastable() ) then 
+	if ( not abilitySC:IsFullyCastable() or abilitySC:IsHidden() or not bot:HasScepter() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
@@ -419,8 +419,9 @@ function ConsiderSlithereenCrush(hMinionUnit)
 	local nCastRange = 0;
 	local nDamage = abilitySC:GetSpecialValueInt("damage");
 
-	local locationAoE = hMinionUnit:FindAoELocation( true, true, hMinionUnit:GetLocation(), 0, nRadius, 0, 3000 );
-	if ( locationAoE.count >= 1 ) then
+	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( nRadius-150, true, BOT_MODE_NONE );
+	
+	if ( tableNearbyAllyHeroes ~= nil and tableNearbyEnemyHeroes >= 1 ) then
 		return BOT_ACTION_DESIRE_LOW;
 	end
 
@@ -430,7 +431,7 @@ end
 
 function ConsiderHB(hMinionUnit)
 
-	if not abilityHB:IsFullyCastable() and abilityHB:IsHidden() then
+	if not abilityHB:IsFullyCastable() or abilityHB:IsHidden() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	

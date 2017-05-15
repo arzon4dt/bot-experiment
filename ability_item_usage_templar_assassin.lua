@@ -32,7 +32,7 @@ function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
 	-- Check if we're already using an ability
-	if mutil.CanNotUseAbility(npcBot) then return end
+	if mutil.CanNotUseAbility(npcBot) or npcBot:HasModifier('modifier_templar_assassin_meld') then return end
 
 	if abilityDP == nil then abilityDP = npcBot:GetAbilityByName( "templar_assassin_refraction" ) end
 	if abilityPC == nil then abilityPC = npcBot:GetAbilityByName( "templar_assassin_meld" ) end
