@@ -24,6 +24,7 @@ local abilityE = nil;
 local abilityD = nil;
 local abilityF = nil;
 local abilityR = nil;
+local gripAllies = nil;
 
 local castQDesire = 0;
 local castWDesire = 0;
@@ -52,6 +53,7 @@ function AbilityUsageThink()
 	if abilityD == nil then abilityD = npcBot:GetAbilityByName( "earth_spirit_stone_caller" ) end
 	if abilityF == nil then abilityF = npcBot:GetAbilityByName( "earth_spirit_petrify" ) end
 	if abilityR == nil then abilityR = npcBot:GetAbilityByName( "earth_spirit_magnetize" ) end
+	if gripAllies == nil then gripAllies = npcBot:GetAbilityByName( "special_bonus_unique_earth_spirit_2" ) end
 
 	castQDesire, castQLoc, castQStone, QStoneNear = ConsiderQ();
 	castWDesire, castWLoc, castWStone, WStoneNear = ConsiderW();
@@ -358,6 +360,16 @@ function ConsiderE()
 	local nCastPoint  = abilityE:GetCastPoint( );
 	local nManaCost   = abilityE:GetManaCost( );
 	local nDamage     = abilityE:GetSpecialValueInt('rock_damage');
+	
+	if gripAllies ~= nil and gripAllies:IsTrained() then
+		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE );
+		for _,ally in pairs(tableNearbyAllies) 
+		do
+			if ally:GetActiveMode() == BOT_MODE_RETREAT and ally:WasRecentlyDamagedByAnyHero(2.0) then
+				return BOT_ACTION_DESIRE_HIGH, ally:GetLocation(), false, true; 
+			end
+		end
+	end	
 	
 	--if we can kill any enemies
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );

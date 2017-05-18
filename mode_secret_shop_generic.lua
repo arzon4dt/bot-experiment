@@ -27,7 +27,7 @@ function GetDesire()
 		if ( IsItemPurchasedFromSecretShop( sNextItem ) and not IsItemPurchasedFromSideShop( sNextItem ) ) or
 		   ( IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) and npcBot:DistanceFromSideShop() > 2000  )
 		then
-			return BOT_MODE_DESIRE_VERYHIGH;
+			return BOT_MODE_DESIRE_HIGH;
 		end
 	end
 

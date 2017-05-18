@@ -71,9 +71,9 @@ ItemModule["basic_items"] = {
 	"item_wind_lace"    
 }
 
-ItemModule["item_abyssal_blade"] = { "item_basher"; "item_vanguard"; "item_recipe_abyssal_blade" }
+ItemModule["item_abyssal_blade"] = { "item_skull_basher"; "item_vanguard"; "item_recipe_abyssal_blade" }
 
-ItemModule["item_aether_lens"] = { "item_energy_booster"; "item_ring_of_health"; "item_recipe_aether_lens" }
+ItemModule["item_aether_lens"] = { "item_energy_booster"; "item_void_stone"; "item_recipe_aether_lens" }
 
 ItemModule["item_ultimate_scepter"] = { "item_point_booster"; "item_staff_of_wizardry"; "item_blade_of_alacrity"; "item_ogre_axe" }
 
@@ -95,7 +95,7 @@ ItemModule["item_bloodthorn"] = { "item_orchid"; "item_crystalys"; "item_recipe_
 
 ItemModule["item_travel_boots"] = { "item_boots"; "item_recipe_travel_boots" }
 
-ItemModule["item_travel_boots_2"] = { "item_boots"; "item_recipe_travel_boots"; "item_recipe_travel_boots" }
+ItemModule["item_travel_boots_2"] = { "item_travel_boots"; "item_recipe_travel_boots" }
 
 ItemModule["item_bracer"] = { "item_gauntlets"; "item_circlet"; "item_recipe_bracer" }
 
@@ -111,19 +111,19 @@ ItemModule["item_greater_crit"] = { "item_demon_edge"; "item_lesser_crit"; "item
 
 ItemModule["item_dagon_1"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon" }
 
-ItemModule["item_dagon_2"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon"; "item_recipe_dagon" }
+ItemModule["item_dagon_2"] = { "item_dagon_1"; "item_recipe_dagon" }
 
-ItemModule["item_dagon_3"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon"; "item_recipe_dagon"; "item_recipe_dagon" }
+ItemModule["item_dagon_3"] = { "item_dagon_2"; "item_recipe_dagon" }
 
-ItemModule["item_dagon_4"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon"; "item_recipe_dagon"; "item_recipe_dagon"; "item_recipe_dagon" }
+ItemModule["item_dagon_4"] = { "item_dagon_3"; "item_recipe_dagon" }
 
-ItemModule["item_dagon_5"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon"; "item_recipe_dagon"; "item_recipe_dagon"; "item_recipe_dagon"; "item_recipe_dagon" }
+ItemModule["item_dagon_5"] = { "item_dagon_4"; "item_recipe_dagon" }
 
 ItemModule["item_desolator"] = { "item_mithril_hammer"; "item_mithril_hammer"; "item_blight_stone" }
 
 ItemModule["item_diffusal_blade_1"] = { "item_blade_of_alacrity"; "item_blade_of_alacrity"; "item_robe"; "item_recipe_diffusal_blade" }
 
-ItemModule["item_diffusal_blade_2"] = { "item_blade_of_alacrity"; "item_blade_of_alacrity"; "item_robe"; "item_recipe_diffusal_blade"; "item_recipe_diffusal_blade" }
+ItemModule["item_diffusal_blade_2"] = { "item_diffusal_blade_1"; "item_recipe_diffusal_blade" }
 
 ItemModule["item_dragon_lance"] = { "item_boots_of_elves"; "item_boots_of_elves"; "item_ogre_axe" }
 
@@ -133,11 +133,11 @@ ItemModule["item_echo_sabre"] = { "item_oblivion_staff"; "item_ogre_axe" }
 
 ItemModule["item_ethereal_blade"] = { "item_ghost"; "item_eagle" }
 
-ItemModule["item_euls"] = { "item_staff_of_wizardry"; "item_wind_lace"; "item_void_stone"; "item_recipe_cyclone" }
+ItemModule["item_cyclone"] = { "item_staff_of_wizardry"; "item_wind_lace"; "item_void_stone"; "item_recipe_cyclone" }
 
 ItemModule["item_eye_of_skadi"] = { "item_point_booster"; "item_orb_of_venom"; "item_ultimate_orb"; "item_ultimate_orb" }
 
-ItemModule["item_force_staff"] = { "item_ring_of_regen"; "item_staff_of_wizardry"; "item_recipe_force_staff" }
+ItemModule["item_force_staff"] = { "item_ring_of_health"; "item_staff_of_wizardry"; "item_recipe_force_staff" }
 
 ItemModule["item_glimmer_cape"] = { "item_cloak"; "item_shadow_amulet" }
 
@@ -155,7 +155,7 @@ ItemModule["item_helm_of_the_dominator"] = { "item_headdress"; "item_gloves"; "i
 
 ItemModule["item_hood_of_defiance"] = { "item_ring_of_health"; "item_cloak"; "item_ring_of_regen" }
 
-ItemModule["item_hurricane_pike"] = { "item_force_staff"; "item_dragon_lance"; "item_recipe_hurricane_pike" }
+ItemModule["item_hurricane_pike"] = { "item_dragon_lance"; "item_force_staff"; "item_recipe_hurricane_pike" }
 
 ItemModule["item_iron_talon"] = { "item_quelling_blade"; "item_ring_of_protection"; "item_recipe_iron_talon" }
 
@@ -183,9 +183,9 @@ ItemModule["item_moon_shard"] = { "item_hyperstone"; "item_hyperstone"}
 
 ItemModule["item_necronomicon_1"] = { "item_staff_of_wizardry"; "item_belt_of_strength"; "item_recipe_necronomicon" }
 
-ItemModule["item_necronomicon_2"] = { "item_staff_of_wizardry"; "item_belt_of_strength"; "item_recipe_necronomicon"; "item_recipe_necronomicon" }
+ItemModule["item_necronomicon_2"] = { "item_necronomicon_1"; "item_recipe_necronomicon" }
 
-ItemModule["item_necronomicon_3"] = { "item_staff_of_wizardry"; "item_belt_of_strength"; "item_recipe_necronomicon"; "item_recipe_necronomicon"; "item_recipe_necronomicon" }
+ItemModule["item_necronomicon_3"] = { "item_necronomicon_2"; "item_recipe_necronomicon" }
 	    
 ItemModule["item_null_talisman"] = { "item_mantle"; "item_circlet"; "item_recipe_null_talisman" }
 
@@ -221,7 +221,7 @@ ItemModule["item_ring_of_aquila"] = { "item_ring_of_basilius"; "item_wraith_band
 			    
 ItemModule["item_ring_of_basilius"] = {  "item_ring_of_protection"; "item_sobi_mask" }
 				
-ItemModule["item_rod_of_atos"] = { "item_vitality_booster"; "item_staff_of_wizardry"; "item_staff_of_wizardry" }
+ItemModule["item_rod_of_atos"] = { "item_bracer"; "item_bracer"; "item_staff_of_wizardry"; "item_recipe_rod_of_atos" }
 
 ItemModule["item_sange"] = { "item_belt_of_strength"; "item_ogre_axe"; "item_recipe_sange" }
 			    
@@ -243,11 +243,11 @@ ItemModule["item_solar_crest"] = { "item_medallion_of_courage"; "item_talisman_o
 
 ItemModule["item_soul_booster"] = { "item_point_booster"; "item_vitality_booster"; "item_energy_booster" }
 
-ItemModule["item_soul_ring"] = { "item_ring_of_regen"; "item_sobi_mask"; "item_recipe_soul_ring" }
+ItemModule["item_soul_ring"] = { "item_ring_of_regen"; "item_sobi_mask"; "item_enchanted_mango" }
 
-ItemModule["item_tranquil_boots"] = { "item_ring_of_protection"; "item_boots"; "item_ring_of_regen" }
+ItemModule["item_tranquil_boots"] = { "item_wind_lace"; "item_boots"; "item_ring_of_regen" }
 
-ItemModule["item_urn_of_shadows"] = { "item_gauntlets"; "item_gauntlets"; "item_sobi_mask"; "item_recipe_urn_of_shadows" }
+ItemModule["item_urn_of_shadows"] = { "item_circlet"; "item_ring_of_protection"; "item_recipe_urn_of_shadows"; "item_infused_raindrop" }
 
 ItemModule["item_vanguard"] = { "item_stout_shield" ; "item_vitality_booster"; "item_ring_of_health" }
 

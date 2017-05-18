@@ -6,11 +6,7 @@ local requiredHeroes = {
 	'npc_dota_hero_ember_spirit',
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
-	'npc_dota_hero_monkey_king';
-	'npc_dota_hero_phoenix';
-	'npc_dota_hero_ember_spirit';
-	'npc_dota_hero_terrorblade';
-	'npc_dota_hero_earth_spirit';
+	'npc_dota_hero_invoker';
 };
 
 local UnImplementedHeroes = {
@@ -173,13 +169,35 @@ local HeroLanes = {
 };
 
 local PairsHeroNameNRole = {};
-
+local humanPick = {};
 function Think()
 	if GetGameMode() == GAMEMODE_AP then
 		AllPickLogic();
 	elseif GetGameMode() == GAMEMODE_CM then
 		CaptainModeLogic();
+		AddToList();
 	end
+end
+
+function AddToList()
+	if not IsPlayerBot(GetCMCaptain()) then
+		for _,h in pairs(allBotHeroes)
+		do
+			if IsCMPickedHero(GetTeam(), h) and not alreadyInTable(h) then
+				table.insert(humanPick, h)
+			end
+		end
+	end
+end
+
+function alreadyInTable(hero_name)
+	for _,h in pairs(humanPick)
+	do
+		if hero_name == h then
+			return true
+		end
+	end
+	return false
 end
 
 function CaptainModeLogic()
@@ -284,6 +302,7 @@ function BansHero()
 end
 
 function PicksHero()
+
 	if not IsPlayerBot(GetCMCaptain()) or not IsPlayerInHeroSelectionControl(GetCMCaptain()) then
 		return
 	end	
@@ -392,47 +411,6 @@ function FillLaneAssignmentTable()
 	end	
 end
 
-function FillLaneAssignmentTable2()
-	local supportAlreadyAssigned = false;
-	local midAlreadyAssigned = false;
-	local offAlreadyAssigned = false;
-	local carryAlreadyAssigned = false;
-	local TeamMember = GetTeamPlayers(GetTeam());
-	for i = 1, #TeamMember
-	do
-		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
-			local unit_name =  GetTeamMember(i):GetUnitName(); 
-			if GetTeam() == TEAM_RADIANT then
-				if not supportAlreadyAssigned and role.CanBeSupport(unit_name) then
-					HeroLanes[i] = LANE_TOP;
-					supportAlreadyAssigned = true;
-				elseif supportAlreadyAssigned and role.CanBeSupport(unit_name) then
-					HeroLanes[i] = LANE_BOT;
-				elseif role.CanBeMidlaner(unit_name) then
-					HeroLanes[i] = LANE_MID;		
-				elseif role.CanBeOfflaner(unit_name) then
-					HeroLanes[i] = LANE_TOP;	
-				elseif role.CanBeSafeLaneCarry(unit_name) then
-					HeroLanes[i] = LANE_BOT;	
-				end
-			else
-				if not supportAlreadyAssigned and role.CanBeSupport(unit_name) then
-					HeroLanes[i] = LANE_BOT;
-					supportAlreadyAssigned = true;
-				elseif supportAlreadyAssigned and role.CanBeSupport(unit_name) then
-					HeroLanes[i] = LANE_TOP;	
-				elseif role.CanBeMidlaner(unit_name) then
-					HeroLanes[i] = LANE_MID;
-				elseif role.CanBeOfflaner(unit_name) then
-					HeroLanes[i] = LANE_BOT;	
-				elseif role.CanBeSafeLaneCarry(unit_name) then
-					HeroLanes[i] = LANE_TOP;		
-				end
-			end
-		end
-	end
-end
-
 function GetTeamSelectedHeroes()
 	for _,sName in pairs(allBotHeroes)
 	do
@@ -457,24 +435,42 @@ function UpdateSelectedHeroes(selected)
 	end
 end
 
+local PickTime = 10;
+local RandomTime = 0;
 function AllPickLogic()
-	 -- only pick if humans have picked or time gets to 30 sec 
-	 if GameTime() < 46 and not IsHumansDonePicking() then return; end 
-	 -- pick for radiant 
+	 if not CanPick() then return end;
+	 
 	 local idx = 0;
 	 for _,i in pairs(GetTeamPlayers(GetTeam())) 
 	 do 
-		if IsPlayerInHeroSelectionControl(i) and IsPlayerBot(i) then 
+		if IsPlayerBot(i) and IsPlayerInHeroSelectionControl(i) and GetSelectedHeroName(i) == "" 
+		then 
 			if testMode then
 				hero = GetRandomHero() 
 			else
 				hero = PickRightHero(idx) 
 			end
 			SelectHero(i, hero); 
+			PickTime = GameTime();
+			RandomTime = 0;
+			return;
 		end
 		idx = idx + 1;
 	end 
 	idx = 0;
+end
+
+
+function CanPick()
+	
+	if RandomTime == 0 then RandomTime = RandomInt((70/5)/2,70/5); end
+	
+	if GameTime() > 70 or IsHumansDonePicking() then return true end
+	
+	if RandomTime ~= 0 and GameTime() >= PickTime + RandomTime then return true end
+	
+	return false;
+	
 end
 
 function PickRightHero(slot)
@@ -512,14 +508,14 @@ end
 
 function IsHumansDonePicking() 
 	-- check radiant 
-	for _,i in pairs(GetTeamPlayers(TEAM_RADIANT)) 
+	for _,i in pairs(GetTeamPlayers(GetTeam())) 
 	do 
 		if GetSelectedHeroName(i) == "" and not IsPlayerBot(i) then 
 			return false; 
 		end 
 	end 
 	-- check dire 
-	for _,i in pairs(GetTeamPlayers(TEAM_DIRE)) 
+	for _,i in pairs(GetTeamPlayers(GetOpposingTeam())) 
 	do 
 		if GetSelectedHeroName(i) == "" and not IsPlayerBot(i) then 
 			return false; 
@@ -527,33 +523,6 @@ function IsHumansDonePicking()
 	end 
 	-- else humans have picked 
 	return true; 
-end
-
-function IsTeamsTurnToPick(team)
-  local radiantHeroCount = 0;
-  local direHeroCount = 0;
-  for pickedSlot, hero in pairs(picks) do
-    if slotBelongsToTeam(pickedSlot, TEAM_RADIANT) then
-      radiantHeroCount = radiantHeroCount + 1;
-    else
-      direHeroCount = direHeroCount + 1;
-    end
-  end
-  if (team == TEAM_RADIANT) then
-    return (radiantHeroCount <= direHeroCount);
-  else
-    return (direHeroCount <= radiantHeroCount);
-  end
-end
-
-function IsSlotEmpty(slot)
-  local slotEmpty = true;
-  for pickedSlot, hero in pairs(picks) do
-        if (pickedSlot == slot) then
-            slotEmpty = false;
-        end
-  end
-  return slotEmpty;
 end
 
 function PickHero(slot)
@@ -565,32 +534,20 @@ end
 function GetPicks()
 	local selectedHeroes = {};
     local pickedSlots = {};
-    for i=0, maxPlayerID do
-        local hName = GetSelectedHeroName(i);
-        if (hName ~= nil and hName ~= "") then
-            selectedHeroes[i] = hName;
-        end
-    end
+	for _,i in pairs(GetTeamPlayers(GetTeam())) 
+	do 
+		if GetSelectedHeroName(i) ~= "" then 
+			selectedHeroes[i] =  GetSelectedHeroName(i);
+		end 
+	end 
+	-- check dire 
+	for _,i in pairs(GetTeamPlayers(GetOpposingTeam())) 
+	do 
+		if GetSelectedHeroName(i) ~= "" then 
+			selectedHeroes[i] =  GetSelectedHeroName(i);
+		end 
+	end 
     return selectedHeroes;
-end
-
--- PLACEHOLDER
--- need to figure out an actual way to determine this, not just hardcoding it
-function slotBelongsToTeam(slot, team)
-  if (team == TEAM_RADIANT) then
-    for index,rSlot in pairs(radiantSlots) do
-      if (slot == rSlot) then
-        return true;
-      end;
-    end
-  elseif (team == TEAM_DIRE) then
-    for index,dSlot in pairs(direSlots) do
-      if (slot == dSlot) then
-        return true;
-      end
-    end
-  end
-    return false;
 end
 
 -- first, check the list of required heroes and pick from those
@@ -622,7 +579,6 @@ function GetRandomHero()
 end
 
 function UpdateLaneAssignments()    
-	
 	if GetGameMode() == GAMEMODE_AP then
 		--print("AP Lane Assignment")
 		return APLaneAssignment()
@@ -633,11 +589,62 @@ function UpdateLaneAssignments()
    
 end
 
+function FillLaneAssignmentTable2()
+	local TeamMember = GetTeamPlayers(GetTeam());
+	for i = 1, #TeamMember
+	do
+		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
+			local unit_name =  GetTeamMember(i):GetUnitName(); 
+			local key = GetFromHumanPick(unit_name);
+			if key ~= nil then
+				if key == 1 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_BOT;
+					else
+						HeroLanes[i] = LANE_TOP;
+					end
+				elseif key == 2 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_BOT;
+					else
+						HeroLanes[i] = LANE_TOP;
+					end	
+				elseif key == 3 then
+					HeroLanes[i] = LANE_MID;
+				elseif key == 4 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_TOP;
+					else
+						HeroLanes[i] = LANE_BOT;
+					end
+				elseif key == 5 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_TOP;
+					else
+						HeroLanes[i] = LANE_BOT;
+					end	
+				end
+			end
+		end
+	end	
+end
+
+function GetFromHumanPick(hero_name)
+	local i = nil;
+	for key,h in pairs(humanPick)
+	do
+		if hero_name == h then
+			i = key;
+		end	
+	end
+	return i;
+end
+
 function CMLaneAssignment()
 	if IsPlayerBot(GetCMCaptain()) then
 		FillLaneAssignmentTable();
 	else
-		FillLaneAssignmentTable2();
+		FillLaneAssignmentTable2()
 	end
 	return HeroLanes;
 end
@@ -722,7 +729,6 @@ function APLaneAssignment()
 end
 
 function GetLane( nTeam ,hHero )
-
         local vBot = GetLaneFrontLocation(nTeam, LANE_BOT, 0)
         local vTop = GetLaneFrontLocation(nTeam, LANE_TOP, 0)
         local vMid = GetLaneFrontLocation(nTeam, LANE_MID, 0)

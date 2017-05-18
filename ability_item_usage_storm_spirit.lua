@@ -48,8 +48,13 @@ function AbilityUsageThink()
 	end
 	if ( castFBDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
-		return;
+		if npcBot:HasScepter() then
+			npcBot:Action_UseAbility( abilityFB );
+			return;
+		else
+			npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
+			return;
+		end
 	end
 	if ( castTDDesire > 0 ) 
 	then
@@ -92,12 +97,12 @@ function ConsiderFireblast()
 
 
 	-- Get some of its values
-	local nCastRange = abilityFB:GetCastRange();
-
+	local nCastRange = abilityFB:GetCastRange() + 200;
+	if npcBot:HasScepter() then nCastRange = 475 end 
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 3*nCastRange, true, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 	do
 		if ( npcEnemy:IsChanneling() ) 
@@ -109,7 +114,7 @@ function ConsiderFireblast()
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 2*nCastRange, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
@@ -119,11 +124,19 @@ function ConsiderFireblast()
 		end
 	end
 
+	if mutil.IsInTeamFight(npcBot, 1200) and npcBot:HasScepter()
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		if (tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2) then
+			return BOT_ACTION_DESIRE_MODERATE, nil;
+		end
+	end
+	
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange-100) and
 		   not mutil.IsDisabled(true, npcTarget)
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget;

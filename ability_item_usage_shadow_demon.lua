@@ -273,7 +273,8 @@ function ConsiderDemonicPurge()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnMagicImmune(npcEnemy)  ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) 
+				and not npcEnemy:HasModifier("modifier_shadow_demon_purge_slow")  ) 
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 			end
@@ -288,7 +289,7 @@ function ConsiderDemonicPurge()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( mutil.CanCastOnMagicImmune(npcEnemy) and not mutil.IsDisabled(true, npcEnemy) )
+			if ( mutil.CanCastOnMagicImmune(npcEnemy) and not npcEnemy:HasModifier("modifier_shadow_demon_purge_slow") and not mutil.IsDisabled(true, npcEnemy) )
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -310,7 +311,7 @@ function ConsiderDemonicPurge()
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) 
-		   and not mutil.IsDisabled(true, npcTarget)
+		   and not npcTarget:HasModifier("modifier_shadow_demon_purge_slow") and not mutil.IsDisabled(true, npcTarget)
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 		end

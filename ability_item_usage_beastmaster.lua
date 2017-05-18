@@ -78,6 +78,7 @@ function ConsiderWildAxes()
 	local nCastPoint = abilityWA:GetCastPoint( );
 	local nDamage = abilityWA:GetSpecialValueInt("axe_damage");
 
+	if nCastRange > 1600 then nCastRange = 1600 end
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------

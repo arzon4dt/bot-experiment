@@ -28,6 +28,7 @@ local abilityIB = nil;
 local abilityDM = nil;
 local ability3 = nil;
 local ability4 = nil;
+local devourAnciennt = nil;
 
 local npcBot = nil;
 
@@ -42,6 +43,7 @@ function AbilityUsageThink()
 	if abilitySE == nil then abilitySE = npcBot:GetAbilityByName( "doom_bringer_scorched_earth" ) end
 	if abilityIB == nil then abilityIB = npcBot:GetAbilityByName( "doom_bringer_infernal_blade" ) end
 	if abilityDM == nil then abilityDM = npcBot:GetAbilityByName( "doom_bringer_doom" ) end
+	if devourAnciennt == nil then devourAnciennt = npcBot:GetAbilityByName( "special_bonus_unique_doom_2" ) end
 	ability3 = npcBot:GetAbilityInSlot(3) 
 	ability4 = npcBot:GetAbilityInSlot(4)
 	
@@ -94,15 +96,12 @@ function ConsiderDevour()
 	local nCastRange = abilityDV:GetCastRange();
 	local canEatAncient = false;
 	
-	if npcBot:GetLevel() == 25 then
-		local ability = npcBot:GetAbilityInSlot(7);
-		if ability ~= nil and ability:GetName() == 'special_bonus_unique_doom_2' and ability:IsTrained() then
-			canEatAncient = true;
-		end
+	if devourAnciennt ~= nil and devourAnciennt:IsTrained() then
+		canEatAncient = true;
 	end
 	
 	if not mutil.IsRetreating(npcBot) then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 1200, true );
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 1600, true );
 		if ( not npcBot:HasModifier("modifier_doom_bringer_devour") ) 
 		then
 			for _,npcCreep in pairs( tableNearbyEnemyCreeps )

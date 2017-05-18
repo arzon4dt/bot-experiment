@@ -1373,6 +1373,28 @@ X["hero_roles"] = {
 	}
 }
 
+X["bottle"] = {
+	["npc_dota_hero_tinker"] = 1;
+	["npc_dota_hero_storm_spirit"] = 1;
+	["npc_dota_hero_pudge"] = 1;
+	["npc_dota_hero_nevermore"] = 1;
+	["npc_dota_hero_ember_spirit"] = 1;
+	["npc_dota_hero_lina"] = 1;
+	["npc_dota_hero_zuus"] = 1;
+	["npc_dota_hero_queenofpain"] = 1;
+	["npc_dota_hero_templar_assassin"] = 1;
+	["npc_dota_hero_mirana"] = 1;
+	["npc_dota_hero_puck"] = 1;
+	["npc_dota_hero_magnataur"] = 1;
+	["npc_dota_hero_windrunner"] = 1;
+	["npc_dota_hero_obsidian_destroyer"] = 1;
+	["npc_dota_hero_death_prophet"] = 1;
+	["npc_dota_hero_tiny"] = 1;
+	["npc_dota_hero_dragon_knight"] = 1;
+	["npc_dota_hero_pugna"] = 1;
+	["npc_dota_hero_naga_siren"] = 1;
+}
+
 X["phase_boots"] = {
 		["npc_dota_hero_abaddon"] = 1,
 		["npc_dota_hero_alchemist"] = 1,
@@ -1405,6 +1427,19 @@ X["phase_boots"] = {
 		["npc_dota_hero_windrunner"] = 1
 	}
 
+X['invisHeroes'] = {
+	['npc_dota_hero_templar_assassin'] = 1,
+	['npc_dota_hero_clinkz'] = 1,
+	['npc_dota_hero_mirana'] = 1,
+	['npc_dota_hero_riki'] = 1,
+	['npc_dota_hero_nyx_assassin'] = 1,
+	['npc_dota_hero_bounty_hunter'] = 1,
+	['npc_dota_hero_invoker'] = 1,
+	['npc_dota_hero_sand_king'] = 1,
+	['npc_dota_hero_treant'] = 1,
+	['npc_dota_hero_broodmother'] = 1,
+	['npc_dota_hero_weaver'] = 1
+} 
 
 function X.IsCarry(hero)
 	if X["hero_roles"][hero] == nil then return false end;

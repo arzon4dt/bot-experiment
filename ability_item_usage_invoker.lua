@@ -50,10 +50,10 @@ function AbilityUsageThink()
     local bot = GetBot()
 
     if not bot:IsAlive() then return false end
-    
+		
     -- Check if we're already using an ability
-    if bot:IsUsingAbility() or bot:IsChanneling() then return false end
-
+    if bot:IsUsingAbility() or bot:IsChanneling() or bot:IsSilenced() then return false end
+	
     if abilityQ == "" then abilityQ = bot:GetAbilityByName( "invoker_quas" ) end
     if abilityW == "" then abilityW = bot:GetAbilityByName( "invoker_wex" ) end
     if abilityE == "" then abilityE = bot:GetAbilityByName( "invoker_exort" ) end
@@ -82,6 +82,8 @@ function AbilityUsageThink()
     castGWDesire = ConsiderGhostWalk(bot, nearbyEnemyHeroes)
     castIWDesire = ConsiderIceWall(bot, nearbyEnemyHeroes)
     castFSDesire = ConsiderForgedSpirit(bot,  nearbyEnemyHeroes, nearbyEnemyCreep, nearbyEnemyTowers)
+	
+	ConsiderEarlySpeels(bot)
 	
 	if not inGhostWalk(bot) then
 		if castTODesire > 0 then
@@ -218,24 +220,40 @@ function AbilityUsageThink()
 		if bRet then return end
         
 	end
-
-	bRet = ConsiderShowUp(bot, nearbyEnemyHeroes)
-    if bRet then return end
 	
 	 -- Initial invokes at low levels
-    if bot:GetLevel() == 1 and abilitySS:IsHidden() then
-		--print("lvl 1 SS")
-        invokeSunStrike(bot)
-        return
-    elseif bot:GetLevel() == 2 and abilityCS:IsHidden() then
-		--print("lvl 2 CM")
-        tripleExortBuff(bot) -- this is first since we are pushing, not queueing
-        invokeColdSnap(bot)
-        return
-    end
-    
+	
+	bRet = ConsiderShowUp(bot, nearbyEnemyHeroes)
+	
+    if bRet then return end
+	
     return false
 	
+end
+
+function ConsiderEarlySpeels(bot)
+	 if bot:GetLevel() == 1 then
+		if exortTrained() and abilitySS:IsHidden() then
+			invokeSunStrike(bot)
+			return
+		elseif quasTrained() and abilityCS:IsHidden() then
+			invokeColdSnap(bot)
+			return
+		elseif wexTrained() and abilityEMP:IsHidden() then
+			invokeEMP(bot)
+			return	
+		end
+    elseif bot:GetLevel() == 2 then
+		if quasTrained() and exortTrained() and abilityCS:IsHidden() then
+			tripleExortBuff(bot) -- this is first since we are pushing, not queueing
+			invokeColdSnap(bot)
+			return
+		elseif quasTrained() and wexTrained() and abilityEMP:IsHidden()then 
+			tripleWexBuff(bot) -- this is first since we are pushing, not queueing
+			invokeEMP(bot)
+			return
+		end	
+    end
 end
 
 function ConsiderShowUp(bot, nearbyEnemyHeroes)

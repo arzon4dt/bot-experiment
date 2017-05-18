@@ -627,16 +627,6 @@ function UseShrine()
 		npcBot:Action_UseShrine(SB3)
 		return
 	end
-	local SB4 = GetShrine(Team, SHRINE_BASE_4);
-	if SB4 ~= nil and SB4:GetHealth() > 0 and GetUnitToUnitDistance(SB4 , npcBot ) < distance and GetShrineCooldown(SB4) < 1 then
-		npcBot:Action_UseShrine(SB4)
-		return
-	end
-	local SB5 = GetShrine(Team, SHRINE_BASE_5);
-	if SB5 ~= nil and SB5:GetHealth() > 0 and GetUnitToUnitDistance(SB5 , npcBot ) < distance and GetShrineCooldown(SB5) < 1 then
-		npcBot:Action_UseShrine(SB5)
-		return
-	end
 end
 
 function UseGlyph()

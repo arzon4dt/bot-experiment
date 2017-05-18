@@ -26,9 +26,13 @@ local abilityNS = nil;
 
 local npcBot = nil;
 
+npcBot.chargeTarget = nil;
+
 function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
+	
+	if not npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") then npcBot.chargeTarget = nil; end
 	
 	-- Check if we're already using an ability
 	if ( npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") or mutil.CanNotUseAbility(npcBot) ) then return end;
@@ -57,6 +61,7 @@ function AbilityUsageThink()
 	then
 		npcBot:Action_ClearActions(false);
 		npcBot:Action_UseAbilityOnEntity( abilityCD, castCDTarget );
+		npcBot.chargeTarget = castCDTarget;
 		return;
 	end
 	

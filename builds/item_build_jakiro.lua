@@ -1,69 +1,26 @@
 X = {}
+
 local IBUtil = require(GetScriptDirectory() .. "/ItemBuildUtility");
 local npcBot = GetBot();
 local talents = IBUtil.FillTalenTable(npcBot);
---[[ warning if meepo does not have an item other than 
-brown boots / power treads at any time he will think he 
-is a clone and skill/item decisions will break! ]]
+local skills  = IBUtil.FillSkillTable(npcBot, IBUtil.GetSlotPattern(1));
+
 X["items"] = { 
-                "item_flask",
-				"item_tango",
-				"item_branches",
-				"item_branches",
-				"item_clarity",
-				"item_magic_stick",
-				"item_circlet",
-				"item_boots",
-				"item_energy_booster",
-				"item_branches",
-				"item_ring_of_regen",
-				"item_recipe_headdress",
-				"item_branches",
-				"item_chainmail",
-				"item_recipe_buckler",
-				"item_recipe_mekansm",
-				"item_staff_of_wizardry",
-				"item_ring_of_regen",
-				"item_recipe_force_staff",
-				"item_cloak",
-				"item_shadow_amulet",
-				"item_recipe_guardian_greaves",
-				"item_point_booster",
-				"item_ogre_axe",
-				"item_staff_of_wizardry",
-				"item_blade_of_alacrity",
-				"item_ogre_axe",
-				"item_boots_of_elves",
-				"item_boots_of_elves",
-				"item_recipe_hurricane_pike",
-				"item_void_stone",
-				"item_ultimate_orb",
-				"item_mystic_staff"
-			};
+	"item_magic_wand",
+	"item_arcane_boots",
+	"item_mekansm",
+	"item_force_staff",
+	"item_guardian_greaves",
+	"item_glimmer_cape",
+	"item_ultimate_scepter",
+	"item_hurricane_pike",
+	"item_sheepstick"
+};			
 
--- Set up Skill build
-local SKILL_Q = "jakiro_dual_breath";
-local SKILL_W = "jakiro_ice_path";
-local SKILL_E = "jakiro_liquid_fire";
-local SKILL_R = "jakiro_macropyre";    
-
-
-local ABILITY1 = "special_bonus_spell_amplify_8"
-local ABILITY2 = "special_bonus_exp_boost_25"
-local ABILITY3 = "special_bonus_unique_jakiro_2"
-local ABILITY4 = "special_bonus_cast_range_125"
-local ABILITY5 = "special_bonus_gold_income_25"
-local ABILITY6 = "special_bonus_attack_range_400"
-local ABILITY7 = "special_bonus_unique_jakiro"
-local ABILITY8 = "special_bonus_respawn_reduction_50"
-
---use -1 for levels that shouldn't level a skill
-X["skills"] = {
-    SKILL_Q,    SKILL_W,    SKILL_Q,    SKILL_W,    SKILL_Q,
-    SKILL_R,    SKILL_W,    SKILL_Q,    SKILL_W,    talents[1],
-    SKILL_E,    SKILL_R,    SKILL_E,    SKILL_E,    talents[4],
-    SKILL_E,    "-1",       SKILL_R,    "-1",   	talents[6],
-    "-1",   	"-1",   	"-1",       "-1",       talents[7]
-};
+X["skills"] = IBUtil.GetBuildPattern(
+	  "normal", 
+	  {1,2,1,3,1,4,1,2,2,2,4,3,3,3,4}, skills, 
+	  {1,4,6,7}, talents
+);
 
 return X

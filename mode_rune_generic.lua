@@ -21,6 +21,15 @@ local ListRune = {
 
 function GetDesire()
 
+	--[[local items = GetDroppedItemList();
+	for _,item in pairs(items)
+	do
+		for key,value in pairs(item)
+		do
+			print(tostring(key)..":"..tostring(value))
+		end
+	end]]--
+
 	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() then
 		return BOT_MODE_DESIRE_NONE;
 	end
