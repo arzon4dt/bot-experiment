@@ -1,7 +1,3 @@
-if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
-	return;
-end
-
 local npcBot = GetBot();
 local sNextItem = nil;
 local RAD_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET )
@@ -9,7 +5,11 @@ local DIRE_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET2 )
 
 function GetDesire()
 	
-	if npcBot:IsIllusion() or not npcBot:IsHero() then
+	if npcBot:IsIllusion() then
+		return BOT_MODE_DESIRE_NONE;
+	end
+	
+	if string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() then
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
@@ -35,12 +35,17 @@ function GetDesire()
 
 end
 
+function OnEnd()
+	sNextItem = nil;
+end
+
 function Think()
 	
-
 	if npcBot:DistanceFromSecretShop() == 0 then 
 		if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
 			table.remove( npcBot.tableItemsToBuy, 1 );
+		else 
+			print("[Secret]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))		
 		end
 	end		
 	

@@ -104,6 +104,32 @@ function castSoulRing()
 	end
 end
 
+function InRadius(uType, nRadius, vLocation)
+	local unit = GetUnitList(UNIT_LIST_ALLIED_OTHER);
+	if uType == "mines" then
+		for _,u in pairs (unit)
+		do
+			if u:GetUnitName() == "npc_dota_techies_land_mine"
+			then
+				if GetUnitToLocationDistance(u, vLocation) <= nRadius then
+					return true;
+				end
+			end
+		end
+	elseif uType == "traps" then
+		for _,u in pairs (unit)
+		do
+			if u:GetUnitName() == "npc_dota_techies_stasis_trap"
+			then
+				if GetUnitToLocationDistance(u, vLocation) <= nRadius then
+					return true;
+				end
+			end
+		end
+	end
+	return false;
+end
+
 function ConsiderIgnite()
 	
 	-- Make sure it's castable
@@ -111,24 +137,12 @@ function ConsiderIgnite()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	local unit = GetUnitList(UNIT_LIST_ALLIES);
-	local inRadius = false;
+	local nRadius = abilityIG:GetSpecialValueInt('radius')+20;
 	local nCastRange = abilityIG:GetCastRange();
-	local vLocation = npcBot:GetXUnitsInFront(nCastRange);
-
-	for _,u in pairs (unit)
-	do
-		if u:GetUnitName() == "npc_dota_techies_land_mine"
-		then
-			if GetUnitToLocationDistance(u, vLocation) <= 400 then
-				inRadius = true
-				break;
-			end
-		end
-	end
+	local vLocation = npcBot:GetXUnitsInFront(nCastRange)+RandomVector(200);
 
 	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
-	if not inRadius and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
+	if not InRadius("mines", nRadius, vLocation) and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
 		return BOT_ACTION_DESIRE_LOW, vLocation;
 	end
 	
@@ -138,7 +152,7 @@ function ConsiderIgnite()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and not inRadius ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and not InRadius("mines", nRadius, vLocation)  ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcBot:GetXUnitsInFront(nCastRange);
 			end
@@ -157,16 +171,24 @@ function ConsiderIgnite()
 	if mutil.IsPushing(npcBot)
 	then
 		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 800, true );
-		if tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers > 0 and not tableNearbyEnemyTowers[1]:IsInvulnerable() and not inRadius then
-			return BOT_ACTION_DESIRE_MODERATE, tableNearbyEnemyTowers[1]:GetLocation() + RandomVector(100);
+		if tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers > 0 and not tableNearbyEnemyTowers[1]:IsInvulnerable()
+		then
+			local loc = tableNearbyEnemyTowers[1]:GetLocation()+RandomVector(300);
+			if not InRadius("mines", nRadius, loc) then
+				return BOT_ACTION_DESIRE_MODERATE, loc;
+			end
 		end
 	end
 	
 	if mutil.IsDefending(npcBot)
 	then
 		local tableNearbyAllyTowers = npcBot:GetNearbyTowers( 800, false );
-		if tableNearbyAllyTowers ~= nil and #tableNearbyAllyTowers > 0 and not tableNearbyAllyTowers[1]:IsInvulnerable() and not inRadius then
-			return BOT_ACTION_DESIRE_LOW, tableNearbyAllyTowers[1]:GetLocation() + RandomVector(100);
+		if tableNearbyAllyTowers ~= nil and #tableNearbyAllyTowers > 0 and not tableNearbyAllyTowers[1]:IsInvulnerable() 
+		then
+			local loc = tableNearbyAllyTowers[1]:GetLocation()+RandomVector(300);
+			if not InRadius("mines", nRadius, loc) then
+				return BOT_ACTION_DESIRE_MODERATE, loc;
+			end
 		end
 	end
 	
@@ -174,9 +196,12 @@ function ConsiderIgnite()
 	then
 		local npcTarget = npcBot:GetTarget();
 
-		if (  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not inRadius ) 
+		if (  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) ) 
 		then
-			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
+			local loc = npcTarget:GetLocation();
+			if not InRadius("mines", nRadius, loc) then
+				return BOT_ACTION_DESIRE_MODERATE, loc;
+			end
 		end
 	end
 	
@@ -190,28 +215,12 @@ function ConsiderFireblast()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
-	local unit = GetUnitList(UNIT_LIST_ALLIES);
-	local inRadius = false;
+	local nRadius = 620;
 	local nCastRange = abilityFB:GetCastRange();
-	local vLocation = npcBot:GetXUnitsInFront(nCastRange);
+	local vLocation = npcBot:GetXUnitsInFront(nCastRange)+RandomVector(200);
 
-	for _,u in pairs (unit)
-	do
-		if u:GetUnitName() == "npc_dota_techies_stasis_trap"
-		then
-			if GetUnitToLocationDistance(u, vLocation) <= 600 then
-				inRadius = true
-				break;
-			end
-		end
-	end
-	
-	if not inRadius then
-		castSoulRing()
-	end
-	
 	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
-	if not inRadius and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
+	if not InRadius("traps", nRadius, vLocation) and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
 		return BOT_ACTION_DESIRE_LOW, vLocation;
 	end
 	
@@ -221,28 +230,33 @@ function ConsiderFireblast()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and not inRadius ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
 				return BOT_ACTION_DESIRE_LOW, npcBot:GetXUnitsInFront(nCastRange);
 			end
 		end
 	end
 	
-	
 	if mutil.IsDefending(npcBot)
 	then
 		local tableNearbyAllyTowers = npcBot:GetNearbyTowers( 800, false );
-		if tableNearbyAllyTowers ~= nil and #tableNearbyAllyTowers > 0 and not tableNearbyAllyTowers[1]:IsInvulnerable() and not inRadius then
-			return BOT_ACTION_DESIRE_LOW, tableNearbyAllyTowers[1]:GetLocation() + RandomVector(100);
+		if tableNearbyAllyTowers ~= nil and #tableNearbyAllyTowers > 0 and not tableNearbyAllyTowers[1]:IsInvulnerable() then
+			local loc = tableNearbyAllyTowers[1]:GetLocation()+RandomVector(300);
+			if not InRadius("traps", nRadius, loc) then
+				return BOT_ACTION_DESIRE_MODERATE, loc;
+			end
 		end
 	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if (  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not inRadius ) 
+		if (  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) ) 
 		then
-			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
+			local loc = npcTarget:GetLocation();
+			if not InRadius("traps", nRadius, loc) then
+				return BOT_ACTION_DESIRE_MODERATE, loc;
+			end
 		end
 	end
 	
@@ -321,8 +335,6 @@ function ConsiderOverwhelmingOdds()
 	
 	local npcBot = GetBot();
 	
-	local unit = GetUnitList(UNIT_LIST_ALLIES);
-	local inRadius = false;
 	local nCastRange = abilityOO:GetCastRange();
 	local vLocation = npcBot:GetXUnitsInFront(nCastRange);
 
@@ -338,7 +350,7 @@ function ConsiderOverwhelmingOdds()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and not inRadius ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcBot:GetXUnitsInFront(nCastRange);
 			end
@@ -348,23 +360,23 @@ function ConsiderOverwhelmingOdds()
 	if mutil.IsPushing(npcBot)
 	then
 		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 800, true );
-		if tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers > 0 and not tableNearbyEnemyTowers[1]:IsInvulnerable() and not inRadius then
-			return BOT_ACTION_DESIRE_MODERATE, tableNearbyEnemyTowers[1]:GetLocation() + RandomVector(100);
+		if tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers > 0 and not tableNearbyEnemyTowers[1]:IsInvulnerable() then
+			return BOT_ACTION_DESIRE_MODERATE, tableNearbyEnemyTowers[1]:GetLocation() + RandomVector(300);
 		end
 	end
 	
 	if mutil.IsDefending(npcBot)
 	then
 		local tableNearbyAllyTowers = npcBot:GetNearbyTowers( 800, false );
-		if tableNearbyAllyTowers ~= nil and #tableNearbyAllyTowers > 0 and not tableNearbyAllyTowers[1]:IsInvulnerable() and not inRadius then
-			return BOT_ACTION_DESIRE_LOW, tableNearbyAllyTowers[1]:GetLocation() + RandomVector(100);
+		if tableNearbyAllyTowers ~= nil and #tableNearbyAllyTowers > 0 and not tableNearbyAllyTowers[1]:IsInvulnerable() then
+			return BOT_ACTION_DESIRE_LOW, tableNearbyAllyTowers[1]:GetLocation() + RandomVector(300);
 		end
 	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if (  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not inRadius ) 
+		if (  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
 		end

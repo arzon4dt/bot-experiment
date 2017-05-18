@@ -1,7 +1,3 @@
-if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or GetBot():IsIllusion() then
-	return;
-end
-
 if string.find(GetBot():GetUnitName(), "monkey") then 
 	if ( DotaTime() < 0 and GetBot():GetLocation() ~= Vector(0.000000, 0.000000, 0.000000) ) 
 	  or ( DotaTime() >= 0 and GetBot():IsInvulnerable() )
@@ -69,7 +65,11 @@ function ItemPurchaseThink()
 		return;
 	end
 	
-	if npcBot:IsIllusion() or npcBot:IsInvulnerable() then
+	if npcBot:IsIllusion() then
+		return;
+	end
+	
+	if string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() then
 		return;
 	end
 	
@@ -182,6 +182,8 @@ function MyItemPurchase()
 		then
 			if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
 				table.remove( npcBot.tableItemsToBuy, 1 );
+			else 
+				print("[Generic]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))
 			end
 		end
 	end

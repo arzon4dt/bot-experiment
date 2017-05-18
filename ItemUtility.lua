@@ -73,7 +73,7 @@ ItemModule["basic_items"] = {
 
 ItemModule["item_abyssal_blade"] = { "item_skull_basher"; "item_vanguard"; "item_recipe_abyssal_blade" }
 
-ItemModule["item_aether_lens"] = { "item_energy_booster"; "item_void_stone"; "item_recipe_aether_lens" }
+ItemModule["item_aether_lens"] = { "item_void_stone"; "item_energy_booster"; "item_recipe_aether_lens" }
 
 ItemModule["item_ultimate_scepter"] = { "item_point_booster"; "item_staff_of_wizardry"; "item_blade_of_alacrity"; "item_ogre_axe" }
 
@@ -83,11 +83,11 @@ ItemModule["item_armlet"] = { "item_helm_of_iron_will"; "item_gloves"; "item_bla
 
 ItemModule["item_assault"] = { "item_platemail"; "item_chainmail"; "item_hyperstone"; "item_recipe_assault" }
 
-ItemModule["item_bfury"] = { "item_quelling_blade"; "item_pers"; "item_claymore"; "item_broadsword" }
+ItemModule["item_bfury"] = {  "item_pers"; "item_claymore"; "item_broadsword"; "item_quelling_blade" }
 
-ItemModule["item_black_king_bar"] = { "item_mithril_hammer"; "item_ogre_axe"; "item_recipe_black_king_bar" }
+ItemModule["item_black_king_bar"] = { "item_ogre_axe"; "item_mithril_hammer"; "item_recipe_black_king_bar" }
 
-ItemModule["item_blade_mail"] = { "item_broadsword"; "item_robe"; "item_chainmail" }
+ItemModule["item_blade_mail"] = { "item_robe"; "item_chainmail"; "item_broadsword" }
 
 ItemModule["item_bloodstone"] = { "item_soul_ring"; "item_point_booster"; "item_vitality_booster"; "item_energy_booster"; "item_recipe_bloodstone" }
 
@@ -103,11 +103,11 @@ ItemModule["item_buckler"] = { "item_branches"; "item_chainmail"; "item_recipe_b
 
 ItemModule["item_butterfly"] = { "item_talisman_of_evasion"; "item_eagle"; "item_quarterstaff" }
 
-ItemModule["item_crimson_guard"] = { "item_buckler"; "item_vanguard"; "item_recipe_crimson_guard" }
+ItemModule["item_crimson_guard"] = { "item_vanguard"; "item_buckler"; "item_recipe_crimson_guard" }
 
 ItemModule["item_lesser_crit"] = { "item_broadsword"; "item_blades_of_attack"; "item_recipe_lesser_crit" }
 
-ItemModule["item_greater_crit"] = { "item_demon_edge"; "item_lesser_crit"; "item_recipe_greater_crit" }
+ItemModule["item_greater_crit"] = { "item_lesser_crit"; "item_demon_edge"; "item_recipe_greater_crit" }
 
 ItemModule["item_dagon_1"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon" }
 
@@ -133,9 +133,9 @@ ItemModule["item_echo_sabre"] = { "item_oblivion_staff"; "item_ogre_axe" }
 
 ItemModule["item_ethereal_blade"] = { "item_ghost"; "item_eagle" }
 
-ItemModule["item_cyclone"] = { "item_staff_of_wizardry"; "item_wind_lace"; "item_void_stone"; "item_recipe_cyclone" }
+ItemModule["item_cyclone"] = { "item_wind_lace"; "item_void_stone"; "item_staff_of_wizardry"; "item_recipe_cyclone" }
 
-ItemModule["item_eye_of_skadi"] = { "item_point_booster"; "item_orb_of_venom"; "item_ultimate_orb"; "item_ultimate_orb" }
+ItemModule["item_eye_of_skadi"] = { "item_point_booster"; "item_ultimate_orb"; "item_ultimate_orb"; "item_orb_of_venom" }
 
 ItemModule["item_force_staff"] = { "item_ring_of_health"; "item_staff_of_wizardry"; "item_recipe_force_staff" }
 
@@ -165,7 +165,7 @@ ItemModule["item_lotus_orb"] = { "item_pers"; "item_platemail"; "item_energy_boo
 
 ItemModule["item_maelstrom"] = { "item_gloves"; "item_mithril_hammer"; "item_recipe_maelstrom" }
 
-ItemModule["item_magic_wand"] = { "item_branches"; "item_branches"; "item_circlet"; "item_magic_stick" }
+ItemModule["item_magic_wand"] = { "item_branches"; "item_branches"; "item_magic_stick"; "item_circlet" }
 
 ItemModule["item_manta"] = { "item_yasha"; "item_ultimate_orb"; "item_recipe_manta" }
 
@@ -213,7 +213,7 @@ ItemModule["item_power_treads"] = { "item_boots"; "item_belt_of_strength"; "item
 
 ItemModule["item_radiance"] = { "item_relic"; "item_recipe_radiance" }
 
-ItemModule["item_rapier"] = { "item_demon_edge"; "item_relic" }
+ItemModule["item_rapier"] = { "item_relic"; "item_demon_edge" }
 
 ItemModule["item_refresher"] = { "item_pers"; "item_pers"; "item_recipe_refresher" }
 				
@@ -225,7 +225,7 @@ ItemModule["item_rod_of_atos"] = { "item_bracer"; "item_bracer"; "item_staff_of_
 
 ItemModule["item_sange"] = { "item_belt_of_strength"; "item_ogre_axe"; "item_recipe_sange" }
 			    
-ItemModule["item_sange_and_yasha"] = { "item_sange"; "item_yasha" }
+ItemModule["item_sange_and_yasha"] = { "item_yasha"; "item_sange" }
 
 ItemModule["item_satanic"] = { "item_lifesteal"; "item_reaver"; "item_mithril_hammer" }
 
