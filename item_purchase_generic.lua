@@ -560,11 +560,8 @@ function IsStashFull()
 	for i=9, 14 do
 		if(npcBot:GetItemInSlot(i) == nil) then
 			return false;
-		else
-			print(npcBot:GetUnitName()..tostring(i)..npcBot:GetItemInSlot(i):GetName())
 		end
 	end
-	print(npcBot:GetUnitName().."full")
 	return true;
 end 
 

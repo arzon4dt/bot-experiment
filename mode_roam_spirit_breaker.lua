@@ -50,7 +50,6 @@ function Think()
 	if npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness")
 	then
 		if ConsiderCancelCharge() then
-			print("Cancel")
 			npcBot:Action_MoveToLocation(npcBot:GetLocation() + RandomVector(200));
 			return;
 		else
@@ -77,24 +76,22 @@ function GetBase(Team)
 end
 
 function ConsiderCancelCharge()
-	if npcBot.chargeTarget ~= nil  
+	local target = npcBot:GetTarget();
+	if target ~= nil 
 	then
-		local targetAlly = npcBot.chargeTarget:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
-		local Ally = npcBot.chargeTarget:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
-		if npcBot.chargeTarget:GetHealth() < 250 then
-			return false;
-		end		
-		if Ally ~= nil and targetAlly ~= nil and #targetAlly <= Ally 
+		local targetAlly = target:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
+		local Ally = target:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+		if Ally ~= nil 
 		then
 			return false
-		elseif GetUnitToLocationDistance(target, GetBase(GetOpposingTeam())) > 2500  
+		elseif GetUnitToLocationDistance(target, GetBase(GetOpposingTeam())) < 2500 or ( targetAlly ~= nil and #targetAlly >= 2 ) 
 		then
 			--print(tostring(#targetAlly))
 			--print("Cancel")
-			return false;
+			return true;
 		end
 	end
-	return true;
+	return false;
 end
 
 function IsValidTarget(target)
