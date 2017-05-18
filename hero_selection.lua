@@ -6,9 +6,6 @@ local requiredHeroes = {
 	'npc_dota_hero_ember_spirit',
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
-	'npc_dota_hero_life_stealer';
-	'npc_dota_hero_brewmaster';
-	'npc_dota_hero_spirit_breaker';
 };
 
 local UnImplementedHeroes = {

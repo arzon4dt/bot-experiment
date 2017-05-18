@@ -147,7 +147,7 @@ ItemModule["item_hand_of_midas"] = { "item_gloves"; "item_recipe_hand_of_midas" 
 
 ItemModule["item_headdress"] = { "item_branches"; "item_ring_of_regen"; "item_recipe_headdress" }
 
-ItemModule["item_heart"] = { "item_reaver"; "item_vitaality_booster"; "item_recipe_heart" }
+ItemModule["item_heart"] = { "item_reaver"; "item_vitality_booster"; "item_recipe_heart" }
 
 ItemModule["item_heavens_halberd"] = { "item_sange"; "item_talisman_of_evasion"}
 
