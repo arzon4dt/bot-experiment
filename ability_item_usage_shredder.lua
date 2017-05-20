@@ -34,6 +34,10 @@ local abilityCHR2 = nil;
 local ultLoc = 0;
 local ultLoc2 = 0;
 local npcBot = nil;
+local ultTime1 = 0;
+local ultETA1 = 0;
+local ultTime2 = 0;
+local ultETA2 = 0;
 
 function AbilityUsageThink()
 
@@ -52,8 +56,8 @@ function AbilityUsageThink()
 	-- Consider using each ability
 	castSCDesire = ConsiderSlithereenCrush();
 	castTCDesire, castTree, castType = ConsiderTimberChain();
-	castCHDesire, castCHLocation = ConsiderChakram();
-	castCH2Desire, castCH2Location = ConsiderChakram2();
+	castCHDesire, castCHLocation, eta = ConsiderChakram();
+	castCH2Desire, castCH2Location, eta2 = ConsiderChakram2();
 	castCHRDesire = ConsiderChakramReturn();
 	castCHR2Desire = ConsiderChakramReturn2();
 	ClosingDesire, Target = ConsiderClosing();
@@ -68,7 +72,7 @@ function AbilityUsageThink()
 	if ( castCHR2Desire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityCHR2 );
-		ultLoc = 0; 
+		ultLoc2 = 0; 
 		return;
 	end
 	
@@ -76,6 +80,8 @@ function AbilityUsageThink()
 	then
 		npcBot:Action_UseAbilityOnLocation( abilityCH, castCHLocation );
 		ultLoc = castCHLocation; 
+		ultTime1 = DotaTime();
+		ultETA1 = eta + 0.5;
 		return;
 	end
 	
@@ -83,6 +89,8 @@ function AbilityUsageThink()
 	then
 		npcBot:Action_UseAbilityOnLocation( abilityCH2, castCH2Location );
 		ultLoc2 = castCH2Location; 
+		ultTime2 = DotaTime();
+		ultETA2 = eta2 + 0.5;
 		return;
 	end
 	
@@ -108,6 +116,17 @@ function AbilityUsageThink()
 		return
 	end
 	
+end
+
+function StillTraveling(cType)
+	local proj = GetLinearProjectiles();
+	for _,p in pairs(proj)
+	do
+		if p ~= nil and (( cType == 1 and p.ability:GetName() == "shredder_chakram" ) or (  cType == 2 and p.ability:GetName() == "shredder_chakram_2" ) ) then
+			return true; 
+		end
+	end
+	return false;
 end
 
 function GetBestTree(npcBot, enemy, nCastRange, hitRadios)
@@ -343,7 +362,7 @@ function ConsiderChakram()
 	-- Make sure it's castable
 	if ( not abilityCH:IsFullyCastable() ) 
 	then 
-		return BOT_ACTION_DESIRE_NONE, 0;
+		return BOT_ACTION_DESIRE_NONE, 0, 0;
 	end
 
 
@@ -365,7 +384,9 @@ function ConsiderChakram()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
 			then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
+				local loc = npcEnemy:GetLocation();
+				local eta = GetUnitToLocationDistance(npcBot, loc) / nSpeed;
+				return BOT_ACTION_DESIRE_MODERATE, loc, eta;
 			end
 		end
 	end
@@ -376,7 +397,9 @@ function ConsiderChakram()
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 3 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65 ) 
 		then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			local loc = locationAoE.targetloc;
+			local eta = GetUnitToLocationDistance(npcBot, loc) / nSpeed;
+			return BOT_ACTION_DESIRE_LOW, loc, eta;
 		end
 	end
 
@@ -389,9 +412,9 @@ function ConsiderChakram()
 		then
 			local Loc = GetUltLoc(npcBot, npcTarget, nManaCost, nCastRange, nSpeed)
 			if Loc ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, Loc;
+				local eta = GetUnitToLocationDistance(npcBot, Loc) / nSpeed;
+				return BOT_ACTION_DESIRE_MODERATE, Loc, eta;
 			end
-			--return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed)+nCastPoint);
 		end
 	end
 --
@@ -425,7 +448,9 @@ function ConsiderChakram2()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
 			then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
+				local loc = npcEnemy:GetLocation();
+				local eta = GetUnitToLocationDistance(npcBot, loc) / nSpeed;
+				return BOT_ACTION_DESIRE_MODERATE, loc, eta;
 			end
 		end
 	end
@@ -436,7 +461,9 @@ function ConsiderChakram2()
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 3 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65 ) 
 		then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			local loc = locationAoE.targetloc
+			local eta = GetUnitToLocationDistance(npcBot, loc) / nSpeed;
+			return BOT_ACTION_DESIRE_LOW, loc, eta;
 		end
 	end
 
@@ -449,9 +476,9 @@ function ConsiderChakram2()
 		then
 			local Loc = GetUltLoc(npcBot, npcTarget, nManaCost, nCastRange, nSpeed)
 			if Loc ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, Loc;
+				local eta = GetUnitToLocationDistance(npcBot, Loc) / nSpeed;
+				return BOT_ACTION_DESIRE_MODERATE, Loc, eta;
 			end
-			--return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed)+nCastPoint);
 		end
 	end
 --
@@ -465,15 +492,23 @@ function ConsiderChakramReturn()
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
+	if DotaTime() < ultTime1 + ultETA1 or StillTraveling(1) then 
+		return BOT_ACTION_DESIRE_NONE;
+	end	
+	
 	local nRadius = abilityCH:GetSpecialValueFloat( "radius" );
 	local nDamage = abilityCH:GetSpecialValueInt("pass_damage");
 	local nManaCost = abilityCH:GetManaCost( );
+	
+	if npcBot:GetMana() < 100 or GetUnitToLocationDistance(npcBot, ultLoc) > 1600 then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
 	
 	if  mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
 	then
 		local nUnits = 0;
 		local nLowHPUnits = 0;
-		local NearbyUnits = npcBot:GetNearbyLaneCreeps(1000, true);
+		local NearbyUnits = npcBot:GetNearbyLaneCreeps(1300, true);
 		for _,c in pairs(NearbyUnits)
 		do 
 			if GetUnitToLocationDistance(c, ultLoc) < nRadius  then
@@ -483,8 +518,7 @@ function ConsiderChakramReturn()
 				nLowHPUnits = nLowHPUnits + 1;
 			end
 		end
-		--print("Push"..nUnits)
-		if npcBot:GetMana() < 100+nManaCost or nUnits == 0 or nLowHPUnits >= 1  then
+		if nUnits == 0 or nLowHPUnits >= 1  then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
@@ -503,8 +537,7 @@ function ConsiderChakramReturn()
 				nLowHPUnits = nLowHPUnits + 1;
 			end
 		end
-		--print("Attck"..nUnits)
-		if npcBot:GetMana() < 100+nManaCost or  nUnits == 0 or nLowHPUnits >= 1 then
+		if nUnits == 0 or nLowHPUnits >= 1 then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
@@ -519,9 +552,17 @@ function ConsiderChakramReturn2()
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
+	if DotaTime() < ultTime2 + ultETA2 or StillTraveling(2) then 
+		return BOT_ACTION_DESIRE_NONE;
+	end	
+	
 	local nRadius = abilityCH:GetSpecialValueFloat( "radius" );
 	local nDamage = abilityCH:GetSpecialValueInt("pass_damage");
 	local nManaCost = abilityCH:GetManaCost( );
+	
+	if npcBot:GetMana() < 100 or GetUnitToLocationDistance(npcBot, ultLoc2) > 1600 then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
 	
 	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
 	then
@@ -538,7 +579,7 @@ function ConsiderChakramReturn2()
 			end
 		end
 		--print("Push"..nUnits)
-		if npcBot:GetMana() < 100+nManaCost or nUnits == 0 or nLowHPUnits >= 1  then
+		if nUnits == 0 or nLowHPUnits >= 1  then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
@@ -558,7 +599,7 @@ function ConsiderChakramReturn2()
 			end
 		end
 		--print("Attck"..nUnits)
-		if npcBot:GetMana() < 100+nManaCost or  nUnits == 0 or nLowHPUnits >= 1 then
+		if nUnits == 0 or nLowHPUnits >= 1 then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end

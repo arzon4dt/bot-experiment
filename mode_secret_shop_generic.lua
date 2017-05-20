@@ -1,5 +1,5 @@
 local npcBot = GetBot();
-local sNextItem = nil;
+
 local RAD_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET )
 local DIRE_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET2 )
 
@@ -17,38 +17,16 @@ function GetDesire()
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
-	if npcBot.tableItemsToBuy == nil or #(npcBot.tableItemsToBuy) == 0 then
-		return BOT_MODE_DESIRE_NONE;
+	if npcBot.SecretShop then
+		return BOT_MODE_DESIRE_HIGH
 	end
 	
-	sNextItem = npcBot.tableItemsToBuy[1];
-	
-	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-		if ( IsItemPurchasedFromSecretShop( sNextItem ) and not IsItemPurchasedFromSideShop( sNextItem ) ) or
-		   ( IsItemPurchasedFromSecretShop( sNextItem ) and IsItemPurchasedFromSideShop( sNextItem ) and npcBot:DistanceFromSideShop() > 2000  )
-		then
-			return BOT_MODE_DESIRE_HIGH;
-		end
-	end
-
 	return BOT_MODE_DESIRE_NONE
 
 end
 
-function OnEnd()
-	sNextItem = nil;
-end
-
 function Think()
-	
-	if npcBot:DistanceFromSecretShop() == 0 then 
-		if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-			table.remove( npcBot.tableItemsToBuy, 1 );
-		else 
-			print("[Secret]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))		
-		end
-	end		
-	
+
 	if GetTeam() == TEAM_RADIANT then
 		if GetUnitToLocationDistance(npcBot, DIRE_SECRET_SHOP) <= 2000 then
 			npcBot:Action_MoveToLocation(DIRE_SECRET_SHOP);
@@ -70,13 +48,14 @@ function Think()
 end
 
 function IsSuitableToBuy()
+	local mode = npcBot:GetActiveMode();
 	local Enemies = npcBot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
-	if ( ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
-		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT
+	if ( ( mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
+		or mode == BOT_MODE_ATTACK
+		or mode == BOT_MODE_DEFEND_ALLY
+		or mode == BOT_MODE_DEFEND_TOWER_TOP
+		or mode == BOT_MODE_DEFEND_TOWER_MID
+		or mode == BOT_MODE_DEFEND_TOWER_BOT
 		or Enemies ~= nil and #Enemies >= 2
 		or ( Enemies ~= nil and #Enemies == 1 and Enemies[1] ~= nil and IsStronger(npcBot, Enemies[1]) )
 		) 

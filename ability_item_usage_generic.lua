@@ -222,16 +222,19 @@ function CourierUsageThink()
 		for i = 1, #numPlayer
 		do
 		--print(numPlayer[i]..tostring(IsPlayerBot(numPlayer[i])));
-			if GetTeamMember(i) ~= nil and IsPlayerBot(numPlayer[i]) then
-				local SVal = GetTeamMember(i):GetStashValue();
+			local member =  GetTeamMember(i);
+			if member ~= nil and IsPlayerBot(numPlayer[i]) and member:IsAlive() 
+			then
+				local SVal = member:GetStashValue();
 				if SVal ~= 0 and SVal > maxVal then
 					maxVal = SVal;
-					target = GetTeamMember(i);
+					target = member;
 				end
 			end
 		end
 		
-		if target ~= nil and target:IsAlive() then
+		if target ~= nil 
+		then
 			--print("TakeNTransfer "..target:GetUnitName())
 			target:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS )
 			return

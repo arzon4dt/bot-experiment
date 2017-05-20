@@ -1,5 +1,5 @@
 local npcBot = GetBot();
-local sNextItem = nil;
+
 local BOT_SIDE_SHOP = GetShopLocation(GetTeam(), SHOP_SIDE )
 local TOP_SIDE_SHOP = GetShopLocation(GetTeam(), SHOP_SIDE2 )
 
@@ -17,36 +17,15 @@ function GetDesire()
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
-	if npcBot.tableItemsToBuy == nil or #(npcBot.tableItemsToBuy) == 0 then
-		return BOT_MODE_DESIRE_NONE;
-	end
-	
-	sNextItem = npcBot.tableItemsToBuy[1];
-	
-	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-		if IsItemPurchasedFromSideShop( sNextItem ) and npcBot:DistanceFromSideShop() < 2000  
-		then
-			return BOT_MODE_DESIRE_VERYHIGH;
-		end
+	if npcBot.SideShop then
+		return BOT_MODE_DESIRE_HIGH
 	end
 
 	return BOT_MODE_DESIRE_NONE
 
 end
 
-function OnEnd()
-	sNextItem = nil;
-end
-
 function Think()
-	
-	if npcBot:DistanceFromSideShop() == 0 then 
-		if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
-			table.remove( npcBot.tableItemsToBuy, 1 );
-		else 
-			print("[Side]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))	
-		end
-	end		
 	
 	local closestSideShop = GetClosestSideShop()
 	
@@ -71,21 +50,16 @@ function GetClosestSideShop()
 end
 
 function IsSuitableToBuy()
-	if ( ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
-		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT
+	local mode = npcBot:GetActiveMode();
+	if ( ( mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
+		or mode == BOT_MODE_ATTACK
+		or mode == BOT_MODE_DEFEND_ALLY
+		or mode == BOT_MODE_DEFEND_TOWER_TOP
+		or mode == BOT_MODE_DEFEND_TOWER_MID
+		or mode == BOT_MODE_DEFEND_TOWER_BOT
 		) 
 	then
 		return false;
 	end
 	return true;
-end
-
-function IsStronger(bot, enemy)
-	local BPower = bot:GetEstimatedDamageToTarget(true, enemy, 4.0, DAMAGE_TYPE_ALL);
-	local EPower = enemy:GetEstimatedDamageToTarget(true, bot, 4.0, DAMAGE_TYPE_ALL);
-	return EPower > BPower;
 end

@@ -147,7 +147,7 @@ function ItemPurchaseThink()
 		return;
 	end
 	
-	MyItemPurchase();
+	GeneralPurchase()
 	
 end	
 
@@ -174,16 +174,54 @@ function IsSupportExist()
 	return false;
 end
 
+function GeneralPurchase()
+	local sNextItem = npcBot.tableItemsToBuy[1];
+	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
+	local CanPurchaseFromSecret = IsItemPurchasedFromSecretShop(sNextItem);
+	local CanPurchaseFromSide   = IsItemPurchasedFromSideShop(sNextItem);
+	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
+		if CanPurchaseFromSecret and not CanPurchaseFromSide and npcBot:DistanceFromSecretShop() > 0 then
+			--print("secret 1"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSecretShop()))
+			npcBot.SecretShop = true;
+		elseif CanPurchaseFromSecret and CanPurchaseFromSide and npcBot:DistanceFromSideShop() < npcBot:DistanceFromSecretShop() 
+		       and npcBot:DistanceFromSideShop() > 0 and npcBot:DistanceFromSideShop() < 2500 then
+			--print("side 1"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSideShop()))
+			npcBot.SideShop = true;
+		elseif CanPurchaseFromSecret and CanPurchaseFromSide and npcBot:DistanceFromSideShop() > npcBot:DistanceFromSecretShop() and npcBot:DistanceFromSecretShop() > 0 then
+			--print("secret 2"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSecretShop()))
+			npcBot.SecretShop = true;
+		elseif CanPurchaseFromSide and npcBot:DistanceFromSideShop() < npcBot:DistanceFromFountain() 
+		       and npcBot:DistanceFromSideShop() > 0 and npcBot:DistanceFromSideShop() < 2500 then
+			--print("side 2"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSideShop()))
+			npcBot.SideShop = true;
+		else
+			if npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS then
+				table.remove( npcBot.tableItemsToBuy, 1 );
+				npcBot.SecretShop = false;
+				npcBot.SideShop = false;	
+			else
+				print("[G]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))	
+			end
+		end
+	else
+		npcBot.SecretShop = false;
+		npcBot.SideShop = false;
+	end
+end
+
+
 function MyItemPurchase()
 	local sNextItem = npcBot.tableItemsToBuy[1];
 	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-		if not CanDoSecretOrSideShop(sNextItem) and not IsStashFull()  
+		if not CanDoSecretOrSideShop(sNextItem) and not IsStashFull() 
 		then
-			if ( npcBot:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS ) then
+			local result = npcBot:ActionImmediate_PurchaseItem( sNextItem );
+			if ( result == PURCHASE_ITEM_SUCCESS ) then
+				print("[Generic]"..npcBot:GetUnitName().." purchase "..sNextItem.." : "..tostring(result))
 				table.remove( npcBot.tableItemsToBuy, 1 );
 			else 
-				print("[Generic]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))
+				print("[Generic]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(result))
 			end
 		end
 	end
@@ -192,18 +230,15 @@ end
 function CanDoSecretOrSideShop(sNextItem)
 	local CanPurchaseFromSecret =  IsItemPurchasedFromSecretShop(sNextItem);
 	local CanPurchaseFromSide = IsItemPurchasedFromSideShop(sNextItem);
-	if  npcBot:DistanceFromSideShop() < 2000 
-	then
-		if CanPurchaseFromSecret and CanPurchaseFromSide then
-			return true;
-		elseif not CanPurchaseFromSecret and CanPurchaseFromSide then
-			return true;
-		end
-	else
-		if CanPurchaseFromSecret then
-			return true;
-		end
+	
+	if CanPurchaseFromSecret and not CanPurchaseFromSide then
+		return true;
+	elseif CanPurchaseFromSecret and CanPurchaseFromSide then
+		return true;
+	elseif not CanPurchaseFromSecret and CanPurchaseFromSide  and npcBot:DistanceFromSideShop() < 2000 then
+		return true;
 	end
+	
 	return false;
 end
 
@@ -664,7 +699,7 @@ for i = 0, #currentItems do
     if(currentItems[i] ~= nil) then
         for j = 0, #npcBot.tableItemsToBuy do
             if npcBot.tableItemsToBuy[j] == currentItems[i] then
-                print("Removing Item " .. currentItems[i] .. " index " .. j)
+                --print("Removing Item " .. currentItems[i] .. " index " .. j)
                 table.remove(npcBot.tableItemsToBuy, j)
                 break
             end

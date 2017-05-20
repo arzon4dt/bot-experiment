@@ -121,7 +121,7 @@ function ConsiderWildAxes()
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
 	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
 	then
-		local lanecreeps = npcBot:GetNearbyLaneCreeps(nCastRange+200, true);
+		local lanecreeps = npcBot:GetNearbyLaneCreeps(nCastRange, true);
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 4 and #lanecreeps >= 4  ) 
 		then

@@ -6,7 +6,8 @@ local requiredHeroes = {
 	'npc_dota_hero_ember_spirit',
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
-	'npc_dota_hero_techies'
+	'npc_dota_hero_shredder';
+	'npc_dota_hero_spirit_breaker'
 };
 
 local UnImplementedHeroes = {
@@ -589,7 +590,7 @@ function UpdateLaneAssignments()
    
 end
 
-function FillLaneAssignmentTable2()
+function FillLAHumanCaptain()
 	local TeamMember = GetTeamPlayers(GetTeam());
 	for i = 1, #TeamMember
 	do
@@ -644,7 +645,7 @@ function CMLaneAssignment()
 	if IsPlayerBot(GetCMCaptain()) then
 		FillLaneAssignmentTable();
 	else
-		FillLaneAssignmentTable2()
+		FillLAHumanCaptain()
 	end
 	return HeroLanes;
 end

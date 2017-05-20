@@ -91,7 +91,7 @@ ItemModule["item_blade_mail"] = { "item_robe"; "item_chainmail"; "item_broadswor
 
 ItemModule["item_bloodstone"] = { "item_soul_ring"; "item_point_booster"; "item_vitality_booster"; "item_energy_booster"; "item_recipe_bloodstone" }
 
-ItemModule["item_bloodthorn"] = { "item_orchid"; "item_crystalys"; "item_recipe_bloodthorn" }
+ItemModule["item_bloodthorn"] = { "item_orchid"; "item_lesser_crit"; "item_recipe_bloodthorn" }
 
 ItemModule["item_travel_boots"] = { "item_boots"; "item_recipe_travel_boots" }
 
@@ -147,11 +147,11 @@ ItemModule["item_hand_of_midas"] = { "item_gloves"; "item_recipe_hand_of_midas" 
 
 ItemModule["item_headdress"] = { "item_branches"; "item_ring_of_regen"; "item_recipe_headdress" }
 
-ItemModule["item_heart"] = { "item_reaver"; "item_vitality_booster"; "item_recipe_heart" }
+ItemModule["item_heart"] = { "item_reaver"; "item_vitality_booster"; "item_vitality_booster" }
 
 ItemModule["item_heavens_halberd"] = { "item_sange"; "item_talisman_of_evasion"}
 
-ItemModule["item_helm_of_the_dominator"] = { "item_headdress"; "item_gloves"; "item_recipe_helm_of_the_dominator" }
+ItemModule["item_helm_of_the_dominator"] = { "item_headdress"; "item_gloves"; "item_ring_of_health" }
 
 ItemModule["item_hood_of_defiance"] = { "item_ring_of_health"; "item_cloak"; "item_ring_of_regen" }
 
@@ -169,7 +169,7 @@ ItemModule["item_magic_wand"] = { "item_branches"; "item_branches"; "item_magic_
 
 ItemModule["item_manta"] = { "item_yasha"; "item_ultimate_orb"; "item_recipe_manta" }
 
-ItemModule["item_mask_of_madness"] = { "item_lifesteal"; "item_recipe_mask_of_madness" }
+ItemModule["item_mask_of_madness"] = { "item_lifesteal"; "item_quarterstaff" }
 
 ItemModule["item_medallion_of_courage"] = { "item_chainmail"; "item_sobi_mask"; "item_blight_stone" }
 
