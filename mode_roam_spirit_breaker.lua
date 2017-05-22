@@ -67,29 +67,29 @@ function Think()
 
 end
 
-function GetBase(Team)
-	if Team == TEAM_RADIANT then
-		return RADBase;
-	else
-		return DIREBase;
-	end
+function GetBase()
+	return GetAncient(GetOpposingTeam()):GetLocation();
 end
 
 function ConsiderCancelCharge()
-	local target = npcBot:GetTarget();
-	if target ~= nil 
+	local target = npcBot.chargeTarget;
+	if target ~= nil and not target:IsNull() and target:IsHero()
 	then
 		local targetAlly = target:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
 		local Ally = target:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
-		if Ally ~= nil 
+		if Ally ~= nil and #Ally > 0
 		then
-			return false
-		elseif GetUnitToLocationDistance(target, GetBase(GetOpposingTeam())) < 2500 or ( targetAlly ~= nil and #targetAlly >= 2 ) 
+			return false;
+		elseif target:GetHealth() < 200 then
+			return false;
+		elseif GetUnitToUnitDistance(target, GetAncient(GetOpposingTeam())) < 2500 or ( targetAlly ~= nil and #targetAlly >= 2 ) 
 		then
-			--print(tostring(#targetAlly))
-			--print("Cancel")
+			npcBot:ActionImmediate_Chat("Canceling charge. "..tostring(#targetAlly).." enemies no ally.", true);
+			npcBot:ActionImmediate_Chat("or target way too close to their base", true);
 			return true;
 		end
+	elseif target ~= nil and not target:IsNull() and not target:IsHero() then
+		return false;
 	end
 	return false;
 end

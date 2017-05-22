@@ -151,6 +151,10 @@ function ConsiderSpinWeb()
 	--[[if DotaTime() > 15 and npcBot:DistanceFromFountain() > 1000 and not LocationOverlapWeb( npcBot:GetXUnitsInFront(nCastRange), nRadius ) then
 		return BOT_ACTION_DESIRE_MODERATE, npcBot:GetXUnitsInFront(nCastRange);
 	end]]--
+	if mutil.IsStuck(npcBot)
+	then
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetLocation();
+	end
 	
 	--------------------------------------
 	-- Mode based usage

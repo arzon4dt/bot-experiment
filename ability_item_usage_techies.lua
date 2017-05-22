@@ -140,12 +140,8 @@ function ConsiderIgnite()
 	local nRadius = abilityIG:GetSpecialValueInt('radius')+20;
 	local nCastRange = abilityIG:GetCastRange();
 	local vLocation = npcBot:GetXUnitsInFront(nCastRange)+RandomVector(200);
-
-	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
-	if not InRadius("mines", nRadius, vLocation) and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
-		return BOT_ACTION_DESIRE_LOW, vLocation;
-	end
 	
+	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
@@ -205,6 +201,11 @@ function ConsiderIgnite()
 		end
 	end
 	
+	
+	if not InRadius("mines", nRadius, vLocation) and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
+		return BOT_ACTION_DESIRE_LOW, vLocation;
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
@@ -218,11 +219,8 @@ function ConsiderFireblast()
 	local nRadius = 620;
 	local nCastRange = abilityFB:GetCastRange();
 	local vLocation = npcBot:GetXUnitsInFront(nCastRange)+RandomVector(200);
-
+	
 	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
-	if not InRadius("traps", nRadius, vLocation) and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
-		return BOT_ACTION_DESIRE_LOW, vLocation;
-	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
@@ -258,6 +256,11 @@ function ConsiderFireblast()
 				return BOT_ACTION_DESIRE_MODERATE, loc;
 			end
 		end
+	end
+	
+	
+	if not InRadius("traps", nRadius, vLocation) and currManaRatio > threshold and npcBot:DistanceFromFountain() > 1500 and DotaTime() > 0 then
+		return BOT_ACTION_DESIRE_LOW, vLocation;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -340,9 +343,6 @@ function ConsiderOverwhelmingOdds()
 
 	
 	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
-	if  currManaRatio > threshold and npcBot:DistanceFromFountain() > 1000 then
-		return BOT_ACTION_DESIRE_LOW, vLocation;
-	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
@@ -382,6 +382,9 @@ function ConsiderOverwhelmingOdds()
 		end
 	end
 
+	if  currManaRatio > threshold and npcBot:DistanceFromFountain() > 1000 then
+		return BOT_ACTION_DESIRE_LOW, vLocation;
+	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end

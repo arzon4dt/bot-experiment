@@ -16,6 +16,9 @@ if build == "NOT IMPLEMENTED" then
 	return 
 end
 
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
+local utils = require(GetScriptDirectory() ..  "/util")
+
 local BotAbilityPriority = build["skills"];
 local IdleTime = 0;
 local AllowedIddle = 15;
@@ -34,9 +37,19 @@ function AbilityLevelUpThink()
 		UseGlyph()
 	end
 	
-	--[[if not IsLocationPassable(npcBot:GetLocation()) then
-		print(npcBot:GetUnitName().." Unpassaable")
-	end]]--
+	local botLoc = npcBot:GetLocation();
+	if npcBot:IsAlive() and not IsLocationPassable(botLoc) then
+		if npcBot.stuckLoc == nil then
+			npcBot.stuckLoc = botLoc
+			npcBot.stuckTime = DotaTime();
+		elseif npcBot.stuckLoc ~= botLoc then
+			npcBot.stuckLoc = botLoc
+			npcBot.stuckTime = DotaTime();
+		end
+	else	
+		npcBot.stuckTime = nil;
+		npcBot.stuckLoc = nil;
+	end
 	
 	if npcBot:GetAbilityPoints() < 1 or #BotAbilityPriority == 0 or  (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
 		return;
@@ -55,7 +68,7 @@ function AbilityLevelUpThink()
 					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
 				end
 			elseif string.find(npcBot:GetUnitName(), "keeper_of_the_light") and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
-				if sNextAbility:IsHidden() then
+				if sNextAbility:IsHidden() then 
 					npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
 				else
 					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
@@ -82,7 +95,7 @@ function IsThereHeroNearby(building)
 	local nearbynum = 0;
 	for _,hero in pairs(heroes)
 	do
-		if GetUnitToUnitDistance(building, hero) <= 1300 then
+		if GetUnitToUnitDistance(building, hero) <= 2750 then
 			nearbynum = nearbynum + 1;
 		end
 	end
@@ -101,9 +114,24 @@ function GetRemainingRespawnTime()
 	end
 end
 
+function IsMeepoClone()
+	if npcBot:GetUnitName() == "npc_dota_hero_meepo" and npcBot:GetLevel() > 1 
+	then
+		for i=0, 5 do
+			local item = npcBot:GetItemInSlot(i);
+			if item ~= nil and not ( string.find(item:GetName(),"boots") or string.find(item:GetName(),"treads") )  
+			then
+				return false;
+			end
+		end
+		return true;
+    end
+	return false;
+end
+
 function BuybackUsageThink() 
 	
-	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() then
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() or IsMeepoClone() then
 		return;
 	end
 	
@@ -130,7 +158,7 @@ function BuybackUsageThink()
 	
 	local team = GetTeam();
 	
-	local tower_top_3 = GetTower( team, TOWER_TOP_3 );
+	--[[local tower_top_3 = GetTower( team, TOWER_TOP_3 );
 	local tower_mid_3 = GetTower( team, TOWER_MID_3 );
 	local tower_bot_3 = GetTower( team, TOWER_BOT_3 );
 	local tower_base_1 = GetTower( team, TOWER_BASE_1 );
@@ -138,25 +166,31 @@ function BuybackUsageThink()
 
 	local barracks_top_melee = GetBarracks( team, BARRACKS_TOP_MELEE );
 	local barracks_mid_melee = GetBarracks( team, BARRACKS_MID_MELEE );
-	local barracks_bot_melee = GetBarracks( team, BARRACKS_BOT_MELEE );
+	local barracks_bot_melee = GetBarracks( team, BARRACKS_BOT_MELEE );]]--
 
 	local ancient = GetAncient(team );
 
-	local buildList = {
+	--[[local buildList = {
 		tower_top_3, tower_mid_3, tower_bot_3, tower_base_1, tower_base_2,
 		barracks_top_melee, 
 		barracks_mid_melee,
 		barracks_bot_melee, 
 		ancient
-	};
+	};]]--
 
-	for _, build in pairs(buildList) 
+	--[[for _, build in pairs(buildList) 
 	do
 		if ( build ~= nil and IsThereHeroNearby(build) ) 
 		then
 			npcBot:ActionImmediate_Buyback();
 			return;
 		end
+	end]]--
+	
+	if ( ancient ~= nil and IsThereHeroNearby(ancient) ) 
+	then
+		npcBot:ActionImmediate_Buyback();
+		return;
 	end
 
 end
@@ -308,14 +342,55 @@ function UseConsumables()
 
 end
 
-
 function UnImplementedItemUsage()
 
 	if npcBot:IsChanneling() or npcBot:IsUsingAbility() or npcBot:IsInvisible() or npcBot:IsMuted( )  then
 		return;
 	end
+	
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
 	local npcTarget = npcBot:GetTarget();
+	local mode = npcBot:GetActiveMode();
+	
+	local bdg=IsItemAvailable("item_blink");
+	if bdg~=nil and bdg:IsFullyCastable() then
+		if mutil.IsStuck(npcBot)
+		then
+			npcBot:ActionImmediate_Chat("I'm using blink while stuck.", true);
+			npcBot:Action_UseAbilityOnLocation(bdg, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), 1100 ));
+			return;
+		end
+	end
+	
+	local fst=IsItemAvailable("item_force_staff");
+	if fst~=nil and fst:IsFullyCastable() then
+		if mutil.IsStuck(npcBot)
+		then
+			npcBot:ActionImmediate_Chat("I'm using force staff while stuck.", true);
+			npcBot:Action_UseAbilityOnEntity(fst, npcBot);
+			return;
+		end
+	end
+	
+	local tpt=IsItemAvailable("item_tpscroll");
+	if tpt~=nil and tpt:IsFullyCastable() then
+		if mutil.IsStuck(npcBot)
+		then
+			npcBot:ActionImmediate_Chat("I'm using tp while stuck.", true);
+			npcBot:Action_UseAbilityOnLocation(tpt, GetAncient(GetTeam()):GetLocation());
+			return;
+		end
+	end
+	
+	local msh=IsItemAvailable("item_moon_shard");
+	if msh~=nil and msh:IsFullyCastable() then
+		if not npcBot:HasModifier("modifier_item_moon_shard_consumed")
+		then
+			print("use Moon")
+			npcBot:Action_UseAbilityOnEntity(msh, npcBot);
+			return;
+		end
+	end
 	
 	local arm=IsItemAvailable("item_armlet");
 	if arm~=nil and arm:IsFullyCastable() then
@@ -342,7 +417,7 @@ function UnImplementedItemUsage()
 	
 	local ff=IsItemAvailable("item_faerie_fire");
 	if ff~=nil and ff:IsFullyCastable() then
-		if  npcBot:GetActiveMode() == BOT_MODE_RETREAT and 
+		if  mode == BOT_MODE_RETREAT and 
 			npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
 			( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.15 
 		then
@@ -353,7 +428,7 @@ function UnImplementedItemUsage()
 	
 	local bst=IsItemAvailable("item_bloodstone");
 	if bst ~= nil and bst:IsFullyCastable() then
-		if  npcBot:GetActiveMode() == BOT_MODE_RETREAT and 
+		if  mode == BOT_MODE_RETREAT and 
 			npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
 			( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.10
 		then
@@ -365,12 +440,12 @@ function UnImplementedItemUsage()
 	local pb=IsItemAvailable("item_phase_boots");
 	if pb~=nil and pb:IsFullyCastable() 
 	then
-		if ( npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-			 npcBot:GetActiveMode() == BOT_MODE_RETREAT or
-			 npcBot:GetActiveMode() == BOT_MODE_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_GANK or
-			 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
+		if ( mode == BOT_MODE_ATTACK or
+			 mode == BOT_MODE_RETREAT or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY )
 		then
 			npcBot:Action_UseAbility(pb);
 			return;
@@ -380,11 +455,11 @@ function UnImplementedItemUsage()
 	local bt=IsItemAvailable("item_bloodthorn");
 	if bt~=nil and bt:IsFullyCastable() 
 	then
-		if ( npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-			 npcBot:GetActiveMode() == BOT_MODE_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_GANK or
-			 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
+		if ( mode == BOT_MODE_ATTACK or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY )
 		then
 			local npcTarget = npcBot:GetTarget();
 			if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastOnTarget(npcTarget) and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
@@ -398,11 +473,11 @@ function UnImplementedItemUsage()
 	local sc=IsItemAvailable("item_solar_crest");
 	if sc~=nil and sc:IsFullyCastable() 
 	then
-		if ( npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-			 npcBot:GetActiveMode() == BOT_MODE_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_GANK or
-			 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY )
+		if ( mode == BOT_MODE_ATTACK or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY )
 		then
 			if ( npcTarget ~= nil and npcTarget:IsHero() and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
 			then
@@ -426,15 +501,15 @@ function UnImplementedItemUsage()
 	
 	local se=IsItemAvailable("item_silver_edge");
     if se ~= nil and se:IsFullyCastable() then
-		if npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
+		if mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
 			tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0
 		then
 			npcBot:Action_UseAbility(se);
 			return;
 	    end
-		if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-			 npcBot:GetActiveMode() == BOT_MODE_GANK )
+		if ( mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK )
 		then
 			if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) > 1000 and  GetUnitToUnitDistance(npcTarget, npcBot) < 2500 )
 			then
@@ -481,7 +556,7 @@ function UnImplementedItemUsage()
 	local hurricanpike = IsItemAvailable("item_hurricane_pike");
 	if hurricanpike~=nil and hurricanpike:IsFullyCastable() 
 	then
-		if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
+		if ( mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		then
 			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 			do
@@ -573,10 +648,8 @@ end
 function IsItemAvailable(item_name)
     for i = 0, 5 do
         local item = npcBot:GetItemInSlot(i);
-		if (item~=nil) then
-			if(item:GetName() == item_name) then
-				return item;
-			end
+		if item~=nil and item:GetName() == item_name then
+			return item;
 		end
     end
     return nil;

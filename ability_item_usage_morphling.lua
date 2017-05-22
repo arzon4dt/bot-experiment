@@ -226,6 +226,10 @@ function ConsiderTimeWalk()
 	local nDamage = abilityTW:GetAbilityDamage();
 	local nAttackRange = npcBot:GetAttackRange();
 
+	if mutil.IsStuck(npcBot)
+	then
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
+	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)

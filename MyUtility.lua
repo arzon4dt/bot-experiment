@@ -2,7 +2,6 @@ local U = {};
 
 local RB = Vector(-7200,-6666)
 local DB = Vector(7137,6548)
-
 local fSpamThreshold = 0.55;
 
 local modifier = {
@@ -206,6 +205,37 @@ function U.GetEnemyFountain()
 	else
 		return DB;
 	end
+end
+
+function U.IsStuck2(npcBot)
+	if npcBot.stuckLoc ~= nil and npcBot.stuckTime ~= nil then 
+		local EAd = GetUnitToUnitDistance(npcBot, GetAncient(GetOpposingTeam()));
+		if DotaTime() > npcBot.stuckTime + 5.0 and GetUnitToLocationDistance(npcBot, npcBot.stuckLoc) < 25  
+           and npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and EAd > 2200		
+		then
+			print(npcBot:GetUnitName().." is stuck")
+			--DebugPause();
+			return true;
+		end
+	end
+	return false
+end
+
+function U.IsStuck(npcBot)
+	if npcBot.stuckLoc ~= nil and npcBot.stuckTime ~= nil then 
+		local attackTarget = npcBot:GetAttackTarget();
+		local EAd = GetUnitToUnitDistance(npcBot, GetAncient(GetOpposingTeam()));
+		local TAd = GetUnitToUnitDistance(npcBot, GetAncient(GetTeam()));
+		local Et = npcBot:GetNearbyTowers(200, true);
+		local At = npcBot:GetNearbyTowers(200, false);
+		if npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and attackTarget == nil and EAd > 2200 and TAd > 2200 and ( Et == nil or #Et == 0 ) and ( At == nil or #At == 0 ) 
+		   and DotaTime() > npcBot.stuckTime + 5.0 and GetUnitToLocationDistance(npcBot, npcBot.stuckLoc) < 25     
+		then
+			print(npcBot:GetUnitName().." is stuck")
+			return true;
+		end
+	end
+	return false
 end
 
 return U;

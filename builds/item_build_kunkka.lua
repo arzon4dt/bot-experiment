@@ -11,9 +11,9 @@ X["items"] = {
 	"item_shadow_blade",
 	"item_greater_crit",
 	"item_blink",
-	"item_greater_crit",
 	"item_silver_edge",
-	"item_black_king_bar"
+	"item_black_king_bar",
+	"item_monkey_king_bar"
 };			
 
 X["skills"] = IBUtil.GetBuildPattern(

@@ -200,6 +200,11 @@ function ConsiderFireFly()
 	
 	local nRadius = abilityFF:GetSpecialValueInt( "radius" );
 	
+	if mutil.IsStuck(npcBot)
+	then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then

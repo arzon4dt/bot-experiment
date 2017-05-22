@@ -189,7 +189,7 @@ function ConsiderIllusoryOrb()
 	local nDamage = abilityOrb:GetAbilityDamage();
 	
 	nCastRange = 1600;
-
+	
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );

@@ -213,6 +213,11 @@ function ConsiderOverwhelmingOdds()
 	-- Mode based usage
 	--------------------------------------
 
+	if mutil.IsStuck(npcBot)
+	then
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetLocation();
+	end
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then

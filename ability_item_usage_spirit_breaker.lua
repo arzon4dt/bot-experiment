@@ -31,8 +31,6 @@ function AbilityUsageThink()
 	-- Check if we're already using an ability
 	if ( npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") or mutil.CanNotUseAbility(npcBot) ) then return end;
 
-	if not npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") then npcBot.chargeTarget = nil end
-	
 	if abilityCD == nil then abilityCD = npcBot:GetAbilityByName( "spirit_breaker_charge_of_darkness" ) end
 	if abilityEH == nil then abilityEH = npcBot:GetAbilityByName( "spirit_breaker_empowering_haste" ) end
 	if abilityNS == nil then abilityNS = npcBot:GetAbilityByName( "spirit_breaker_nether_strike" ) end
@@ -40,7 +38,10 @@ function AbilityUsageThink()
 	castEHDesire = ConsiderEmpoweringHaste();
 	castCDDesire, castCDTarget = ConsiderCharge();
 	castNSDesire, castNSTarget = ConsiderNetherStrike();
-
+	
+	if abilityCD:GetCooldownTimeRemaining() > 0 and npcBot.chargeTarget ~= nil 
+	then npcBot.chargeTarget = nil end
+	
 	if ( castNSDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityNS, castNSTarget );
@@ -56,8 +57,8 @@ function AbilityUsageThink()
 	if ( castCDDesire > 0 ) 
 	then
 		npcBot:Action_ClearActions(false);
-		npcBot:Action_UseAbilityOnEntity( abilityCD, castCDTarget );
 		npcBot.chargeTarget = castCDTarget;
+		npcBot:Action_UseAbilityOnEntity( abilityCD, castCDTarget );
 		return;
 	end
 	
@@ -107,7 +108,7 @@ function ConsiderCharge()
 	-- Get some of its values
 	local nCastRange = npcBot:GetAttackRange() + 150;
 	
-	if mutil.IsRetreating(npcBot)
+	if mutil.IsRetreating(npcBot) and npcBot:WasRecentlyDamagedByAnyHero(2.0)
 	then
 		local enemyCreeps = GetUnitList(UNIT_LIST_ENEMY_CREEPS );
 		for _,creep in pairs(enemyCreeps) 
@@ -125,7 +126,10 @@ function ConsiderCharge()
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and
 			not mutil.IsDisabled(true, npcTarget) ) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
+			local Ally = npcTarget:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+			if ( Ally ~= nil and #Ally >= 1 ) or npcTarget:GetHealth() <= ( 100 + (5*npcBot:GetLevel()) ) then
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
+			end	
 		end
 	end
 

@@ -5,10 +5,10 @@ if string.find(GetBot():GetUnitName(), "monkey") then
 		return; 
 	end
 end
-	
+
 local purchase ="NOT IMPLEMENTED";
 
-if string.find(GetBot():GetUnitName(), "hero") then
+if string.find(GetBot():GetUnitName(), "hero") and not GetBot():IsIllusion() then
     purchase = require(GetScriptDirectory() .. "/builds/item_build_" .. string.gsub(GetBot():GetUnitName(), "npc_dota_hero_", ""))
 end
 
@@ -54,51 +54,26 @@ local earlyBoots = {
 	 "item_ring_of_aquila", 
 	 "item_urn_of_shadows",
 	 "item_dust",
-	 "item_ward_observer"
-	 --"item_soul_ring", 
-	 --"item_ward_observer",
+	 "item_ward_observer",
+	 "item_tpscroll"
 }
 
 function ItemPurchaseThink()
 		
-	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
+	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS 
+		or npcBot:IsIllusion() 
+		or( string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() )
+		or npcBot:HasModifier("modifier_arc_warden_tempest_double")
+		or IsMeepoClone()
+	then
 		return;
 	end
-	
-	if npcBot:IsIllusion() then
-		return;
-	end
-	
-	if string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() then
-		return;
-	end
-	
-	if( npcBot:GetUnitName() == "npc_dota_hero_meepo") then
-        if(npcBot:GetLevel() > 1) then
-            for i=0, 5 do
-                if(npcBot:GetItemInSlot(i) ~= nil ) then
-                    if not ( npcBot:GetItemInSlot(i):GetName() == "item_travel_boots" or 
-							 npcBot:GetItemInSlot(i):GetName() == "item_travel_boots_2" or 
-							 npcBot:GetItemInSlot(i):GetName() == "item_boots" or 
-							 npcBot:GetItemInSlot(i):GetName() == "item_power_treads"
-							) 
-					then
-                        break
-                    end
-                end
-                if i == 5 then
-                    return
-                end
-            end
-        end
-    end
 	
 	if supportExist == nil then supportExist = IsSupportExist(); end
 	
 	if not invisEnemyExist then invisEnemyExist = IsInvisEnemyExist(); end
 
 	PurchaseTP();
-	
 	
 	--Buy bottle for mid heroes
 	if DotaTime() > 0 and DotaTime() < 15 then
@@ -134,13 +109,13 @@ function ItemPurchaseThink()
 		PurchaseBOT2();
 	end
 	
-	UseMoonShard();
+	--UseMoonShard();
 	
 	sellBoots();
 	
-	if npcBot:GetActiveMode() ~= BOT_MODE_WARD then
-		--SwapBoots();
-	end
+	--[[if npcBot:GetActiveMode() ~= BOT_MODE_WARD then
+		SwapBoots();
+	end]]--
 	
 	if ( npcBot.tableItemsToBuy == nil or #(npcBot.tableItemsToBuy) == 0 ) then
 		npcBot:SetNextItemPurchaseValue( 0 );
@@ -152,7 +127,6 @@ function ItemPurchaseThink()
 end	
 
 function IsSupportExist()
-
 	if role.CanBeSupport(npcBot:GetUnitName()) then
 		return true;
 	end
@@ -174,24 +148,45 @@ function IsSupportExist()
 	return false;
 end
 
+function IsMeepoClone()
+	if npcBot:GetUnitName() == "npc_dota_hero_meepo" and npcBot:GetLevel() > 1 
+	then
+		for i=0, 5 do
+			local item = npcBot:GetItemInSlot(i);
+			if item ~= nil and not ( string.find(item:GetName(),"boots") or string.find(item:GetName(),"treads") )  
+			then
+				return false;
+			end
+		end
+		return true;
+    end
+	return false;
+end
+
 function GeneralPurchase()
 	local sNextItem = npcBot.tableItemsToBuy[1];
 	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 	local CanPurchaseFromSecret = IsItemPurchasedFromSecretShop(sNextItem);
 	local CanPurchaseFromSide   = IsItemPurchasedFromSideShop(sNextItem);
 	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-		if CanPurchaseFromSecret and not CanPurchaseFromSide and npcBot:DistanceFromSecretShop() > 0 then
+		if CanPurchaseFromSecret and not CanPurchaseFromSide and npcBot:DistanceFromSecretShop() > 0 
+		then
 			--print("secret 1"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSecretShop()))
 			npcBot.SecretShop = true;
 		elseif CanPurchaseFromSecret and CanPurchaseFromSide and npcBot:DistanceFromSideShop() < npcBot:DistanceFromSecretShop() 
-		       and npcBot:DistanceFromSideShop() > 0 and npcBot:DistanceFromSideShop() < 2500 then
+		       and npcBot:DistanceFromSideShop() > 0 and npcBot:DistanceFromSideShop() <= 2500 
+		then
 			--print("side 1"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSideShop()))
 			npcBot.SideShop = true;
-		elseif CanPurchaseFromSecret and CanPurchaseFromSide and npcBot:DistanceFromSideShop() > npcBot:DistanceFromSecretShop() and npcBot:DistanceFromSecretShop() > 0 then
+		elseif CanPurchaseFromSecret and CanPurchaseFromSide and npcBot:DistanceFromSideShop() > npcBot:DistanceFromSecretShop() and npcBot:DistanceFromSecretShop() > 0 
+		then
 			--print("secret 2"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSecretShop()))
 			npcBot.SecretShop = true;
-		elseif CanPurchaseFromSide and npcBot:DistanceFromSideShop() < npcBot:DistanceFromFountain() 
-		       and npcBot:DistanceFromSideShop() > 0 and npcBot:DistanceFromSideShop() < 2500 then
+		elseif CanPurchaseFromSecret and CanPurchaseFromSide and npcBot:DistanceFromSideShop() > 2500 and npcBot:DistanceFromSecretShop() > 0 
+		then
+			npcBot.SecretShop = true;
+		elseif CanPurchaseFromSide and not CanPurchaseFromSecret and npcBot:DistanceFromSideShop() > 0 and npcBot:DistanceFromSideShop() <= 2500 
+		then
 			--print("side 2"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSideShop()))
 			npcBot.SideShop = true;
 		else
@@ -200,7 +195,7 @@ function GeneralPurchase()
 				npcBot.SecretShop = false;
 				npcBot.SideShop = false;	
 			else
-				print("[G]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))	
+				print("[Generic]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))	
 			end
 		end
 	else
@@ -208,40 +203,6 @@ function GeneralPurchase()
 		npcBot.SideShop = false;
 	end
 end
-
-
-function MyItemPurchase()
-	local sNextItem = npcBot.tableItemsToBuy[1];
-	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
-	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
-		if not CanDoSecretOrSideShop(sNextItem) and not IsStashFull() 
-		then
-			local result = npcBot:ActionImmediate_PurchaseItem( sNextItem );
-			if ( result == PURCHASE_ITEM_SUCCESS ) then
-				print("[Generic]"..npcBot:GetUnitName().." purchase "..sNextItem.." : "..tostring(result))
-				table.remove( npcBot.tableItemsToBuy, 1 );
-			else 
-				print("[Generic]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(result))
-			end
-		end
-	end
-end
-
-function CanDoSecretOrSideShop(sNextItem)
-	local CanPurchaseFromSecret =  IsItemPurchasedFromSecretShop(sNextItem);
-	local CanPurchaseFromSide = IsItemPurchasedFromSideShop(sNextItem);
-	
-	if CanPurchaseFromSecret and not CanPurchaseFromSide then
-		return true;
-	elseif CanPurchaseFromSecret and CanPurchaseFromSide then
-		return true;
-	elseif not CanPurchaseFromSecret and CanPurchaseFromSide  and npcBot:DistanceFromSideShop() < 2000 then
-		return true;
-	end
-	
-	return false;
-end
-
 
 function SwapBoots()
 	
@@ -310,7 +271,7 @@ function getMostValuableBPSlot()
 end
 
 function SellEarlyGameItem()
-	if ( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 ) and DotaTime() > 25*60 and GetEmptySlotAmount() < 4 then
+	if ( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 ) and DotaTime() > 25*60 and GetEmptySlotAmount() < 3 then
 		for _,item in pairs(earlyGameItem)
 		do
 			local itemSlot = npcBot:FindItemSlot(item);
@@ -351,7 +312,6 @@ end
 
 function HasCGorABBuild()
 	local npcCourier = GetCourier(0);
-	
 	if HasItem(npcBot, "item_recipe_abyssal_blade") or 
 	   HasItem(npcBot, "item_recipe_crimson_guard") or 
 	   HasItem(npcCourier, "item_recipe_abyssal_blade") or
@@ -368,9 +328,7 @@ function HasCGorABBuild()
 			return true
 		end
 	end
-	
 	return false
-	
 end
 
 function HasSomeBuild(build_name)
@@ -540,10 +498,11 @@ function PurchaseMoonShard()
 end
 
 function UseMoonShard()
-	if HasItem( npcBot, "item_moon_shard" ) then
-		local MSSlot = npcBot:FindItemSlot("item_moon_shard");
-		if MSSlot >= 0 then
-			npcBot:ActionQueue_UseAbilityOnEntity( npcBot:GetItemInSlot(MSSlot), npcBot );
+	local MSSlot = npcBot:FindItemSlot("item_moon_shard");
+	if MSSlot >= 0 and MSSlot <= 5 then
+		local MS = npcBot:GetItemInSlot(MSSlot);
+		if MS:IsFullyCastable() then
+			npcBot:Action_UseAbilityOnEntity( MS, npcBot );
 		end
 	end
 end

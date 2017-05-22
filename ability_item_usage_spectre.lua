@@ -106,6 +106,11 @@ function ConsiderFireblast()
 	local nRadius = abilityFB:GetSpecialValueInt("dagger_radius");
 	local nDamage = abilityFB:GetSpecialValueInt("damage")
 
+	if mutil.IsStuck(npcBot)
+	then
+		return BOT_ACTION_DESIRE_HIGH, npcBot;
+	end
+	
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
