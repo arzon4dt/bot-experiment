@@ -260,12 +260,12 @@ function ConsiderE()
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
 	
 	--if we can kill any enemies
-	if npcBot:GetMaxMana() - npcBot:GetMana() > nManaDrained and ( tableNearbyEnemyHeroes == nil or #tableNearbyEnemyHeroes == 0 )
+	if npcBot:GetMaxMana() - npcBot:GetMana() > nManaDrained/2 and ( tableNearbyEnemyHeroes == nil or #tableNearbyEnemyHeroes == 0 )
 	then
 		local tableNearbyCreeps = npcBot:GetNearbyLaneCreeps( nCastRange + 200, true );
 		for _,creep in pairs(tableNearbyCreeps)
 		do
-			if mutil.CanCastOnNonMagicImmune(creep) and creep:GetAttackRange() > 320 and creep:GetMana() >= nManaDrained 
+			if mutil.CanCastOnNonMagicImmune(creep) and creep:GetAttackRange() > 320 and creep:GetMana() >= nManaDrained/2 
 			then
 				return BOT_ACTION_DESIRE_HIGH, creep;
 			end

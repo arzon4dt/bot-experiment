@@ -1498,6 +1498,7 @@ function X.IsRemovedFromSupportPoll(hero)
 end
 
 function X.CanBeOfflaner(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return string.find(hero, "bounty_hunter") or string.find(hero, "nyx") or string.find(hero, "magnataur") or string.find(hero, "sand_king")
            or string.find(hero, "shredder") or string.find(hero, "tusk") or string.find(hero, "dark_seer") or string.find(hero, "techies")
 		   or ( X["hero_roles"][hero]["initiator"] > 0 and
@@ -1508,6 +1509,7 @@ function X.CanBeOfflaner(hero)
 end
 
 function X.CanBeMidlaner(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return string.find(hero, "zuus") or string.find(hero, "templar_assassin") or string.find(hero, "ember_spirit") or string.find(hero, "puck") 
 	       or string.find(hero, "pugna") or ( X["hero_roles"][hero]["carry"] > 0 and
 		   ( 
@@ -1518,6 +1520,7 @@ function X.CanBeMidlaner(hero)
 end
 
 function X.CanBeSafeLaneCarry(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return X["hero_roles"][hero]["carry"] > 1 and
 		   ( 
 			 ( X["hero_roles"][hero]["nuker"] < 3 and X["hero_roles"][hero]["pusher"] < 3 ) or
@@ -1528,6 +1531,7 @@ function X.CanBeSafeLaneCarry(hero)
 end
 
 function X.CanBeSupport(hero)
+	if X["hero_roles"][hero] == nil then return false end;
 	return not X.IsRemovedFromSupportPoll(hero) and X["hero_roles"][hero]["support"] > 0 and
 		  ( 
 			X["hero_roles"][hero]["carry"] < 2 or 

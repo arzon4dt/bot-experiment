@@ -242,11 +242,11 @@ function ConsiderMove(hMinionUnit)
 end
 
 function ConsiderRetreat(hMinionUnit)
-	local tableNearbyAllyHeroes = hMinionUnit:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
-	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+	local tableNearbyAllyHeroes = hMinionUnit:GetNearbyHeroes( 1200, false, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 	if #tableNearbyAllyHeroes == 0 and #tableNearbyEnemyHeroes >= 2 then
 		local location = GetFountain(false)
-		return BOT_ACTION_DESIRE_LOW, location;
+		return BOT_ACTION_DESIRE_LOW, location+RandomVector(300);
 	end
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
@@ -395,10 +395,13 @@ function ConsiderWW(hMinionUnit)
 	
 	local nCastRange = abilityWW:GetCastRange();
 	local tableNearbyAllyHeroes = hMinionUnit:GetNearbyHeroes( nCastRange + 200, false, BOT_MODE_NONE );
-	for _,npcAlly in pairs( tableNearbyAllyHeroes )
-	do
-		if ( GetUnitToUnitDistance(npcAlly, hMinionUnit) < nCastRange ) 
-		then
+	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
+	
+	if ( tableNearbyEnemyHeroes == nil and #tableNearbyEnemyHeroes == 0 ) then
+		return BOT_ACTION_DESIRE_HIGH, hMinionUnit;
+	else
+		for _,npcAlly in pairs( tableNearbyAllyHeroes )
+		do
 			return BOT_ACTION_DESIRE_LOW, npcAlly;
 		end
 	end
@@ -421,8 +424,8 @@ function ConsiderSlithereenCrush(hMinionUnit)
 
 	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( nRadius-150, true, BOT_MODE_NONE );
 	
-	if ( tableNearbyAllyHeroes ~= nil and tableNearbyEnemyHeroes >= 1 ) then
-		return BOT_ACTION_DESIRE_LOW;
+	if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 ) then
+		return BOT_ACTION_DESIRE_HIGH;
 	end
 
 	return BOT_ACTION_DESIRE_NONE;

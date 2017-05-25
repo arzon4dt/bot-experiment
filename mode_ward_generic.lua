@@ -22,12 +22,10 @@ local Boots = {
 }
 
 function GetDesire()
-
-	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
-		return ( 0.0 );
-	end
 	
-	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() then
+	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or not IsSuitableToWard() 
+	   or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE 
+	then
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
@@ -39,14 +37,6 @@ function GetDesire()
 	end
 	
 	if not bot.HasWard then
-		return ( 0.0 );
-	end
-	
-	if not IsSuitableToWard(bot) then
-		return ( 0.0 );
-	end
-	
-	if bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE then
 		return ( 0.0 );
 	end
 	
@@ -83,7 +73,6 @@ function GetDesire()
 end
 
 function OnStart()
-    local bot =  GetBot();
 	MWardSpot = WardUtils.GetMandatorySpot();
 	MWardSpotTowerFall = WardUtils.GetWardSpotWhenTowerFall();
 	--print(#MWardSpotTowerFall)
@@ -112,11 +101,11 @@ function Think()
 	
 	if not bot.HasWard then return end;
 	
-	UpdateAvailableWardSpot(bot, "mandate");
-	UpdateAvailableWardSpot(bot, "tower_fall");
+	UpdateAvailableWardSpot("mandate");
+	UpdateAvailableWardSpot("tower_fall");
 	
-	local MclosestWardSpot = GetClosestWardSpot(bot, "mandate");
-	local MTFclosestWardSpot = GetClosestWardSpot(bot, "tower_fall");
+	local MclosestWardSpot = GetClosestWardSpot("mandate");
+	local MTFclosestWardSpot = GetClosestWardSpot("tower_fall");
 	
 	if MclosestWardSpot ~= nil and MTFclosestWardSpot ~= nil then
 		if GetUnitToLocationDistance(bot,  MclosestWardSpot) < GetUnitToLocationDistance(bot,  MTFclosestWardSpot) then
@@ -246,7 +235,7 @@ function IsObserver(wardUnit)
 	return string.find(wardUnit:GetUnitName(), "observer");
 end
 
-function UpdateAvailableWardSpot(bot, sType)
+function UpdateAvailableWardSpot(sType)
 	if sType == "mandate" then
 		for i = 1, #MWardSpot
 		do
@@ -267,7 +256,7 @@ function UpdateAvailableWardSpot(bot, sType)
 	
 end
 
-function GetClosestWardSpot(bot, sType)
+function GetClosestWardSpot(sType)
 	local closestSpot = nil;
 	local closestDistance = 50000;
 	if sType == "mandate" then
@@ -321,16 +310,17 @@ end
 
 
 --check if the condition is suitable for warding
-function IsSuitableToWard(npcBot)
-	local Enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
-	if ( ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
-		or npcBot:GetActiveMode() == BOT_MODE_ATTACK
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID
-		or npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT
+function IsSuitableToWard()
+	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+	local mode = bot:GetActiveMode();
+	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
+		or mode == BOT_MODE_ATTACK
+		or mode == BOT_MODE_DEFEND_ALLY
+		or mode == BOT_MODE_DEFEND_TOWER_TOP
+		or mode == BOT_MODE_DEFEND_TOWER_MID
+		or mode == BOT_MODE_DEFEND_TOWER_BOT
 		or Enemies ~= nil and #Enemies >= 2
-		or ( Enemies ~= nil and #Enemies == 1 and Enemies[1] ~= nil and IsStronger(npcBot, Enemies[1]) )
+		or ( Enemies ~= nil and #Enemies == 1 and Enemies[1] ~= nil and IsStronger(Enemies[1]) )
 		) 
 	then
 		return false;
@@ -338,14 +328,13 @@ function IsSuitableToWard(npcBot)
 	return true;
 end
 
-function IsStronger(bot, enemy)
+function IsStronger(enemy)
 	local BPower = bot:GetEstimatedDamageToTarget(true, enemy, 4.0, DAMAGE_TYPE_ALL);
 	local EPower = enemy:GetEstimatedDamageToTarget(true, bot, 4.0, DAMAGE_TYPE_ALL);
 	return EPower > BPower;
 end
 
 function SwapItemForWarding() 
-	local bot = GetBot();
 	--if bot:GetItemSlotType( bot.WardSlot ) == ITEM_SLOT_TYPE_BACKPACK then
 		local lviSlot = getLessValuableItemSlot();
 		if wdSlot ~= -1 then
@@ -356,9 +345,7 @@ function SwapItemForWarding()
 end
 
 function PutWardOnBackPack()
-	local bot = GetBot();
 	local wardSlot = bot:FindItemSlot( "item_ward_observer" );
-	
 	if wardSlot >= 0 and wardSlot <= 8 then
 		--if bot:GetActiveMode() ~= BOT_MODE_WARD and 
 		if bot:GetItemSlotType(wardSlot) == ITEM_SLOT_TYPE_MAIN  and 

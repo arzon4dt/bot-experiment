@@ -85,7 +85,7 @@ ItemModule["item_assault"] = { "item_platemail"; "item_chainmail"; "item_hyperst
 
 ItemModule["item_bfury"] = {  "item_pers"; "item_claymore"; "item_broadsword"; "item_quelling_blade" }
 
-ItemModule["item_black_king_bar"] = { "item_ogre_axe"; "item_mithril_hammer"; "item_recipe_black_king_bar" }
+ItemModule["item_black_king_bar"] = { "item_mithril_hammer"; "item_ogre_axe"; "item_recipe_black_king_bar" }
 
 ItemModule["item_blade_mail"] = { "item_robe"; "item_chainmail"; "item_broadsword" }
 

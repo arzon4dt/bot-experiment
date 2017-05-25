@@ -16,6 +16,7 @@ if build == "NOT IMPLEMENTED" then
 	return 
 end
 
+local role = require(GetScriptDirectory() .. "/RoleUtility");
 local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 local utils = require(GetScriptDirectory() ..  "/util")
 
@@ -31,11 +32,11 @@ function AbilityLevelUpThink()
 		return;
 	end
 	
-	if DotaTime() > 0 then
+	--if DotaTime() > 0 then
 		UnImplementedItemUsage()
 		UseShrine()
 		UseGlyph()
-	end
+	--end
 	
 	local botLoc = npcBot:GetLocation();
 	if npcBot:IsAlive() and not IsLocationPassable(botLoc) then
@@ -69,7 +70,12 @@ function AbilityLevelUpThink()
 				end
 			elseif string.find(npcBot:GetUnitName(), "keeper_of_the_light") and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
 				if sNextAbility:IsHidden() then 
-					npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
+					local ability = npcBot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
+					if not ability:IsHidden() then
+						npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
+					else
+						return;
+					end	
 				else
 					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
 				end			
@@ -158,35 +164,8 @@ function BuybackUsageThink()
 	
 	local team = GetTeam();
 	
-	--[[local tower_top_3 = GetTower( team, TOWER_TOP_3 );
-	local tower_mid_3 = GetTower( team, TOWER_MID_3 );
-	local tower_bot_3 = GetTower( team, TOWER_BOT_3 );
-	local tower_base_1 = GetTower( team, TOWER_BASE_1 );
-	local tower_base_2 = GetTower( team, TOWER_BASE_2 );
-
-	local barracks_top_melee = GetBarracks( team, BARRACKS_TOP_MELEE );
-	local barracks_mid_melee = GetBarracks( team, BARRACKS_MID_MELEE );
-	local barracks_bot_melee = GetBarracks( team, BARRACKS_BOT_MELEE );]]--
-
 	local ancient = GetAncient(team );
 
-	--[[local buildList = {
-		tower_top_3, tower_mid_3, tower_bot_3, tower_base_1, tower_base_2,
-		barracks_top_melee, 
-		barracks_mid_melee,
-		barracks_bot_melee, 
-		ancient
-	};]]--
-
-	--[[for _, build in pairs(buildList) 
-	do
-		if ( build ~= nil and IsThereHeroNearby(build) ) 
-		then
-			npcBot:ActionImmediate_Buyback();
-			return;
-		end
-	end]]--
-	
 	if ( ancient ~= nil and IsThereHeroNearby(ancient) ) 
 	then
 		npcBot:ActionImmediate_Buyback();
@@ -194,30 +173,29 @@ function BuybackUsageThink()
 	end
 
 end
---[[
-function ItemUsageThink()
-	print("item usage")
+
+--[[function ItemUsageThink()
+	--print(npcBot:GetUnitName().."item usage")
 	if GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
 		return;
 	end
 	
 	UnImplementedItemUsage()
 	--UseShrine()
-end
-]]--
+end]]--
+
+local courierTime = -90;
+local cState = -1;
 function CourierUsageThink()
 
-	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() then
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() or GetNumCouriers() == 0 then
 		return;
 	end
 	
-	if GetNumCouriers() == 0 then
-		return
-	end
-
 	local npcCourier = GetCourier(0);	
+	local cState = GetCourierState( npcCourier );
 
-	if GetCourierState( npcCourier ) == COURIER_STATE_DEAD then
+	if cState == COURIER_STATE_DEAD then
 		return
 	end
 	
@@ -227,35 +205,36 @@ function CourierUsageThink()
 		IdleTime = 0;
 	end
 	
-	if  not npcBot:IsAlive() and GetCourierState( npcCourier ) == COURIER_STATE_DELIVERING_ITEMS  and npcBot:GetCourierValue( ) > 0  then
-		--print(npcBot:GetUnitName().."return stash")
-		--print("Return Stash "..npcBot:GetUnitName())
+	if  not npcBot:IsAlive() and cState == COURIER_STATE_DELIVERING_ITEMS  
+		and npcBot:GetCourierValue( ) > 0 and DotaTime() > courierTime + 2.0
+	then
 		npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
+		courierTime = DotaTime();
 		return
 	end
 	
-	if  GetCourierState( npcCourier ) == COURIER_STATE_IDLE and npcCourier:DistanceFromFountain() > 00 and 
+	
+	if  cState == COURIER_STATE_IDLE and npcCourier:DistanceFromFountain() > 00 and 
 	( not IsCourierNearShop(npcCourier) or ( IsCourierNearShop(npcCourier) and DotaTime() >= IdleTime + AllowedIddle ))
 	then
-		--print("Return "..npcBot:GetUnitName())
 		npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
 		return
 	end
 	
-	if DotaTime() >= IdleTime + AllowedIddle and npcBot:IsAlive() and npcBot:GetCourierValue( ) > 0 and not IsInvFull(npcBot) and IsCourierAvailable() then
-		--print("Transfer.."..npcBot:GetUnitName())
+	if DotaTime() >= IdleTime + AllowedIddle and npcBot:IsAlive() and npcBot:GetCourierValue( ) > 0 
+	   and not IsInvFull(npcBot) and IsCourierAvailable() and DotaTime() > courierTime + 2.0
+	then
 		npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TRANSFER_ITEMS )
+		courierTime = DotaTime();
 		return
 	end
 	
-	if DotaTime() >= IdleTime + AllowedIddle and IsCourierAvailable() then
-		
+	if DotaTime() >= IdleTime + AllowedIddle and IsCourierAvailable() and DotaTime() > courierTime + 2.0 then
 		local numPlayer =  GetTeamPlayers(GetTeam());
 		local maxVal = 0;
 		local target = nil;
 		for i = 1, #numPlayer
 		do
-		--print(numPlayer[i]..tostring(IsPlayerBot(numPlayer[i])));
 			local member =  GetTeamMember(i);
 			if member ~= nil and IsPlayerBot(numPlayer[i]) and member:IsAlive() 
 			then
@@ -269,18 +248,12 @@ function CourierUsageThink()
 		
 		if target ~= nil 
 		then
-			--print("TakeNTransfer "..target:GetUnitName())
 			target:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS )
+			courierTime = DotaTime();
 			return
 		end
 		
 	end
-	
-	--[[if  npcBot:IsAlive() and npcBot:GetStashValue( ) > 200 and  CourierCanDeliverItems(npcCourier) then
-		--print(npcBot:GetUnitName().."taketransf")
-		npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS )
-		return
-	end]]--
 	
 end
 
@@ -342,6 +315,36 @@ function UseConsumables()
 
 end
 
+function GiveToMidLaner()
+	local teamPlayers = GetTeamPlayers(GetTeam())
+	local target = nil;
+	for k,v in pairs(teamPlayers)
+	do
+		local member = GetTeamMember(k);
+		if member ~= nil and not member:IsIllusion() and member:IsAlive() then
+			local num_stg = GetItemCount(member, "item_tango_single"); 
+			local num_ff = GetItemCount(member, "item_faerie_fire"); 
+			if num_ff > 0 and num_stg < 1 then
+				return member;
+			end
+		end
+	end
+	return nil;
+end
+
+function GetItemCount(unit, item_name)
+	local count = 0;
+	for i = 0, 8 
+	do
+		local item = unit:GetItemInSlot(i)
+		if item ~= nil and item:GetName() == item_name then
+			count = count + 1;
+		end
+	end
+	return count;
+end
+
+local giveTime = -90;
 function UnImplementedItemUsage()
 
 	if npcBot:IsChanneling() or npcBot:IsUsingAbility() or npcBot:IsInvisible() or npcBot:IsMuted( )  then
@@ -351,6 +354,37 @@ function UnImplementedItemUsage()
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
 	local npcTarget = npcBot:GetTarget();
 	local mode = npcBot:GetActiveMode();
+	
+	local itg=IsItemAvailable("item_tango");
+	if itg~=nil and itg:IsFullyCastable() then
+		local tCharge = itg:GetCurrentCharges()
+		if DotaTime() > -80 and DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and role.CanBeSupport(npcBot:GetUnitName())
+		   and npcBot:GetAssignedLane() ~= LANE_MID and tCharge > 2 and DotaTime() > giveTime + 2.0 then
+			local target = GiveToMidLaner()
+			if target ~= nil then
+				npcBot:ActionImmediate_Chat(string.gsub(npcBot:GetUnitName(),"npc_dota_hero_","")..
+						" giving tango to "..
+						string.gsub(target:GetUnitName(),"npc_dota_hero_","")
+						, false);
+				npcBot:Action_UseAbilityOnEntity(itg, target);
+				giveTime = DotaTime();
+				return;
+			end
+		elseif npcBot:GetActiveMode() == BOT_MODE_LANING and role.CanBeSupport(npcBot:GetUnitName()) and tCharge > 1 and DotaTime() > giveTime + 2.0 then
+			local allies = npcBot:GetNearbyHeroes(1200, false, BOT_MODE_NONE)
+			for _,ally in pairs(allies)
+			do
+				local tangoSlot = ally:FindItemSlot('item_tango');
+				if ally:GetUnitName() ~= npcBot:GetUnitName() and not ally:IsIllusion() 
+				   and tangoSlot == -1 and GetItemCount(ally, "item_tango_single") == 0 
+				then
+					npcBot:Action_UseAbilityOnEntity(itg, ally);
+					giveTime = DotaTime();
+					return
+				end
+			end
+		end
+	end
 	
 	local bdg=IsItemAvailable("item_blink");
 	if bdg~=nil and bdg:IsFullyCastable() then
@@ -419,6 +453,7 @@ function UnImplementedItemUsage()
 	if ff~=nil and ff:IsFullyCastable() then
 		if  mode == BOT_MODE_RETREAT and 
 			npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
+			npcBot:DistanceFromFountain() > 0 and
 			( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.15 
 		then
 			npcBot:Action_UseAbility(ff);

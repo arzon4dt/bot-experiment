@@ -22,7 +22,7 @@ function  MinionThink(  hMinionUnit )
 	
 	if npcBot == nil then npcBot = GetBot(); end
 	
-	if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
+	if not hMinionUnit:IsNull() and hMinionUnit ~= nil and hMinionUnit:IsAlive() then 
 		if hMinionUnit:IsIllusion() then
 		
 			if ( hMinionUnit:IsUsingAbility() or hMinionUnit:IsChanneling() ) then return end
@@ -476,7 +476,7 @@ function ConsiderMove(hMinionUnit)
 
 	local target = npcBot:GetTarget()
 	
-	if AttackDesire > 0 then
+	if AttackDesire > 0 or not npcBot:IsAlive() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	

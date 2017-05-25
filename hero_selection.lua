@@ -6,8 +6,6 @@ local requiredHeroes = {
 	'npc_dota_hero_ember_spirit',
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
-	'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_techies';
 };
 
 local UnImplementedHeroes = {
@@ -677,13 +675,12 @@ function APLaneAssignment()
                 playercount = playercount + 1
             end
         end
-
         for i=1,playercount do
             local lane = GetLane( TEAM_RADIANT,GetTeamMember( i ) )
             lanecount[lane] = lanecount[lane] - 1
             lanes[i] = lane 
         end
-
+	
         for i=(playercount + 1), 5 do
             if lanecount[LANE_MID] > 0 then
                 lanes[i] = LANE_MID
@@ -705,7 +702,6 @@ function APLaneAssignment()
                 playercount = playercount + 1
             end
         end
-
         for i=1,playercount do
             local lane = GetLane( TEAM_DIRE, GetTeamMember( i ) )
             lanecount[lane] = lanecount[lane] - 1

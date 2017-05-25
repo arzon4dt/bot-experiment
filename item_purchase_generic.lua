@@ -34,7 +34,7 @@ local buyRD = false;
 local buyHeal = false;
 local buyBottle = false;
 
-local earlyBoots = { 
+local earlyBoots = {  
 	"item_phase_boots", 
 	"item_power_treads", 
 	"item_tranquil_boots", 
@@ -42,8 +42,9 @@ local earlyBoots = {
 }
 
  local earlyGameItem = {
-	 "item_clarity", 
-	 "item_tango", 
+	 "item_clarity",
+	 "item_faerie_fire",
+	 "item_tango",  
 	 "item_flask", 
 	 "item_infused_raindrop",
 	 "item_quelling_blade", 
@@ -74,6 +75,19 @@ function ItemPurchaseThink()
 	if not invisEnemyExist then invisEnemyExist = IsInvisEnemyExist(); end
 
 	PurchaseTP();
+	
+	if DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and role.CanBeMidlaner(npcBot:GetUnitName()) and npcBot:GetAssignedLane() == LANE_MID then
+		local salve = npcBot:FindItemSlot("item_flask");
+		if salve >= 0 then
+			npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(salve));
+			table.insert(npcBot.tableItemsToBuy, 1, "item_faerie_fire")
+		end	
+		local tango = npcBot:FindItemSlot("item_tango");
+		if tango >= 0 then
+			npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(tango));
+			table.insert(npcBot.tableItemsToBuy, 1, "item_faerie_fire")
+		end	
+	end
 	
 	--Buy bottle for mid heroes
 	if DotaTime() > 0 and DotaTime() < 15 then
@@ -113,9 +127,9 @@ function ItemPurchaseThink()
 	
 	sellBoots();
 	
-	--[[if npcBot:GetActiveMode() ~= BOT_MODE_WARD then
+	if npcBot:GetActiveMode() ~= BOT_MODE_WARD then
 		SwapBoots();
-	end]]--
+	end
 	
 	if ( npcBot.tableItemsToBuy == nil or #(npcBot.tableItemsToBuy) == 0 ) then
 		npcBot:SetNextItemPurchaseValue( 0 );
@@ -205,7 +219,7 @@ function GeneralPurchase()
 end
 
 function SwapBoots()
-	
+
 	local itemSlot = -1;
 	for _,item in pairs(earlyBoots)
 	do
@@ -215,6 +229,10 @@ function SwapBoots()
 			break
 		end
 	end	
+	
+	if itemSlot == -1 and not buyBOT then
+		itemSlot = npcBot:FindItemSlot("item_boots")
+	end
 	
 	if itemSlot >= 0 and npcBot:GetItemSlotType(itemSlot) == ITEM_SLOT_TYPE_BACKPACK and not HasItem(npcBot, "item_travel_boots") and not HasItem(npcBot, "item_travel_boots_2")
 	then

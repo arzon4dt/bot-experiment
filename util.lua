@@ -414,6 +414,90 @@ function utilsModule.AreCreepsBetweenMeAndLoc(loc, lineOfSightThickness)
     return true
 end
 
+function utilsModule.ValidTarget(target)
+    if target and not target:IsNull() and target:IsAlive() then
+        return true
+    end
+    return false
+end
+
+-- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
+function utilsModule.GetFriendlyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
+    local bot = GetBot()
+    local fHeroList = {}
+
+    local fHeroes = bot:GetNearbyHeroes(1600, false, BOT_MODE_NONE)
+
+    --check if there are enemy creeps between us and location with line-of-sight thickness
+    for _, fHero in pairs(fHeroes) do
+        if utilsModule.ValidTarget(fHero) then
+            local x = fHero:GetLocation()
+            local y = bot:GetLocation()
+            local z = loc
+
+            if x ~= y then
+                local a = 1
+                local b = 1
+                local c = 0
+
+                if x.x - y.x == 0 then
+                    b = 0
+                    c = -x.x
+                else
+                    a =- (x.y - y.y)/(x.x - y.x)
+                    c =- (x.y + x.x*a)
+                end
+
+                local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+                if d <= lineOfSightThickness and
+                    GetUnitToLocationDistance(bot, loc) > (utilsModule.GetDistance(x,loc) + 50) then
+                    table.insert(fHeroList, fHero)
+                end
+            end
+        end
+    end
+    return fHeroList
+end
+
+-- CONTRIBUTOR: Function below was based off above function by Platinum_dota2
+function utilsModule.GetEnemyHeroesBetweenMeAndLoc(loc, lineOfSightThickness)
+    local bot = GetBot()
+    local fHeroList = {}
+
+     local fHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+
+    --check if there are enemy creeps between us and location with line-of-sight thickness
+    for _, fHero in pairs(fHeroes) do
+        if utilsModule.ValidTarget(fHero) then
+            local x = fHero:GetLocation()
+            local y = bot:GetLocation()
+            local z = loc
+
+            if x ~= y then
+                local a = 1
+                local b = 1
+                local c = 0
+
+                if x.x - y.x == 0 then
+                    b = 0
+                    c = -x.x
+                else
+                    a =- (x.y - y.y)/(x.x - y.x)
+                    c =- (x.y + x.x*a)
+                end
+
+                local d = math.abs((a*z.x + b*z.y + c)/math.sqrt(a*a + b*b))
+                if d <= lineOfSightThickness and
+                    GetUnitToLocationDistance(bot, loc) > (utilsModule.GetDistance(x,loc) + 50) then
+                    table.insert(fHeroList, fHero)
+                end
+            end
+        end
+    end
+    return fHeroList
+end
+
+
 -- util function for printing a table
 function utilsModule.print_r(t)--print_r ( t )  
     local print_r_cache={}
