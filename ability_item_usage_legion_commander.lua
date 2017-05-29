@@ -119,7 +119,7 @@ function ConsiderOverwhelmingOdds()
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
-
+	
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
@@ -210,6 +210,11 @@ function ConsiderPressTheAttack()
 			end
 		end
 	end
+	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM and npcBot:GetHealth() / npcBot:GetMaxHealth() < 0.55
+	then
+		return BOT_ACTION_DESIRE_LOW, npcBot;
+	end	
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then

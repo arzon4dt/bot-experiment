@@ -53,7 +53,7 @@ function GetDesire()
 			return BOT_MODE_DESIRE_HIGH;
 		elseif DotaTime() > 60 and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then	
 			return BOT_MODE_DESIRE_HIGH;
-		elseif ( minute % 2 == 1 and sec > 52 ) and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then
+		elseif DotaTime() > 60 and ( minute % 2 == 1 and sec > 52 ) and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then
 			return BOT_MODE_DESIRE_HIGH;
 		elseif r == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_RADIANT and IsTeamMustSaveRune(r)
 			and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
@@ -82,10 +82,10 @@ function Think()
 			bot:Action_PickUpRune(rune);
 			return
 		elseif DotaTime() > 60 and GetRuneStatus( rune ) == RUNE_STATUS_UNKNOWN and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then	
-			bot:Action_MoveToLocation(rLoc + RandomVector(300));
+			bot:Action_MoveToLocation(rLoc);
 			return	
-		elseif ( minute % 2 == 1 and sec > 50 ) and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc)	then
-			bot:Action_MoveToLocation(rLoc + RandomVector(300));
+		elseif DotaTime() > 60 and ( minute % 2 == 1 and sec > 50 ) and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc)	then
+			bot:Action_MoveToLocation(rLoc);
 			return
 		elseif rune == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_RADIANT and IsTeamMustSaveRune(rune)
 			and GetRuneStatus( rune ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
@@ -103,18 +103,18 @@ function Think()
 	if DotaTime() < 0 then 
 		if GetTeam() == TEAM_RADIANT then
 			if bot:GetAssignedLane() == LANE_BOT then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1) + RandomVector(300));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2) + RandomVector(300));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
 				return
 			end
 		elseif GetTeam() == TEAM_DIRE then
 			if bot:GetAssignedLane() == LANE_TOP then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3) + RandomVector(300));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4) + RandomVector(300));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
 				return
 			end
 		end

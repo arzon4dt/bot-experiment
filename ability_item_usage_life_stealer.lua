@@ -123,8 +123,9 @@ function ConsiderRage()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) 
 		then
+			local tDist =  GetUnitToUnitDistance( npcBot, npcTarget );
 			local eHeroesCastSpell = false;
-			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
+			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 600, true, BOT_MODE_NONE );
 			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 			do
 				if ( npcEnemy:IsUsingAbility() ) 
@@ -132,7 +133,7 @@ function ConsiderRage()
 					eHeroesCastSpell = true;
 				end
 			end
-			if ( GetUnitToUnitDistance( npcBot, npcTarget ) < 400 or eHeroesCastSpell or npcTarget:IsUsingAbility() )
+			if ( tDist < 300 or ( tDist < 500 and ( eHeroesCastSpell or npcTarget:IsUsingAbility() ) ) )
 			then
 				return BOT_ACTION_DESIRE_ABSOLUTE;
 			end

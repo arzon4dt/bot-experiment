@@ -229,6 +229,14 @@ function ConsiderStaticStorm()
 		end
 	end
 	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local creeps = npcBot:GetNearbyCreeps( 350, true );
+		if #creeps >= 3 and creeps[1] ~= nil then
+			return BOT_ACTION_DESIRE_LOW, creeps[1]:GetLocation();
+		end
+	end	
+	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
@@ -300,6 +308,14 @@ function ConsiderFleshGolem()
 			end
 		end
 	end
+	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end	
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then

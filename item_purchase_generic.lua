@@ -42,6 +42,7 @@ local earlyBoots = {
 }
 
  local earlyGameItem = {
+	 "item_tango_single",
 	 "item_clarity",
 	 "item_faerie_fire",
 	 "item_tango",  
@@ -49,6 +50,7 @@ local earlyBoots = {
 	 "item_infused_raindrop",
 	 "item_quelling_blade", 
 	 "item_stout_shield", 
+	 "item_iron_talon",
 	 "item_poor_mans_shield",
 	 "item_magic_wand",
 	 "item_bottle",  
@@ -289,6 +291,7 @@ function getMostValuableBPSlot()
 end
 
 function SellEarlyGameItem()
+
 	if ( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 ) and DotaTime() > 25*60 and GetEmptySlotAmount() < 3 then
 		for _,item in pairs(earlyGameItem)
 		do

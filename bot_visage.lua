@@ -1,13 +1,11 @@
 local utils = require(GetScriptDirectory() ..  "/util")
-local npcBot = nil;
+local npcBot = GetBot();
 local castSFDesire = 0;
 local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 0;
-local ProxRange = 900;
+local ProxRange = 1200;
 function  MinionThink(  hMinionUnit ) 
-
-if npcBot == nil then npcBot = GetBot(); end
 
 if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
 	if string.find(hMinionUnit:GetUnitName(), "npc_dota_visage_familiar") then
@@ -60,6 +58,16 @@ function IsDisabled(npcTarget)
 	return false;
 end
 
+function GetBase()
+	local RB = Vector(-7200,-6666)
+	local DB = Vector(7137,6548)
+	if GetTeam( ) == TEAM_DIRE then
+		return DB;
+	elseif GetTeam( ) == TEAM_RADIANT then
+		return RB;
+	end
+end
+
 function ConsiderStoneForm(hMinionUnit)
 	
 	if not abilitySF:IsFullyCastable() or 
@@ -110,94 +118,13 @@ function ConsiderAttacking(hMinionUnit)
 		return BOT_ACTION_DESIRE_NONE, {};
 	end	
 	
-	local target = npcBot:GetTarget();
+	local target = npcBot:GetAttackTarget();
 	local AR = hMinionUnit:GetAttackRange();
 	local OAR = npcBot:GetAttackRange();
 	local AD = hMinionUnit:GetAttackDamage();
 	
-	if target ~= nil and CanBeAttacked(target) and GetUnitToUnitDistance(target, npcBot) <= OAR and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
-		--[[if target:IsTower() and GetUnitToUnitDistance(target, npcBot) > 700 then
-			return BOT_ACTION_DESIRE_NONE, {};
-		end]]--
-		return BOT_ACTION_DESIRE_MODERATE, target;
-	else
-		if hMinionUnit:WasRecentlyDamagedByTower( 2.0 ) then
-			local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(800, false);
-			if NearbyLaneCreeps[1] ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, NearbyLaneCreeps[1];
-			end
-		end
-		if npcBot:GetActiveMode() == BOT_MODE_LANING and GetUnitToUnitDistance(npcBot, hMinionUnit) < ProxRange then
-			local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(1000, true);
-			local TCreep = nil;
-			for _,creep in pairs(NearbyLaneCreeps)
-			do
-				local CHealth = creep:GetHealth();
-				if CHealth < 4*AD then
-					TCreep = creep;
-				end
-			end
-			if TCreep ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, TCreep;
-			end
-		elseif ( (npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-				 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-				 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange 
-				 ) 
-		then
-			local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(1000, true);
-			local TCreep = nil;
-			local MinHealth = 10000;
-			for _,creep in pairs(NearbyLaneCreeps)
-			do
-				local CHealth = creep:GetHealth();
-				if CHealth < MinHealth then
-					TCreep = creep;
-					MinHealth = CHealth;
-				end
-			end
-			if TCreep ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, TCreep;
-			end
-		elseif (npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-				 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-				 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange
-		then
-			local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-			if tableNearbyEnemyHeroes == nil then
-				local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(1000, true);
-				local TCreep = nil;
-				local MinHealth = 10000;
-				for _,creep in pairs(NearbyLaneCreeps)
-				do
-					local CHealth = creep:GetHealth();
-					if CHealth < MinHealth then
-						TCreep = creep;
-						MinHealth = CHealth;
-					end
-				end
-				if TCreep ~= nil then
-					return BOT_ACTION_DESIRE_MODERATE, TCreep;
-				end
-			end
-		elseif 	npcBot:GetActiveMode() == BOT_MODE_FARM  and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange
-		then
-			local NearbyCreeps = hMinionUnit:GetNearbyCreeps(1000, true);
-			local TCreep = nil;
-			local MinHealth = 10000;
-			for _,creep in pairs(NearbyCreeps)
-			do
-				local CHealth = creep:GetHealth();
-				if CHealth < MinHealth then
-					TCreep = creep;
-					MinHealth = CHealth;
-				end
-			end
-			if TCreep ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, TCreep;
-			end
-		end
-		
+	if target ~= nil and CanBeAttacked(target) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
+		return BOT_ACTION_DESIRE_MODERATE, target;	
 	end
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
@@ -209,14 +136,10 @@ function ConsiderMove(hMinionUnit)
 		return BOT_ACTION_DESIRE_NONE, {};
 	end	
 	
-	local target = npcBot:GetTarget()
-	
-	if AttackDesire > 0 then
-		return BOT_ACTION_DESIRE_NONE, 0;
-	end
+	local target = npcBot:GetAttackTarget()
 	
 	if target == nil or ( target ~= nil and not CanBeAttacked(target) ) or (target ~= nil and GetUnitToUnitDistance(target, npcBot) > ProxRange) then
-		return BOT_ACTION_DESIRE_MODERATE, npcBot:GetLocation();
+		return BOT_ACTION_DESIRE_MODERATE, npcBot:GetXUnitsTowardsLocation(GetAncient(GetOpposingTeam()):GetLocation(), 200);
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -225,21 +148,14 @@ end
 
 function ConsiderRetreat(hMinionUnit)
 	
-	if hMinionUnit:HasModifier("modifier_visage_summon_familiars_stone_form_buff") 	or hMinionUnit:DistanceFromFountain() == 0 
+	if hMinionUnit:HasModifier("modifier_visage_summon_familiars_stone_form_buff") or hMinionUnit:DistanceFromFountain() == 0 
 	then
 		return BOT_ACTION_DESIRE_NONE, {};
 	end	
-	
-	local RB = Vector(-7200,-6666)
-	local DB = Vector(7137,6548)
 
 	if not npcBot:IsAlive() then
-		if GetTeam( ) == TEAM_DIRE then
-			location = DB;
-		elseif GetTeam( ) == TEAM_RADIANT then
-			location = RB;
-		end
-		return BOT_ACTION_DESIRE_LOW, location;
+		local loc = GetBase()
+		return BOT_ACTION_DESIRE_HIGH, loc;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;

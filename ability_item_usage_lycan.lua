@@ -91,6 +91,14 @@ function ConsiderDarkPact()
 		end
 	end
 	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end	
+	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
@@ -133,6 +141,14 @@ function ConsiderPounce()
 			return BOT_ACTION_DESIRE_LOW;
 		end
 	end
+	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end	
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then

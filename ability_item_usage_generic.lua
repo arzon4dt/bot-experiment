@@ -416,6 +416,39 @@ function UnImplementedItemUsage()
 		end
 	end
 	
+	local its=IsItemAvailable("item_tango_single");
+	if its~=nil and its:IsFullyCastable() then
+		if  DotaTime() > 10*60 
+		then
+			local trees = npcBot:GetNearbyTrees(1200);
+			if trees[1] ~= nil then
+				npcBot:Action_UseAbilityOnTree(its, trees[1]);
+				return;
+			end
+		end
+	end
+	
+	local irt=IsItemAvailable("item_iron_talon");
+	if irt~=nil and irt:IsFullyCastable() then
+		if npcBot:GetActiveMode() == BOT_MODE_FARM 
+		then
+			local neutrals = npcBot:GetNearbyNeutralCreeps(600);
+			local maxHP = 0;
+			local target = nil;
+			for _,c in pairs(neutrals) do
+				local cHP = c:GetHealth();
+				if cHP > maxHP and not c:IsAncientCreep() then
+					maxHP = cHP;
+					target = c;
+				end
+			end
+			if target ~= nil then
+				npcBot:Action_UseAbilityOnEntity(irt, target);
+				return;
+			end
+		end
+	end
+	
 	local msh=IsItemAvailable("item_moon_shard");
 	if msh~=nil and msh:IsFullyCastable() then
 		if not npcBot:HasModifier("modifier_item_moon_shard_consumed")
@@ -451,10 +484,10 @@ function UnImplementedItemUsage()
 	
 	local ff=IsItemAvailable("item_faerie_fire");
 	if ff~=nil and ff:IsFullyCastable() then
-		if  mode == BOT_MODE_RETREAT and 
+		if ( mode == BOT_MODE_RETREAT and 
 			npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
 			npcBot:DistanceFromFountain() > 0 and
-			( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.15 
+			( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.15 ) or DotaTime() > 10*60
 		then
 			npcBot:Action_UseAbility(ff);
 			return;

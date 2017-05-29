@@ -88,6 +88,14 @@ function ConsiderInnerVitality()
 			return BOT_ACTION_DESIRE_HIGH, npcBot;
 		end
 	end
+	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil then
+			return BOT_ACTION_DESIRE_LOW, npcBot;
+		end
+	end	
 
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot) and npcBot:GetHealth() / npcBot:GetMaxHealth() < 0.65

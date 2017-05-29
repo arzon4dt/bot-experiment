@@ -70,7 +70,7 @@ function ConsiderQ()
 	local nCastRange = abilityQ:GetCastRange();
 	local nCastPoint = abilityQ:GetCastPoint( );
 	local nManaCost  = abilityQ:GetManaCost( );
-	local nDamage    = ( abilityQ:GetSpecialValueInt( 'damage_increase_pct' ) / 100 ) * npcBot:GetAttackDamage();
+	local nDamage    = npcBot:GetAttackDamage()+ (( abilityQ:GetSpecialValueInt( 'damage_increase_pct' ) / 100 ) * npcBot:GetAttackDamage());
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_LANING  ) 
 	     and not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage')
@@ -94,7 +94,7 @@ function ConsiderQ()
 	if  npcBot:GetActiveMode() == BOT_MODE_FARM 
 	    and not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage')
 	then
-		local tableNearbyCreeps  = npcBot:GetNearbyNeutralCreeps( 1000 );
+		local tableNearbyCreeps  = npcBot:GetNearbyCreeps( 1000, true );
 		for _,ECreep in pairs(tableNearbyCreeps)
 		do
 			if mutil.CanKillTarget(ECreep, nDamage, DAMAGE_TYPE_PHYSICAL) then

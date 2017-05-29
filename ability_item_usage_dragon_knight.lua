@@ -85,6 +85,14 @@ function ConsiderQ()
 		end
 	end
 	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil then
+			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
+		end
+	end	
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then

@@ -171,9 +171,17 @@ function ConsiderSlithereenCrush()
 		local npcTarget = npcBot:GetAttackTarget();
 		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)  )
 		then
-			return BOT_ACTION_DESIRE_LOW, npcTarget;
+			return BOT_ACTION_DESIRE_LOW;
 		end
 	end
+	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end	
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
@@ -267,6 +275,14 @@ function ConsiderTempestDouble()
 			end
 		end
 	end
+	
+	if npcBot:GetActiveMode() == BOT_MODE_FARM 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end	
 	
 	--------------------------------------
 	-- Global high-priorty usage

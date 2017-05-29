@@ -73,7 +73,7 @@ ItemModule["basic_items"] = {
 
 ItemModule["item_abyssal_blade"] = { "item_skull_basher"; "item_vanguard"; "item_recipe_abyssal_blade" }
 
-ItemModule["item_aether_lens"] = { "item_void_stone"; "item_energy_booster"; "item_recipe_aether_lens" }
+ItemModule["item_aether_lens"] = { "item_energy_booster"; "item_void_stone"; "item_recipe_aether_lens" }
 
 ItemModule["item_ultimate_scepter"] = { "item_point_booster"; "item_staff_of_wizardry"; "item_blade_of_alacrity"; "item_ogre_axe" }
 
@@ -137,7 +137,7 @@ ItemModule["item_cyclone"] = { "item_wind_lace"; "item_void_stone"; "item_staff_
 
 ItemModule["item_eye_of_skadi"] = { "item_point_booster"; "item_ultimate_orb"; "item_ultimate_orb"; "item_orb_of_venom" }
 
-ItemModule["item_force_staff"] = { "item_ring_of_health"; "item_staff_of_wizardry"; "item_recipe_force_staff" }
+ItemModule["item_force_staff"] = { "item_staff_of_wizardry"; "item_ring_of_health"; "item_recipe_force_staff" }
 
 ItemModule["item_glimmer_cape"] = { "item_cloak"; "item_shadow_amulet" }
 
