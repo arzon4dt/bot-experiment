@@ -10,17 +10,9 @@ function  MinionThink(  hMinionUnit )
 			local abilityOO = hMinionUnit:GetAbilityByName( "techies_remote_mines_self_detonate" ); 
 			
 			local nRadius = abilityOO:GetSpecialValueInt( "radius" );
-			local numHeroes = 0;
 			local nearbyHeroes = hMinionUnit:GetNearbyHeroes(nRadius - 100, true, BOT_MODE_NONE) 
-			
-			for _,h in pairs (nearbyHeroes)
-			do
-				if h:IsHero() then
-					numHeroes = numHeroes + 1;
-				end
-			end
-			
-			if numHeroes >= 1 then
+		
+			if nearbyHeroes ~= nil and #nearbyHeroes >= 1 then
 				hMinionUnit:Action_UseAbility(abilityOO)
 				return
 			end

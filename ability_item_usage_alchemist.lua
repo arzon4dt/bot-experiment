@@ -231,9 +231,9 @@ function ConsiderStaticStorm()
 	
 	if npcBot:GetActiveMode() == BOT_MODE_FARM 
 	then
-		local creeps = npcBot:GetNearbyCreeps( 350, true );
-		if #creeps >= 3 and creeps[1] ~= nil then
-			return BOT_ACTION_DESIRE_LOW, creeps[1]:GetLocation();
+		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), 400, 300, 0, 0 );
+		if  locationAoE.count >= 3 then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end	
 	

@@ -26,7 +26,7 @@ X["items"] = {
 	"item_manta",
 	"item_octarine_core",
 	"item_shivas_guard",
-	"item_heart"
+	"item_assault"
 };
 
 X["skills"] = IBUtil.GetBuildPattern(

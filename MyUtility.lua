@@ -16,15 +16,23 @@ function U.IsRetreating(npcBot)
 end
 
 function U.IsValidTarget(npcTarget)
-	return npcTarget ~= nil and npcTarget:IsAlive() and not npcTarget:IsIllusion() and npcTarget:IsHero(); 
+	return npcTarget ~= nil and npcTarget:IsAlive() and npcTarget:IsHero(); 
+end
+
+function IsSuspiciousIllusion(npcTarget)
+	if npcTarget:IsIllusion() then
+		return true;
+	else	
+		return false;
+	end
 end
 
 function U.CanCastOnMagicImmune(npcTarget)
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable();
+	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable() and not IsSuspiciousIllusion(npcTarget);
 end
 
 function U.CanCastOnNonMagicImmune(npcTarget)
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable();
+	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable() and not IsSuspiciousIllusion(npcTarget);
 end
 
 function U.CanCastOnTargetAdvanced( npcTarget )

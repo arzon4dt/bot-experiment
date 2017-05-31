@@ -5,11 +5,7 @@ local DIRE_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET2 )
 
 function GetDesire()
 	
-	if npcBot:IsIllusion() then
-		return BOT_MODE_DESIRE_NONE;
-	end
-	
-	if string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() then
+	if npcBot:IsChanneling() or npcBot:IsIllusion() or (string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable()) then
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
