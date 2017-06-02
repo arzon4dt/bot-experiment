@@ -19,7 +19,7 @@ function U.IsValidTarget(npcTarget)
 	return npcTarget ~= nil and npcTarget:IsAlive() and npcTarget:IsHero(); 
 end
 
-function IsSuspiciousIllusion(npcTarget)
+function U.IsSuspiciousIllusion(npcTarget)
 	if npcTarget:IsIllusion() then
 		return true;
 	else	
@@ -28,11 +28,11 @@ function IsSuspiciousIllusion(npcTarget)
 end
 
 function U.CanCastOnMagicImmune(npcTarget)
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable() and not IsSuspiciousIllusion(npcTarget);
+	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable() and not U.IsSuspiciousIllusion(npcTarget);
 end
 
 function U.CanCastOnNonMagicImmune(npcTarget)
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable() and not IsSuspiciousIllusion(npcTarget);
+	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable() and not U.IsSuspiciousIllusion(npcTarget);
 end
 
 function U.CanCastOnTargetAdvanced( npcTarget )
@@ -68,10 +68,15 @@ end
 function U.IsDisabled(enemy, npcTarget)
 	if enemy 
 	then
-		return npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) or npcTarget:IsNightmared(); 
+		return npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) or npcTarget:IsNightmared() or U.IsTaunted(npcTarget); 
 	else
-		return npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) or npcTarget:IsNightmared() or npcTarget:IsSilenced( );
+		return npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) or npcTarget:IsNightmared() or npcTarget:IsSilenced( ) or U.IsTaunted(npcTarget);
 	end
+end
+
+function U.IsTaunted(npcTarget)
+	return npcTarget:HasModifier("modifier_axe_berserkers_call") or npcTarget:HasModifier("modifier_legion_commander_duel") 
+	    or npcTarget:HasModifier("modifier_winter_wyvern_winters_curse");
 end
 
 function U.IsInRange(npcTarget, npcBot, nCastRange)

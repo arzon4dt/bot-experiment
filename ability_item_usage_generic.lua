@@ -459,13 +459,13 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	local arm=IsItemAvailable("item_armlet");
+	--[[local arm=IsItemAvailable("item_armlet");
 	if arm~=nil and arm:IsFullyCastable() then
 		if #tableNearbyEnemyHeroes == 0 and arm:GetToggleState( ) then
 			npcBot:Action_UseAbility(arm);
 			return;
 		end
-	end
+	end]]--
 	
 	local mg=IsItemAvailable("item_enchanted_mango");
 	if mg~=nil and mg:IsFullyCastable() then

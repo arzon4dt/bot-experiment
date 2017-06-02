@@ -638,6 +638,9 @@ end
 if DotaTime() < 0 then
 	table.insert(npcBot.tableItemsToBuy , "item_tango");
 	table.insert(npcBot.tableItemsToBuy , "item_flask");
+	if role.IsSupport(npcBot:GetUnitName()) then
+		table.insert(npcBot.tableItemsToBuy , "item_clarity");
+	end
 end
 for _,it in pairs(purchase["items"])
 do	
