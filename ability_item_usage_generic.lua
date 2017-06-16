@@ -432,7 +432,7 @@ function UnImplementedItemUsage()
 	if irt~=nil and irt:IsFullyCastable() then
 		if npcBot:GetActiveMode() == BOT_MODE_FARM 
 		then
-			local neutrals = npcBot:GetNearbyNeutralCreeps(600);
+			local neutrals = npcBot:GetNearbyNeutralCreeps(500);
 			local maxHP = 0;
 			local target = nil;
 			for _,c in pairs(neutrals) do

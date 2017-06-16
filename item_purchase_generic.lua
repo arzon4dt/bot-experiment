@@ -8,7 +8,7 @@ end
 
 local purchase ="NOT IMPLEMENTED";
 
-if string.find(GetBot():GetUnitName(), "hero") and not GetBot():IsIllusion() then
+if string.find(GetBot():GetUnitName(), "hero") and not GetBot():IsIllusion() and not GetBot():IsMinion() then
     purchase = require(GetScriptDirectory() .. "/builds/item_build_" .. string.gsub(GetBot():GetUnitName(), "npc_dota_hero_", ""))
 end
 

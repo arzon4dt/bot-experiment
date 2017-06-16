@@ -269,7 +269,7 @@ function ConsiderShadowDance()
 		local npcTarget = npcBot:GetTarget();
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, false, BOT_MODE_NONE );
 		if  mutil.IsValidTarget(npcTarget) and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 and 
-			not mutil.IsInRange(npcTarget, npcBot, 1000) and  mutil.IsInRange(npcTarget, npcBot, 2000) 
+			not mutil.IsInRange(npcTarget, npcBot, 1600) and mutil.IsInRange(npcTarget, npcBot, 2500) 
 		then
 			return BOT_ACTION_DESIRE_HIGH;
 		end

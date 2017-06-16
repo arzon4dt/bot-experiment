@@ -6,6 +6,8 @@ local requiredHeroes = {
 	'npc_dota_hero_ember_spirit',
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
+	--'npc_dota_hero_alchemist';
+	--'npc_dota_hero_alchemist';
 	'npc_dota_hero_alchemist';
 	'npc_dota_hero_life_stealer';
 };
@@ -24,7 +26,7 @@ end]]--
 -- quickMode eliminates the 30s delay before picks begin
 -- it also eliminates the delay between bot picks
 local quickMode = false;
-local testMode =  true;
+local testMode =  false;
 
 local allBotHeroes = {
 	'npc_dota_hero_ember_spirit',

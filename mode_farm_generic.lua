@@ -11,11 +11,27 @@ local LaneCreeps = {};
 local numCamp = 18;
 local farmState = 0;
 local teamPlayers = nil;
+local lanes = {LANE_TOP, LANE_MID, LANE_BOT}
 
 function GetDesire()
 	
 	if teamPlayers == nil then teamPlayers = GetTeamPlayers(GetTeam()) end
 	
+	
+	--[[for _,l in pairs(lanes)
+	do
+		local tFA = GetLaneFrontAmount( team, l, true )
+		local eFA = GetLaneFrontAmount( GetOpposingTeam(), l, true )
+		if tFA + eFA >= 0.9 then
+			print(tostring(l)..":"..tostring(tFA).."><"..tostring(eFA))
+		end
+	end]]--
+	
+	
+	--[[if team == TEAM_RADIANT and string.find(bot:GetUnitName(), "bloodseeker") then
+		local fLoc = GetLocationAlongLane( lane, GetLaneFrontAmount( GetOpposingTeam(), lane, true ) )
+		bot:ActionImmediate_Ping(fLoc.x, fLoc.y, true)	
+	end]]--
 	--[[for k,v in pairs(teamPlayers)
 	do
 		local member = GetTeamMember(k);
@@ -49,6 +65,7 @@ function GetDesire()
 	   or ( DotaTime() > 30 and  sec > 0 and sec < 1 ) ) 
 	then
 		RefreshCamp();
+		
 		--print("Refresh Camp "..bot:GetUnitName()..":"..tostring(#AvailableCamp))
 	end
 
@@ -98,20 +115,37 @@ function OnEnd()
 	farmState = 0;
 end
 
-function NotEnemyOrAncientCamp(camp)
-	if team == TEAM_RADIANT then
-		return camp.name == "basic_enemy_7" or not string.find(camp.name, "ancient") and not string.find(camp.name, "enemy");  
-	else
-		return camp.name ~= "basic_7" and not string.find(camp.name, "ancient") and not string.find(camp.name, "enemy")  
-	end
+function IsEnemyCamp(camp)
+	return camp.team ~= team;
+end
+
+function IsAncientCamp(camp)
+	return camp.type == "ancient";
+end
+
+function IsSmallCamp(camp)
+	return camp.type == "small";
+end
+
+function IsMediumCamp(camp)
+	return camp.type == "medium";
+end
+
+function IsLargeCamp(camp)
+	return camp.type == "large";
 end
 
 function RefreshCamp()
 	local camps = GetNeutralSpawners();
 	AvailableCamp = {};
 	for k,camp in pairs(camps) do
-		if bot:GetLevel() < 10 then
-			if NotEnemyOrAncientCamp(camp)
+		if bot:GetLevel() <= 6 then
+			if not IsEnemyCamp(camp) and not IsLargeCamp(camp) and not IsAncientCamp(camp)
+			then
+				table.insert(AvailableCamp, {idx=k, cattr=camp});
+			end
+		elseif bot:GetLevel() <= 10 then
+			if not IsEnemyCamp(camp) and not IsAncientCamp(camp)
 			then
 				table.insert(AvailableCamp, {idx=k, cattr=camp});
 			end
@@ -119,7 +153,7 @@ function RefreshCamp()
 			table.insert(AvailableCamp, {idx=k, cattr=camp});
 		end
 	end
-	--print(tostring(team)..tostring(#AvailableCamp))
+	print(tostring(team)..tostring(#AvailableCamp))
 	numCamp = #AvailableCamp;
 end
 
@@ -139,8 +173,8 @@ function Think()
 		
 	if preferedCamp ~= nil then
 		local cDist = GetUnitToLocationDistance(bot, preferedCamp.cattr.location);
-		local stackMove = campUtils.GetCampMoveToStack(team, preferedCamp.idx);
-		local stackTime =  campUtils.GetCampStackTime(team, preferedCamp.idx);
+		local stackMove = campUtils.GetCampMoveToStack(preferedCamp.idx);
+		local stackTime =  campUtils.GetCampStackTime(preferedCamp.idx);
 		if cDist > 300 and farmState == 0 then
 			bot:Action_MoveToLocation(preferedCamp.cattr.location);
 			return
@@ -196,7 +230,7 @@ function FindFarmedTarget(Creeps)
 	for _,creep in pairs(Creeps)
 	do
 		local hp = creep:GetHealth(); 
-		if hp < minHP then
+		if creep:IsAlive() and hp < minHP then
 			minHP = hp;
 			target = creep;
 		end

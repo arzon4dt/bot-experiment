@@ -9,9 +9,9 @@ X["items"] = {
 	"item_poor_mans_shield",
 	"item_magic_wand",
 	"item_power_treads_str",
-	"item_maelstrom",
+	"item_armlet",
 	"item_blink",
-	"item_mjollnir",
+	--"item_mjollnir",
 	"item_abyssal_blade",
 	"item_assault",
 	"item_monkey_king_bar"

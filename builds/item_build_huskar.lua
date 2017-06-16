@@ -9,11 +9,11 @@ X["items"] = {
 	"item_poor_mans_shield",
 	"item_magic_wand",
 	"item_power_treads_str",
+	"item_armlet",
 	"item_dragon_lance",
 	"item_heavens_halberd",
 	"item_assault",
 	"item_hurricane_pike",
-	"item_ultimate_scepter",
 	"item_satanic"
 };			
 

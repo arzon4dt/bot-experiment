@@ -239,10 +239,10 @@ function U.IsStuck(npcBot)
 		local attackTarget = npcBot:GetAttackTarget();
 		local EAd = GetUnitToUnitDistance(npcBot, GetAncient(GetOpposingTeam()));
 		local TAd = GetUnitToUnitDistance(npcBot, GetAncient(GetTeam()));
-		local Et = npcBot:GetNearbyTowers(200, true);
-		local At = npcBot:GetNearbyTowers(200, false);
-		if npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and attackTarget == nil and EAd > 2200 and TAd > 2200 and ( Et == nil or #Et == 0 ) and ( At == nil or #At == 0 ) 
-		   and DotaTime() > npcBot.stuckTime + 5.0 and GetUnitToLocationDistance(npcBot, npcBot.stuckLoc) < 25     
+		local Et = npcBot:GetNearbyTowers(450, true);
+		local At = npcBot:GetNearbyTowers(450, false);
+		if npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and attackTarget == nil and EAd > 2200 and TAd > 2200 and #Et == 0 and #At == 0  
+		   and DotaTime() > npcBot.stuckTime + 5.0 and GetUnitToLocationDistance(npcBot, npcBot.stuckLoc) < 25    
 		then
 			print(npcBot:GetUnitName().." is stuck")
 			return true;
