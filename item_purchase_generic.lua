@@ -65,7 +65,7 @@ function ItemPurchaseThink()
 		
 	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS 
 		or npcBot:IsIllusion() 
-		or( string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() )
+		or ( npcBot:GetUnitName() == "npc_dota_hero_monkey_king" and npcBot:IsInvulnerable() )
 		or npcBot:HasModifier("modifier_arc_warden_tempest_double")
 		or IsMeepoClone()
 	then

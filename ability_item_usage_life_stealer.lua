@@ -108,6 +108,15 @@ function ConsiderRage()
 		end
 	end
 
+	if ( npcBot:GetActiveMode() == BOT_MODE_FARM and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.65  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil 
+		then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end
+	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
@@ -169,6 +178,15 @@ function ConsiderOpenWounds()
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 			end
+		end
+	end
+	
+	if ( npcBot:GetActiveMode() == BOT_MODE_FARM and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.65  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if npcTarget ~= nil and not npcTarget:IsAncientCreep() 
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
 		end
 	end
 	
@@ -254,14 +272,14 @@ function ConsiderInfest()
 			local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps ( 800, true );
 		for _,npcACreep in pairs( tableNearbyAlliedCreeps  )
 		do
-			if mutil.CanCastOnNonMagicImmune(npcACreep) and mutil.IsInRange(npcACreep, npcBot, 3*nCastRange)
+			if mutil.CanCastOnNonMagicImmune(npcACreep) and mutil.IsInRange(npcACreep, npcTarget, nRadius-200)
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcACreep;
 			end
 		end
 		for _,npcECreep in pairs( tableNearbyEnemyCreeps  )
 		do
-			if mutil.CanCastOnNonMagicImmune(npcECreep) and mutil.IsInRange(npcECreep, npcBot, 3*nCastRange)
+			if mutil.CanCastOnNonMagicImmune(npcECreep) and mutil.IsInRange(npcECreep, npcTarget, nRadius-200)
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcECreep;
 			end

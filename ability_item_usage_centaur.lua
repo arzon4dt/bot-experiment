@@ -83,7 +83,7 @@ function ConsiderHoofStomp()
 	-- If a mode has set a target, and we can kill them, do it
 	local npcTarget = npcBot:GetTarget();
 	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and 
-	   mutil.IsInRange(npcTarget, npcBot, nRadius + 50) 
+	   mutil.IsInRange(npcTarget, npcBot, nRadius - 100) 
 	then   
 		return BOT_ACTION_DESIRE_MODERATE;
 	end
@@ -113,8 +113,8 @@ function ConsiderHoofStomp()
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and 
-	       mutil.IsInRange(npcTarget, npcBot, nRadius + 50) and not mutil.IsDisabled(true, npcTarget)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and 
+	       mutil.IsInRange(npcTarget, npcBot, nRadius - 100) and not mutil.IsDisabled(true, npcTarget)
 		then   
 			return BOT_ACTION_DESIRE_HIGH;
 		end

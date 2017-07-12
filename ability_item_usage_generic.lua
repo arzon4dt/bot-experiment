@@ -39,7 +39,7 @@ function AbilityLevelUpThink()
 	--end
 	
 	local botLoc = npcBot:GetLocation();
-	if npcBot:IsAlive() and not IsLocationPassable(botLoc) then
+	if npcBot:IsAlive() and npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and not IsLocationPassable(botLoc) then
 		if npcBot.stuckLoc == nil then
 			npcBot.stuckLoc = botLoc
 			npcBot.stuckTime = DotaTime();
@@ -61,14 +61,14 @@ function AbilityLevelUpThink()
 		local sNextAbility = npcBot:GetAbilityByName(BotAbilityPriority[1])
 		if ( sNextAbility ~= nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel() ) 
 		then
-			if string.find(npcBot:GetUnitName(), "troll_warlord") and BotAbilityPriority[1] == "troll_warlord_whirling_axes_ranged" 
+			if npcBot:GetUnitName() == "npc_dota_hero_troll_warlord" and BotAbilityPriority[1] == "troll_warlord_whirling_axes_ranged" 
 			then
 				if sNextAbility:IsHidden() then
 					npcBot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
 				else
 					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
 				end
-			elseif string.find(npcBot:GetUnitName(), "keeper_of_the_light") and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
+			elseif npcBot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
 				if sNextAbility:IsHidden() then 
 					local ability = npcBot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
 					if not ability:IsHidden() then
@@ -417,8 +417,8 @@ function UnImplementedItemUsage()
 	end
 	
 	local its=IsItemAvailable("item_tango_single");
-	if its~=nil and its:IsFullyCastable() then
-		if  DotaTime() > 10*60 
+	if its~=nil and its:IsFullyCastable() and its:GetCooldownTimeRemaining() == 0 then
+		if DotaTime() > 10*60 
 		then
 			local trees = npcBot:GetNearbyTrees(1200);
 			if trees[1] ~= nil then
@@ -461,10 +461,19 @@ function UnImplementedItemUsage()
 	
 	--[[local arm=IsItemAvailable("item_armlet");
 	if arm~=nil and arm:IsFullyCastable() then
-		if #tableNearbyEnemyHeroes == 0 and arm:GetToggleState( ) then
-			npcBot:Action_UseAbility(arm);
-			return;
-		end
+		if npcBot:GetActiveMode() == BOT_MODE_FARM 
+		then
+			local creeps = npcBot:GetNearbyCreeps(400, true);
+			if creeps ~= nil and #creeps > 0 and not arm:GetToggleState( ) then
+				print("active")
+				npcBot:Action_UseAbility(arm);
+				return;
+			elseif ( creeps == nil or #creeps == 0 ) and arm:GetToggleState( ) then
+				print("deactive")
+				npcBot:Action_UseAbility(arm);
+				return;
+			end
+		end	
 	end]]--
 	
 	local mg=IsItemAvailable("item_enchanted_mango");
@@ -797,7 +806,7 @@ function UseGlyph()
 	for _,t in pairs(T1)
 	do
 		local tower = GetTower(GetTeam(), t);
-		if  tower ~= nil and tower:GetHealth() > 0 and tower:GetHealth()/tower:GetMaxHealth() < 0.20  
+		if  tower ~= nil and tower:GetHealth() > 0 and tower:GetHealth()/tower:GetMaxHealth() < 0.15 and tower:GetAttackTarget() ~=  nil
 		then
 			npcBot:ActionImmediate_Glyph( )
 			return

@@ -81,7 +81,7 @@ ItemModule["item_arcane_boots"] = { "item_boots"; "item_energy_booster"}
 
 ItemModule["item_armlet"] = { "item_helm_of_iron_will"; "item_gloves"; "item_blades_of_attack"; "item_recipe_armlet" }
 
-ItemModule["item_assault"] = { "item_platemail"; "item_chainmail"; "item_hyperstone"; "item_recipe_assault" }
+ItemModule["item_assault"] = { "item_platemail"; "item_hyperstone"; "item_chainmail"; "item_recipe_assault" }
 
 ItemModule["item_bfury"] = {  "item_pers"; "item_claymore"; "item_broadsword"; "item_quelling_blade" }
 

@@ -175,7 +175,7 @@ function ConsiderEnrage()
 		end
 	end
 	
-	if  npcBot:GetActiveMode() == BOT_MODE_FARM 
+	if  npcBot:GetActiveMode() == BOT_MODE_FARM and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.20
 	then
 		local npcTarget = npcBot:GetAttackTarget();
 		if npcTarget ~= nil then
