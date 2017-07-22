@@ -188,7 +188,7 @@ local courierTime = -90;
 local cState = -1;
 function CourierUsageThink()
 
-	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() or GetNumCouriers() == 0 then
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() or npcBot:HasModifier("modifier_arc_warden_tempest_double") or GetNumCouriers() == 0 then
 		return;
 	end
 	
@@ -418,9 +418,9 @@ function UnImplementedItemUsage()
 	
 	local its=IsItemAvailable("item_tango_single");
 	if its~=nil and its:IsFullyCastable() and its:GetCooldownTimeRemaining() == 0 then
-		if DotaTime() > 10*60 
+		if DotaTime() > 10*60 and npcBot:DistanceFromFountain() > 1300
 		then
-			local trees = npcBot:GetNearbyTrees(1200);
+			local trees = npcBot:GetNearbyTrees(1300);
 			if trees[1] ~= nil then
 				npcBot:Action_UseAbilityOnTree(its, trees[1]);
 				return;
@@ -863,6 +863,7 @@ function MoveToHealerShrine()
 	
 	if selectedShrine ~= nil and selectedShrine:GetHealth() > 0 and ( Health < 0.75 or Mana < 0.55 ) then
 		npcBot:Action_MoveToLocation(selectedShrine:GetLocation() + RandomVector(200));
+		return
 	end
 end
 

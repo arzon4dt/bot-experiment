@@ -12,7 +12,7 @@ local modifier = {
 }
 
 function U.IsRetreating(npcBot)
-	return npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH;
+	return npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and npcBot:DistanceFromFountain() > 0
 end
 
 function U.IsValidTarget(npcTarget)

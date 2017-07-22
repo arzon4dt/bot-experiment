@@ -21,9 +21,9 @@ local Combo1Time = 0;
 local Combo2Time = 0; 
 local Combo3Time = 0; 
 
-local C1Delay = 2.5; 
+local C1Delay = 2.2; 
 local C2Delay = 1.8; 
-local C3Delay = 3.5; 
+local C3Delay = 3.2; 
 local Combo1 = 0;
 local Combo2 = 0;
 local Combo3 = 0;

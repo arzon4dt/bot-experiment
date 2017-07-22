@@ -29,7 +29,7 @@ function GetDesire()
 	
 	if teamPlayers == nil then teamPlayers = GetTeamPlayers(GetTeam()) end
 
-	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or bot:IsUsingAbility() or bot:IsChanneling() 
+	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or bot:HasModifier("modifier_arc_warden_tempest_double") or bot:IsUsingAbility() or bot:IsChanneling() 
 	   or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE  then
 		return BOT_MODE_DESIRE_NONE;
 	end
@@ -50,7 +50,7 @@ function GetDesire()
 		elseif r == closestRune and GetRuneStatus( r ) == RUNE_STATUS_AVAILABLE and IsTheClosestOne(rLoc) and GetUnitToLocationDistance( bot , rLoc) < ProxDist / 3 then
 			return BOT_MODE_DESIRE_ABSOLUTE;
 		elseif r == closestRune and GetRuneStatus( r ) == RUNE_STATUS_AVAILABLE and IsTheClosestOne(rLoc) and IsSuitableToPick() then
-			return BOT_MODE_DESIRE_HIGH;
+			return BOT_MODE_DESIRE_MODERATE;
 		elseif DotaTime() > 60 and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then	
 			return BOT_MODE_DESIRE_HIGH;
 		elseif DotaTime() > 60 and ( minute % 2 == 1 and sec > 52 ) and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then
@@ -58,11 +58,11 @@ function GetDesire()
 		elseif r == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_RADIANT and IsTeamMustSaveRune(r)
 			and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
 		then
-			return BOT_MODE_DESIRE_HIGH;
+			return BOT_MODE_DESIRE_MODERATE;
 		elseif r == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_DIRE and IsTeamMustSaveRune(r)
 			and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
 		then
-			return BOT_MODE_DESIRE_HIGH;		
+			return BOT_MODE_DESIRE_MODERATE;		
 		end
 	end
 	
