@@ -3,6 +3,7 @@ if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot(
 end
 
 local WardUtils = require(GetScriptDirectory() ..  "/WardUtility")
+local role = require(GetScriptDirectory() .. "/RoleUtility");
 local bot = GetBot();
 local MWardSpot = {};
 local MWardSpotTowerFall = {};
@@ -21,9 +22,33 @@ local Boots = {
 	"item_travel_boots_2"
 }
 
+local smoke = nil;
+local cause = "";
+bot.steal = false;
+
+local route = {
+	Vector(-50, 2464),
+	Vector(-1300, 4680),
+	Vector(-2820, 4041)
+}
+
+local route2 = {
+	Vector(4300, -1500),
+	Vector(3300, -5300),
+	Vector(1280, -4100)
+}
+local tPing = 0;
+local chat = false;
 function GetDesire()
 	
-	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or not IsSuitableToWard() 
+	--local human_ping = GetHumanPing();
+	
+	--if human_ping ~= nil  then
+		--print(tostring(human_ping.location));
+	--end
+	
+	
+	if bot:IsChanneling() or bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or not IsSuitableToWard() 
 	   or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE 
 	then
 		return BOT_MODE_DESIRE_NONE;
@@ -34,6 +59,21 @@ function GetDesire()
 	
 	if bot.WardSlot >= 0 and bot.WardSlot <= 8 then
 		bot.HasWard = true;
+	end
+	
+	if DotaTime() < 0 then
+		local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
+		if not IsSafelaneCarry() and bot:GetAssignedLane() ~= LANE_MID 
+		   and ( (GetTeam() == TEAM_RADIANT and bot:GetAssignedLane() == LANE_TOP) 
+		      or (GetTeam() == TEAM_DIRE and bot:GetAssignedLane() == LANE_BOT) 
+			  or  role.IsSupport(bot:GetUnitName()) ) 
+		  and #enemies == 0 
+		then
+			bot.steal = true;
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end
+	else	
+		bot.steal = false;
 	end
 	
 	if not bot.HasWard then
@@ -50,7 +90,7 @@ function GetDesire()
 	
 	if DotaTime() <= 0  then
 		--print(bot:GetUnitName().."Warding Early Game")
-		return BOT_MODE_DESIRE_HIGH;
+		return BOT_MODE_DESIRE_MODERATE+0.05;
 	elseif DotaTime() > 0 then
 		if IsThereAWardSpot()  then
 			--print(bot:GetUnitName().."Warding If There Is a Mandate Spot")
@@ -89,12 +129,70 @@ function OnEnd()
 	MWardSpotTowerFall = {};
 	PutWardOnBackPack();
 	wt = nil;
+	cause = "";
+	bot.steal = false;
 end
 
 function Think()
 
 	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
 		return;
+	end
+	
+	
+	if bot.steal == true then
+		local stealCount = CountStealingUnit();
+		smoke = HasItem('item_smoke_of_deceit');
+		local loc = nil;
+		
+		if smoke ~= nil and chat == false then
+			chat = true;
+			bot:ActionImmediate_Chat("Let's steal the bounty rune!",false);
+			return
+		end
+		
+		--print(tostring(smoke))
+		if smoke ~= nil and smoke:IsFullyCastable() and not bot:HasModifier('modifier_smoke_of_deceit') then 
+			--print("Use Smoke")
+			bot:Action_UseAbility(smoke);
+			return
+		end
+		
+		if GetTeam() == TEAM_RADIANT then
+			for _,r in pairs(route) do
+				if r ~= nil then
+					loc = r;
+					break;
+				end
+			end
+		else
+			for _,r in pairs(route2) do
+				if r ~= nil then
+					loc = r;
+					break;
+				end
+			end
+		end
+		
+		local allies = CountStealUnitNearLoc(loc, 300);
+		
+		if ( GetTeam() == TEAM_RADIANT and #route == 1 ) or ( GetTeam() == TEAM_DIRE and #route2 == 1 )  then
+			bot:Action_MoveToLocation(loc);
+			return
+		elseif GetUnitToLocationDistance(bot, loc) <= 300 and allies < stealCount then
+			bot:Action_MoveToLocation(loc);
+			return	
+		elseif GetUnitToLocationDistance(bot, loc) > 300 then
+			bot:Action_MoveToLocation(loc);
+			return
+		else
+			if GetTeam() == TEAM_RADIANT then
+				table.remove(route,1);
+			else
+				table.remove(route2,1);
+			end
+		end
+		
 	end
 	
 	--local bot = GetBot()
@@ -180,6 +278,28 @@ function Think()
 		end
 	end
 
+end
+
+function CountStealingUnit()
+	local count = 0;
+	for i,id in pairs(GetTeamPlayers(GetTeam())) do
+		local unit = GetTeamMember(i);
+		if IsPlayerBot(id) and unit ~= nil and unit.steal == true then
+			count = count + 1;
+		end
+	end
+	return count;
+end
+
+function  CountStealUnitNearLoc(loc, nRadius)
+	local count = 0;
+	for i,id in pairs(GetTeamPlayers(GetTeam())) do
+		local unit = GetTeamMember(i);
+		if unit ~= nil and unit.steal == true and GetUnitToLocationDistance(unit, loc) <= nRadius then
+			count = count + 1;
+		end
+	end
+	return count;
 end
 
 function IsPingedByHumanPlayer()
@@ -312,6 +432,7 @@ end
 --check if the condition is suitable for warding
 function IsSuitableToWard()
 	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+	local Allies = bot:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
 	local mode = bot:GetActiveMode();
 	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		or mode == BOT_MODE_ATTACK
@@ -320,7 +441,7 @@ function IsSuitableToWard()
 		or mode == BOT_MODE_DEFEND_TOWER_MID
 		or mode == BOT_MODE_DEFEND_TOWER_BOT
 		or Enemies ~= nil and #Enemies >= 2
-		or ( Enemies ~= nil and #Enemies == 1 and Enemies[1] ~= nil and IsStronger(Enemies[1]) )
+		or ( #Enemies == 1 and #Enemies > #Allies and Enemies[1] ~= nil and IsStronger(Enemies[1]) )
 		) 
 	then
 		return false;
@@ -424,4 +545,30 @@ function HasItemInBP()
 		end
 	end
 	return false;
+end
+
+function HasItem(item_name)
+	for i=0,5  do
+		local item = bot:GetItemInSlot(i); 
+		if item ~= nil and item:GetName() == item_name then
+			return item;
+		end
+	end
+	return nil;
+end
+
+function IsSafelaneCarry()
+	return role.CanBeSafeLaneCarry(bot:GetUnitName()) and ( (GetTeam()==TEAM_DIRE and bot:GetAssignedLane()==LANE_TOP) or (GetTeam()==TEAM_RADIANT and bot:GetAssignedLane()==LANE_BOT)  )	
+end
+
+function GetHumanPing()
+	local teamIDs = GetTeamPlayers(GetTeam());
+	for i,id in pairs(teamIDs)
+	do
+		local hUnit = GetTeamMember(i);
+		if hUnit ~= nil and not hUnit:IsBot() then
+			return hUnit:GetMostRecentPing();
+		end
+	end
+	return nil;
 end

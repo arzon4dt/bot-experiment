@@ -42,8 +42,8 @@ function AbilityUsageThink()
 	CancelShackleDesire = ConsiderCancelShackle();
 	
 	if CancelShackleDesire > 0 then
-		npcBot:Action_MoveToLocation(npcBot:GetLocation()+RandomVector(200))
-		return
+		--npcBot:Action_MoveToLocation(npcBot:GetLocation()+RandomVector(200))
+		--return
 	end
 	
 	-- Check if we're already using an ability
@@ -109,7 +109,7 @@ function ConsiderMassSerpentWards()
 	
 	
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if  mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
+	if  mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange+200, 400, 0, 0 );
 		if ( locationAoE.count >= 2 ) 
@@ -157,7 +157,7 @@ function ConsiderEtherShock()
 	end
 
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
+	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and ( npcBot:GetMana() - abilityES:GetManaCost() ) / npcBot:GetMaxMana() >= 0.75 - (0.01*npcBot:GetLevel()) 
 	then
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nCastRange+200, true );
 		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 3 and tableNearbyEnemyCreeps[1] ~= nil 

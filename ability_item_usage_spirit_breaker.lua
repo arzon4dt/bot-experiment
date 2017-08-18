@@ -29,7 +29,12 @@ local npcBot = GetBot();
 function AbilityUsageThink()
 
 	-- Check if we're already using an ability
-	if ( npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") or mutil.CanNotUseAbility(npcBot) ) then return end;
+	if npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") then
+		npcBot:Action_ClearActions(false);
+		return
+	end
+	
+	if ( npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") or mutil.CanNotUseAbility(npcBot) or npcBot:NumQueuedActions() > 0 ) then return end;
 
 	if abilityCD == nil then abilityCD = npcBot:GetAbilityByName( "spirit_breaker_charge_of_darkness" ) end
 	if abilityEH == nil then abilityEH = npcBot:GetAbilityByName( "spirit_breaker_empowering_haste" ) end
@@ -56,9 +61,10 @@ function AbilityUsageThink()
 	
 	if ( castCDDesire > 0 ) 
 	then
-		npcBot:Action_ClearActions(false);
+		npcBot:Action_ClearActions(true);
 		npcBot.chargeTarget = castCDTarget;
-		npcBot:Action_UseAbilityOnEntity( abilityCD, castCDTarget );
+		npcBot:ActionQueue_UseAbilityOnEntity( abilityCD, castCDTarget );
+		npcBot:ActionQueue_Delay( 1.0 );
 		return;
 	end
 	

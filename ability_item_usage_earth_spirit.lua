@@ -287,6 +287,12 @@ function ConsiderW()
 	
 	if nStoneCR > 1600 then nStoneCR = 1300 end
 	
+	if mutil.IsStuck(npcBot)
+	then
+		local loc = mutil.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nStoneCR );
+	end
+	
 	--if we can kill any enemies
 	if nStone >= 1 then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nStoneCR, true, BOT_MODE_NONE );
@@ -310,7 +316,8 @@ function ConsiderW()
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot) and npcBot:WasRecentlyDamagedByAnyHero( 1.0 )
 	then
-		local loc = utils.GetTowardsFountainLocation(npcBot:GetLocation(), nUnitCR);
+		local location = mutil.GetEscapeLoc();
+		local loc = npcBot:GetXUnitsTowardsLocation( location, nUnitCR );
 		if IsStoneInPath(loc, (nUnitCR/2)+200) then
 			return BOT_ACTION_DESIRE_MODERATE, loc, false;
 		elseif nStone >= 1 then

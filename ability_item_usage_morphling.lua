@@ -270,7 +270,7 @@ function ConsiderMorphAgility()
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT  ) 
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1400, true, BOT_MODE_NONE );
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 then
 			return BOT_ACTION_DESIRE_NONE, 0;
 		end
@@ -279,6 +279,12 @@ function ConsiderMorphAgility()
 	local nBonusAgi = abilityMRA:GetSpecialValueInt("bonus_attributes");
 	local currAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY);
 	local currSTRENGTH = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
+
+	if npcBot:GetMana() < 30 and abilityMRA:GetToggleState() then
+		return BOT_ACTION_DESIRE_LOW;
+	elseif npcBot:GetMana() < 30 and not abilityMRA:GetToggleState() then
+		return BOT_ACTION_DESIRE_NONE;
+	end
 
 	if currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) < 2.0 and not abilityMRA:GetToggleState() then
 		--print("start")
@@ -304,6 +310,12 @@ function ConsiderMorphStrength()
 	
 	local currAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY);
 	local currSTRENGTH = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
+	
+	if npcBot:GetMana() < 30 and abilityMRS:GetToggleState() then
+		return BOT_ACTION_DESIRE_LOW;
+	elseif npcBot:GetMana() < 30 and not abilityMRS:GetToggleState() then
+		return BOT_ACTION_DESIRE_NONE;
+	end
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT ) 
 	then

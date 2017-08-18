@@ -36,6 +36,8 @@ local SunRayStop = "";
 local ToggleMovement = "";
 local Supernova = "";
 
+local everStuck = false;
+
 local EscLoc = {};
 local spiritCT = 0.0;
 
@@ -145,6 +147,12 @@ function ConsiderIcarusDive()
 	local nCastPoint = IcarusDive:GetCastPoint();
 	local nDamage = IcarusDive:GetSpecialValueInt("damage_per_second") * IcarusDive:GetSpecialValueFloat("burn_duration");
 	
+	if mutil.IsStuck(npcBot)
+	then
+		everStuck = true;
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
+	end
+	
 	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
@@ -183,12 +191,18 @@ function ConsiderIcarusDiveStop()
 	then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
+	
 	if npcBot:GetActiveMode() == BOT_MODE_RETREAT
 	then
 		if ( GetUnitToLocationDistance(npcBot, EscLoc) <= 100 ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
+	end
+	
+	if everStuck and GetUnitToLocationDistance(npcBot, EscLoc) <= 100 then
+		everStuck = false;
+		return BOT_ACTION_DESIRE_MODERATE;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE

@@ -98,6 +98,7 @@ function ConsiderFireblast()
 
 	-- Get some of its values
 	local nCastRange = abilityFB:GetCastRange() + 200;
+	if nCastRange < npcBot:GetAttackRange() then nCastRange = npcBot:GetAttackRange() + 200; end
 	if npcBot:HasScepter() then nCastRange = 475 end 
 	--------------------------------------
 	-- Mode based usage
@@ -164,7 +165,8 @@ function ConsiderTimeWalk()
 
 	if mutil.IsStuck(npcBot)
 	then
-		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), 600 );
+		local loc = mutil.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, 600 );
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
@@ -173,16 +175,15 @@ function ConsiderTimeWalk()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1  ) )
 		then
-			--return BOT_ACTION_DESIRE_MODERATE, GetTowardsFountainLocation(npcBot:GetLocation(), 600);
-			local location = npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), 600 );
-			return BOT_ACTION_DESIRE_MODERATE, location;
+			local loc = mutil.GetEscapeLoc();
+		    return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, 600 );
 		end
 	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 500) and  mutil.IsInRange(npcTarget, npcBot, 1200)   
+		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, npcBot:GetAttackRange()-200) and  mutil.IsInRange(npcTarget, npcBot, 1600)   
 		then
 			local MaxMana = npcBot:GetMaxMana();
 			local distance = GetUnitToUnitDistance( npcTarget, npcBot );

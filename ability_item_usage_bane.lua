@@ -303,7 +303,7 @@ function ConsiderE2()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1000) and mutil.StillHasModifier(npcTarget, 'modifier_bane_nightmare')
 		then
-			local allies = npcTarget:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
+			local allies = npcTarget:GetNearbyHeroes( 600, true, BOT_MODE_NONE );
 			local enemies = npcTarget:GetNearbyHeroes( 800, false, BOT_MODE_NONE );
 			if ( #allies >= 2 and #enemies == 1 ) 
 			then

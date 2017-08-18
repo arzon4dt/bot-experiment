@@ -103,7 +103,7 @@ function ConsiderThunderClap()
 	if mutil.IsPushing(npcBot)
 	then
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nRadius, true );
-		if ( tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 3 and  npcBot:GetMana()/npcBot:GetMaxMana() > 0.6 ) then
+		if ( tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 4 and  npcBot:GetMana()/npcBot:GetMaxMana() > 0.6 ) then
 			return BOT_ACTION_DESIRE_LOW;
 		end
 	end
@@ -112,7 +112,7 @@ function ConsiderThunderClap()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius - 50)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius - 100)
 		then
 			return BOT_ACTION_DESIRE_VERYHIGH;
 		end
@@ -146,7 +146,7 @@ function ConsiderPrimalSplit()
 		end
 	end
 	
-	if mutil.IsInTeamFight(npcBot, 1200)
+	if mutil.IsInTeamFight(npcBot, 1200) and not abilityTC:IsFullyCastable()
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 3 
@@ -156,7 +156,7 @@ function ConsiderPrimalSplit()
 	end
 	
 	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) and not abilityTC:IsFullyCastable()
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 400) 

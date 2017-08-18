@@ -101,7 +101,7 @@ function ConsiderDeathCoil()
 	then
 		local lowHpAlly = nil;
 		local nLowestHealth = 1000;
-		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
+		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE  );
 		for _,npcAlly in pairs( tableNearbyAllies )
 		do
 			if ( npcAlly:GetUnitName() ~= npcBot:GetUnitName() and mutil.CanCastOnNonMagicImmune(npcAlly) )
@@ -162,7 +162,7 @@ function ConsiderAphoticShield()
 		local lowHpAlly = nil;
 		local nLowestHealth = 10000;
 
-		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
+		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE  );
 		for _,npcAlly in pairs( tableNearbyAllies )
 		do
 			if ( npcAlly:GetUnitName() ~= npcBot:GetUnitName() and mutil.CanCastOnMagicImmune(npcAlly) )

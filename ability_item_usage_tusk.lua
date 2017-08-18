@@ -40,7 +40,7 @@ function AbilityUsageThink()
 	
 	castSBLDesire = ConsiderSnowBallLaunch();
 	
-	if ( castSBLDesire > 0 ) 
+	if ( castSBLDesire > 0 and not npcBot:IsUsingAbility() ) 
 	then
 		npcBot:Action_UseAbility( abilitySBL );
 		return;
@@ -104,7 +104,7 @@ function ConsiderIceShards()
 
 	-- Get some of its values
 	local nRadius = abilityIS:GetSpecialValueInt( "shard_width" );
-	local nCastRange = 1200;
+	local nCastRange = 1600;
 	local nCastPoint = abilityIS:GetCastPoint( );
 	local nDamage = abilityIS:GetSpecialValueInt("shard_damage");
 	local nSpeed = abilityIS:GetSpecialValueInt("shard_speed");
@@ -120,7 +120,7 @@ function ConsiderIceShards()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcEnemy, npcBot)/nSpeed) + nCastPoint );
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation( ((GetUnitToUnitDistance(npcEnemy, npcBot)+200)/nSpeed) + nCastPoint );
 			end
 		end
 	end
@@ -142,7 +142,7 @@ function ConsiderIceShards()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed) + nCastPoint );
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( ((GetUnitToUnitDistance(npcTarget, npcBot)+200)/nSpeed) + nCastPoint );
 		end
 	end
 --
@@ -362,7 +362,7 @@ function ConsiderWalrusKick()
 	local nCastRange = abilityWP:GetCastRange();
 	local nDamage = 350;
 	
-		if mutil.IsRetreating(npcBot)
+	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -424,6 +424,7 @@ function ConsiderSnowBallLaunch()
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
+		--print("Launch")
 		return BOT_ACTION_DESIRE_HIGH;
 	end
 	

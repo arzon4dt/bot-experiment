@@ -13,6 +13,18 @@ function GetDesire()
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
+	local invFull = true;
+	
+	for i=0,8 do 
+		if npcBot:GetItemInSlot(i) == nil then
+			invFull = false;
+		end	
+	end
+	
+	if invFull then
+		return BOT_MODE_DESIRE_NONE
+	end
+	
 	if npcBot.SecretShop then
 		return BOT_MODE_DESIRE_HIGH
 	end

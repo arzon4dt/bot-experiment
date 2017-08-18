@@ -2,7 +2,6 @@ if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot(
 	return;
 end
 
-
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
 local mutil = require(GetScriptDirectory() ..  "/MyUtility")
@@ -36,13 +35,15 @@ function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
 	
-	-- Check if we're already using an ability
-	if mutil.CanNotUseAbility(npcBot) or npcBot:HasModifier("modifier_tinker_rearm") then return end
-
 	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "tinker_laser" ) end
 	if abilitySC == nil then abilitySC = npcBot:GetAbilityByName( "tinker_heat_seeking_missile" ) end
 	if abilityTS == nil then abilityTS = npcBot:GetAbilityByName( "tinker_march_of_the_machines" ) end
 	if abilityRA == nil then abilityRA = npcBot:GetAbilityByName( "tinker_rearm" ) end
+	
+	-- Check if we're already using an ability
+	--if mutil.CanNotUseAbility(npcBot) or npcBot:HasModifier("modifier_tinker_rearm") then return end
+	if mutil.CanNotUseAbility(npcBot) or npcBot:HasModifier("modifier_tinker_rearm") or npcBot:NumQueuedActions() > 0 then return end
+	
 	-- Consider using each ability
 	castFBDesire, castFBTarget = ConsiderFireblast();
 	castSCDesire = ConsiderSlithereenCrush();
@@ -79,13 +80,23 @@ function AbilityUsageThink()
 		return;
 	end
 	
-	if ( castRADesire > 0 and DotaTime() > timeCast + channleTime ) 
+	--Original Rearm Code
+	--[[if ( castRADesire > 0 and DotaTime() > timeCast + channleTime ) 
 	then
 		npcBot:Action_ClearActions(true);
 		npcBot:ActionPush_UseAbility( abilityRA );
 		timeCast = DotaTime();
 		return;
+	end]]--
+	
+	if ( castRADesire > 0 ) 
+	then
+		npcBot:Action_ClearActions(true);
+		npcBot:ActionQueue_UseAbility( abilityRA );
+		npcBot:ActionQueue_Delay( channleTime + 0.25 );
+		return;
 	end
+	
 end
 
 function IsItemAvailable(item_name)
@@ -331,11 +342,11 @@ function ConsiderRearm()
 	local nManaCost = abilityRA:GetManaCost()
 	local botMana = npcBot:GetMana();
 	
-	if npcBot:DistanceFromFountain() == 0 and not TravelOffCD() then
+	if  not TravelOffCD() and npcBot:DistanceFromFountain() > 0 then
 		return BOT_ACTION_DESIRE_MODERATE;
 	end
 	
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) and npcBot:DistanceFromFountain() > 0
 	then
 		local npcTarget = npcBot:GetTarget();
 		if ( botMana >= nManaCost and mutil.IsValidTarget(npcTarget) and not abilityFB:IsCooldownReady() and not abilitySC:IsCooldownReady() 
@@ -345,7 +356,7 @@ function ConsiderRearm()
 		end
 	end
 	
-	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
+	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and npcBot:DistanceFromFountain() > 0
 	then
 		if ( botMana >= nManaCost and not abilityTS:IsCooldownReady()  ) 
 		then

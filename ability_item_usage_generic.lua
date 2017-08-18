@@ -32,6 +32,15 @@ function AbilityLevelUpThink()
 		return;
 	end
 	
+	if npcBot:IsChanneling() then
+		npcBot:Action_ClearActions( false ) 
+		return
+	end
+	
+	--[[if mutil.IsSlowed(npcBot) then
+		print(npcBot:GetUnitName().." is slowed");
+	end]]--
+	
 	--if DotaTime() > 0 then
 		UnImplementedItemUsage()
 		UseShrine()
@@ -556,9 +565,9 @@ function UnImplementedItemUsage()
 			 mode == BOT_MODE_GANK or
 			 mode == BOT_MODE_DEFEND_ALLY )
 		then
-			if ( npcTarget ~= nil and npcTarget:IsHero() and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
+			if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
 			then
-			    npcBot:Action_UseAbilityOnEntity(sc,npcTarget);
+			    npcBot:Action_UseAbilityOnEntity(sc, npcTarget);
 				return
 			end
 		end
@@ -567,8 +576,9 @@ function UnImplementedItemUsage()
 	if sc~=nil and sc:IsFullyCastable() then
 		local Allies=npcBot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
 		for _,Ally in pairs(Allies) do
-			if ( Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and CanCastOnTarget(Ally) ) or 
-			   ( IsDisabled(Ally) and CanCastOnTarget(Ally) )
+			if Ally:GetUnitName() ~= npcBot:GetUnitName() and 
+			   ( ( Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and CanCastOnTarget(Ally) ) or 
+				 ( IsDisabled(Ally) and CanCastOnTarget(Ally) ) )
 			then
 				npcBot:Action_UseAbilityOnEntity(sc,Ally);
 				return;

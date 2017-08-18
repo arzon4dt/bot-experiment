@@ -1499,28 +1499,28 @@ end
 
 function X.CanBeOfflaner(hero)
 	if X["hero_roles"][hero] == nil then return false end;
-	return string.find(hero, "bounty_hunter") or string.find(hero, "nyx") or string.find(hero, "magnataur") or string.find(hero, "sand_king")
-           or string.find(hero, "shredder") or string.find(hero, "tusk") or string.find(hero, "dark_seer") or string.find(hero, "techies")
-		   or ( X["hero_roles"][hero]["initiator"] > 0 and
-		   X["hero_roles"][hero]["disabler"] > 0 and
-		   X["hero_roles"][hero]["durable"] > 0 and
-		   X["hero_roles"][hero]["support"] == 0 
-    )
+	return hero == "npc_dota_hero_bounty_hunter" or hero == "npc_dota_hero_nyx_assassin" or hero == "npc_dota_hero_magnataur" or hero == "npc_dota_hero_sand_king"
+           or hero == "npc_dota_hero_shredder" or hero == "npc_dota_hero_tusk" or hero == "npc_dota_hero_dark_seer" or hero == "npc_dota_hero_techies" or hero == "npc_dota_hero_batrider"
+		   or (  X["hero_roles"][hero]["initiator"] > 0 and
+		         X["hero_roles"][hero]["disabler"] > 0 and
+		         X["hero_roles"][hero]["durable"] > 0 and
+		         X["hero_roles"][hero]["support"] == 0 )
 end
 
 function X.CanBeMidlaner(hero)
 	if X["hero_roles"][hero] == nil then return false end;
-	return string.find(hero, "zuus") or string.find(hero, "templar_assassin") or string.find(hero, "ember_spirit") or string.find(hero, "puck") 
-	       or string.find(hero, "pugna") or ( X["hero_roles"][hero]["carry"] > 0 and
-		   ( 
-		     X["hero_roles"][hero]["nuker"] > 0 or
-			 X["hero_roles"][hero]["pusher"] > 0 
-			) 
-	)
+	return hero == "npc_dota_hero_zuus" or hero == "npc_dota_hero_templar_assassin" or hero == "npc_dota_hero_ember_spirit" or hero == "npc_dota_hero_puck" 
+	       or hero == "npc_dota_hero_pugna" 
+		   or ( X["hero_roles"][hero]["carry"] > 0 and
+		      ( 
+		        X["hero_roles"][hero]["nuker"] > 0 or
+			    X["hero_roles"][hero]["pusher"] > 0 
+			   ) 
+			)
 end
 
 function X.CanBeSafeLaneCarry(hero)
-	if X["hero_roles"][hero] == nil then return false end;
+	if X["hero_roles"][hero] == nil or hero == "npc_dota_hero_obsidian_destroyer" or hero == "npc_dota_hero_storm_spirit" then return false end;
 	return X["hero_roles"][hero]["carry"] > 1 and
 		   ( 
 			 ( X["hero_roles"][hero]["nuker"] < 3 and X["hero_roles"][hero]["pusher"] < 3 ) or

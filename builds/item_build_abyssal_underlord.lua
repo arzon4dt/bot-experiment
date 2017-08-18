@@ -19,7 +19,7 @@ X["items"] = {
 
 X["skills"] = IBUtil.GetBuildPattern(
 	  "normal", 
-	  {1,2,1,3,1,4,1,2,2,2,4,3,3,3,4}, skills, 
+	  {2,1,1,3,1,4,1,2,2,2,4,3,3,3,4}, skills, 
 	  {2,4,5,7}, talents
 );
 

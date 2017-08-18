@@ -28,11 +28,18 @@ local abilityAC = nil;
 local abilityHP = nil;
 local abilityHoG = nil;
 
-local npcBot = nil;
+local npcBot = GetBot();
+npcBot.creeps = {}; 
+local maxUnit = 0;
 
 function AbilityUsageThink()
 
-	if npcBot == nil then npcBot = GetBot(); end
+	--if npcBot == nil then npcBot = GetBot(); end
+	--print(tostring(#npcBot.creeps))
+	
+	--[[for _,u in pairs(npcBot.creeps) do
+		print(tostring(u).." : "..u:GetUnitName().." > "..tostring(u:HasModifier('modifier_chen_holy_persuasion')))
+	end]]--
 	
 	-- Check if we're already using an ability
 	if mutil.CanNotUseAbility(npcBot) then return end
@@ -76,11 +83,49 @@ function AbilityUsageThink()
 	
 	if ( castHPDesire > 0 ) 
 	then
+		--print(tostring(castHPTarget))
+		AddedToDominated(castHPTarget);
 		npcBot:Action_UseAbilityOnEntity( abilityHP, castHPTarget );
 		return;
 	end
+	
+	UpdateDominatedCreeps();
 
+end
 
+function AddedToDominated(unit)
+	if #npcBot.creeps == 0 then
+		table.insert(npcBot.creeps, unit);
+	else
+		for _,u in pairs(npcBot.creeps) do
+			if tostring(unit) ~= tostring(u) then
+				table.insert(npcBot.creeps, unit);
+			end
+		end
+	end
+end
+
+function UpdateDominatedCreeps()
+	local removedkey = -1;
+	for i,u in pairs(npcBot.creeps) do
+		if u:IsNull() or u == nil or not u:IsAlive() or not u:HasModifier('modifier_chen_holy_persuasion') or IsDuplicated(u) then
+			removedkey = i;
+			break;
+		end
+	end
+	if removedkey ~= -1 then
+		table.remove(npcBot.creeps, removedkey);
+	end
+end
+
+function IsDuplicated(unit)
+	local count = 0;
+	for _,u in pairs(npcBot.creeps) do
+		if tostring(unit) == tostring(u) then
+			count = count + 1;
+		end
+	end
+	return count > 1;
 end
 
 function ConsiderUnrefinedFireblast()

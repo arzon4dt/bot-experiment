@@ -260,7 +260,7 @@ function ConsiderE()
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
 	
 	--if we can kill any enemies
-	if npcBot:GetMaxMana() - npcBot:GetMana() > nManaDrained/2 and ( tableNearbyEnemyHeroes == nil or #tableNearbyEnemyHeroes == 0 )
+	if not mutil.IsRetreating(npcBot) and npcBot:GetMaxMana() - npcBot:GetMana() > nManaDrained/2 and ( tableNearbyEnemyHeroes == nil or #tableNearbyEnemyHeroes == 0 )
 	then
 		local tableNearbyCreeps = npcBot:GetNearbyLaneCreeps( nCastRange + 200, true );
 		for _,creep in pairs(tableNearbyCreeps)

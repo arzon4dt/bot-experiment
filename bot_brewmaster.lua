@@ -31,7 +31,7 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		CastDMDesire, DMLocation = ConsiderDM(hMinionUnit); 
 		CastCYDesire, CYTarget = ConsiderCY(hMinionUnit); 
 		castCHDesire, castCHTarget = ConsiderCorrosiveHaze(hMinionUnit);
-		CastWWDesire, WWTarget = ConsiderWW(hMinionUnit); 
+		CastWWDesire = ConsiderWW(hMinionUnit); 
 		AttackDesire, AttackTarget = ConsiderAttacking(hMinionUnit); 
 		MoveDesire, Location = ConsiderMove(hMinionUnit); 
 		
@@ -55,7 +55,7 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		
 		if ( CastWWDesire > 0 ) 
 		then
-			hMinionUnit:Action_UseAbilityOnEntity( abilityWW, WWTarget );
+			hMinionUnit:Action_UseAbility( abilityWW );
 			return;
 		end
 		
@@ -390,23 +390,17 @@ end
 function ConsiderWW(hMinionUnit)
 
 	if not abilityWW:IsFullyCastable() or abilityWW:IsHidden() then
-		return BOT_ACTION_DESIRE_NONE, 0;
+		return BOT_ACTION_DESIRE_NONE;
 	end
 	
-	local nCastRange = abilityWW:GetCastRange();
-	local tableNearbyAllyHeroes = hMinionUnit:GetNearbyHeroes( nCastRange + 200, false, BOT_MODE_NONE );
-	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
+	local tableNearbyEnemyCreeps = hMinionUnit:GetNearbyLaneCreeps( 1300, true );
+	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 700, true, BOT_MODE_NONE );
 	
-	if ( tableNearbyEnemyHeroes == nil and #tableNearbyEnemyHeroes == 0 ) then
-		return BOT_ACTION_DESIRE_HIGH, hMinionUnit;
-	else
-		for _,npcAlly in pairs( tableNearbyAllyHeroes )
-		do
-			return BOT_ACTION_DESIRE_LOW, npcAlly;
-		end
+	if ( #tableNearbyEnemyHeroes == 0 and #tableNearbyEnemyCreeps == 0 ) then
+		return BOT_ACTION_DESIRE_HIGH;
 	end
 	
-	return BOT_ACTION_DESIRE_NONE, 0;
+	return BOT_ACTION_DESIRE_NONE;
 
 end
 

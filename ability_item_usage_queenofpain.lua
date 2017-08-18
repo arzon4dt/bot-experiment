@@ -142,7 +142,8 @@ function ConsiderTimeWalk()
 
 	if mutil.IsStuck(npcBot)
 	then
-		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
+		local loc = mutil.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
@@ -151,15 +152,15 @@ function ConsiderTimeWalk()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1  ) )
 		then
-				local location = mutil.GetTeamFountain()
-				return BOT_ACTION_DESIRE_MODERATE, location;
+			local loc = mutil.GetEscapeLoc();
+			return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 		end
 	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 600) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
+		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, npcBot:GetAttackRange()-200) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) 
 		then
 			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 			if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes <= 2 then

@@ -135,10 +135,10 @@ function ConsiderW()
 		return BOT_ACTION_DESIRE_HIGH, npcBot;
 	end
 	
-	local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE );
+	local tableNearbyAllyHeroes  = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE );
 	for _,npcAlly in pairs( tableNearbyAllyHeroes )
 	do
-		if  mutil.IsRetreating(npcAlly) and mutil.CanCastOnMagicImmune(npcAlly) and npcAlly:WasRecentlyDamagedByAnyHero(2.0) and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35
+		if mutil.CanCastOnMagicImmune(npcAlly) and npcAlly:WasRecentlyDamagedByAnyHero(2.0) and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.15
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcAlly;
 		end

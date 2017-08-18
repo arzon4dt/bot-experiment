@@ -157,7 +157,7 @@ function ConsiderCombo1()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and 
 			GetUnitToUnitDistance(npcTarget, npcBot) > nCastRange/2 and GetUnitToUnitDistance(npcTarget, npcBot) < nCastRange ) 
 		then
 			--return BOT_ACTION_DESIRE_HIGH, npcTarget, npcTarget:GetLocation();
@@ -187,7 +187,7 @@ function ConsiderCombo2()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and GetUnitToUnitDistance(npcTarget, npcBot) < nCastRange ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and GetUnitToUnitDistance(npcTarget, npcBot) < nCastRange ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget, npcTarget:GetXUnitsInFront( 75 )
 		end
@@ -216,7 +216,7 @@ function ConsiderCombo3()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget)  and 
 			GetUnitToUnitDistance(npcTarget, npcBot) > nCastRange/2 and GetUnitToUnitDistance(npcTarget, npcBot) < nCastRange ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget, npcTarget:GetLocation();
@@ -270,7 +270,7 @@ function ConsiderTorrent()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastXMarkOnTarget(npcTarget) and GetUnitToUnitDistance(npcTarget, npcBot) < 600 ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and GetUnitToUnitDistance(npcTarget, npcBot) < 600 ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetExtrapolatedLocation(nDelay + nCastPoint);
 		end

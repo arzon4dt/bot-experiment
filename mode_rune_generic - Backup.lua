@@ -75,14 +75,6 @@ function GetDesire()
 	return BOT_MODE_DESIRE_NONE;
 end
 
-function OnStart()
-	
-end
-
-function OnEnd()
-	
-end
-
 function Think()
 	
 	for _,rune in pairs(ListRune)
@@ -278,4 +270,3 @@ function IsSuitableToPick()
 	end
 	return true;
 end
-

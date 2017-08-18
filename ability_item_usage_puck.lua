@@ -8,6 +8,7 @@ local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_
 local utils = require(GetScriptDirectory() ..  "/util")
 local inspect = require(GetScriptDirectory() ..  "/inspect")
 local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -29,6 +30,7 @@ local castForceEnemyDesire = 0;
 
 ----------------------------------------------------------------------------------------------------
 local courierTime = 0
+local illuOrbLoc = nil;
 
 function CourierUsageThink()
 	local npcBot = GetBot()
@@ -129,6 +131,7 @@ local sideOfMap = 0
 	--print("desires".. castOrbDesire .. castSilenceDesire .. castPhaseDesire .. castJauntDesire .. castCoilDesire);
 	if highestDesire == 0 then return;
     elseif desiredSkill == 1 then 
+		illuOrbLoc = castOrbTarget;
 		npcBot:Action_UseAbilityOnLocation( abilityOrb, castOrbTarget );
     elseif desiredSkill == 2 then 
 		npcBot:Action_UseAbility( abilitySilence);
@@ -197,14 +200,8 @@ function ConsiderIllusoryOrb()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
-				local location = npcBot:GetXUnitsInFront( nCastRange );
-				if GetOpposingTeam( ) == TEAM_DIRE then
-					location = RB;
-				end
-				if GetOpposingTeam( ) == TEAM_RADIANT then
-					location = DB;
-				end
-				return BOT_ACTION_DESIRE_MODERATE, location;
+				local loc = mutil.GetEscapeLoc();
+				return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 			end
 		end
 	end
@@ -346,29 +343,16 @@ function ConsiderEtherealJaunt()
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-		local enemyFlag = nil;
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		local pro = GetLinearProjectiles();
+		for _,pr in pairs(pro)
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
-			then
-				enemyFlag = npcEnemy;
-			end
-		end
-		
-		if enemyFlag ~= nil then
-			local pro = GetLinearProjectiles();
-			for _,pr in pairs(pro)
-			do
-				if pr.ability:GetName() == "puck_illusory_orb" then
-					local ProjDist = GetUnitToLocationDistance(enemyFlag, pr.location);
-					if ProjDist > 800 then
-						return BOT_ACTION_DESIRE_MODERATE;
-					end
-				end	
-			end
-		end
-		
+			if pr.ability:GetName() == "puck_illusory_orb" then
+				local ProjDist = utils.GetDistance(illuOrbLoc, pr.location);
+				if ProjDist < 100 then
+					return BOT_ACTION_DESIRE_MODERATE;
+				end
+			end	
+		end	
 	end
 	
 	return BOT_ACTION_DESIRE_NONE;
@@ -423,27 +407,6 @@ function ConsiderPhaseShift()
 			end
 		end
 	end
-	
-	--[[local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-	do
-		if ( npcEnemy:IsUsingAbility( ) ) 
-		then
-			return BOT_ACTION_DESIRE_MODERATE;
-		end
-	end
-
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-	do
-
-		if(npcEnemy:GetAttackTarget() ~= nil) then 
-			--print(npcEnemy:GetMaxHealth()) 
-			if ( npcEnemy:GetAttackTarget() == npcBot) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
-		end
-	end]]--
 
 	return BOT_ACTION_DESIRE_NONE;
 

@@ -345,7 +345,7 @@ function ConsiderPrimalSpringEarly()
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and 
-		  ( GetUnitToLocationDistance(npcTarget, PSLoc) >= ( 375 - 100 ) or npcTarget:GetHealth() <= 175 )
+		  ( GetUnitToLocationDistance(npcTarget, PSLoc) >= ( 375 - 125 ) or npcTarget:GetHealth() <= 175 )
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end

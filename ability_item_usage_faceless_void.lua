@@ -69,7 +69,7 @@ function ConsiderTimeWalk()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	if ( npcBot:HasModifier("modifier_faceless_void_chronosphere_selfbuff") ) 
+	if ( npcBot:HasModifier("modifier_faceless_void_chronosphere_speed") ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
@@ -80,7 +80,8 @@ function ConsiderTimeWalk()
 
 	if mutil.IsStuck(npcBot)
 	then
-		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
+		local loc = mutil.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
@@ -89,15 +90,15 @@ function ConsiderTimeWalk()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1  ) )
 		then
-			local location = mutil.GetTeamFountain();
-			return BOT_ACTION_DESIRE_HIGH, location;
+			local loc = mutil.GetEscapeLoc();
+		    return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 		end	
 	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 200) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot) / 3000) + nCastPoint );
 		end
@@ -138,7 +139,7 @@ function ConsiderTimeDilation()
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius - 100, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius - 200, true, BOT_MODE_NONE );
 		if (tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2) then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end

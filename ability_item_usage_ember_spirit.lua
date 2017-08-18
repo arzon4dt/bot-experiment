@@ -366,7 +366,8 @@ function ConsiderR()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) )
 			then
-				return BOT_ACTION_DESIRE_MODERATE, utils.GetTowardsFountainLocation(npcBot:GetLocation(), nCastRange-(#tableNearbyEnemyHeroes*100));
+				local loc = mutil.GetEscapeLoc();
+				return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange-(#tableNearbyEnemyHeroes*100) );
 			end
 		end
 	end

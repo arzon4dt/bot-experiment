@@ -103,6 +103,7 @@ function ItemPurchaseThink()
 	if  supportExist ~= nil and supportExist and 
 		role.CanBeSupport(npcBot:GetUnitName()) and npcBot:GetAssignedLane() ~= LANE_MID  
 	then
+		PurchaseSmoke();
 		if invisEnemyExist then
 			PurchaseDust();	
 		end
@@ -118,6 +119,7 @@ function ItemPurchaseThink()
 	
 	PurchaseRainDrop();
 	SellEarlyGameItem();
+	UpgradeItem();
 	
 	if #(npcBot.tableItemsToBuy) == 0 then
 		PurchaseBOT();
@@ -218,6 +220,30 @@ function GeneralPurchase()
 		npcBot.SecretShop = false;
 		npcBot.SideShop = false;
 	end
+end
+
+function UpgradeItem()
+	--Upgrade Diffusal 
+	if HasItem(npcBot, 'item_diffusal_blade') then
+		
+		local diffusal1 = npcBot:GetItemInSlot(npcBot:FindItemSlot('item_diffusal_blade'));
+		if diffusal1:GetCurrentCharges() == 0 and not AlreadyAddedInTable('item_recipe_diffusal_blade') 
+		   and npcBot:GetCourierValue() == 0 and not HasItem(npcBot, 'item_recipe_diffusal_blade')  
+		then
+			--npcBot:ActionImmediate_Chat(npcBot:GetUnitName().." Added diffusal blade receipe to ugrade it", true)
+			table.insert(npcBot.tableItemsToBuy, 1, "item_recipe_diffusal_blade");
+			return
+		end
+	end
+end
+
+function AlreadyAddedInTable(item)
+	for _,value in pairs(npcBot.tableItemsToBuy) do
+		if value == item then
+			return true;
+		end
+	end
+	return false;
 end
 
 function SwapBoots()
@@ -421,6 +447,19 @@ function PurchaseDust()
 	end
 end
 
+function PurchaseSmoke()
+	if ( DotaTime() < 0 ) 
+	then
+		if( npcBot:GetGold() >= GetItemCost( "item_smoke_of_deceit" ) and
+			GetItemStockCount( "item_smoke_of_deceit" ) > 1 and
+			GetEmptySlotAmount() >= 4 
+		) 
+		then
+			npcBot:ActionImmediate_PurchaseItem("item_smoke_of_deceit"); 
+		end
+	end
+end
+
 function IsInvisEnemyExist()
 
 	if not enemyInvisCheck then
@@ -461,7 +500,7 @@ function IsInvisEnemyExist()
 end
 
 function PurchaseRainDrop()
-	if( not buyRD and GetItemStockCount( "item_infused_raindrop" ) > 0 and 
+	if( not buyRD and HasItem(npcBot, 'item_boots') and GetItemStockCount( "item_infused_raindrop" ) > 0 and 
 		npcBot:GetGold() >= GetItemCost( "item_infused_raindrop" ) 
 	) 
 	then

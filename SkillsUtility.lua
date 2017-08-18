@@ -104,6 +104,32 @@ function X.AbilityNeedPathToBeClear(ability_name)
 	return false;
 end
 
+function X.GetFurthestTarget(npcBot, nCastRange)
+	local Enemies = npcBot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+	local Allies = npcBot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
+	local AllyCreeps = npcBot:GetNearbyLaneCreeps(nCastRange, false);
+	local furthestUnit = nil;
+	local closestDistance = 10000;
+	for _,ally in pairs(Allies) do
+		local dist = GetUnitToUnitDistance(ally, GetAncient(GetTeam()));
+		if dist < closestDistance then
+			closestDistance = dist;
+			furthestUnit = ally;
+		end
+	end
+	for _,creep in pairs(AllyCreeps) do
+		local dist = GetUnitToUnitDistance(creep, GetAncient(GetTeam()));
+		if dist < closestDistance then
+			closestDistance = dist;
+			furthestUnit = creep;
+		end
+	end
+	if furthestUnit ~= nil and #Enemies > 0 and closestDistance < GetUnitToUnitDistance(Enemies[1], GetAncient(GetTeam()))  then
+		return furthestUnit;
+	end
+	return nil;
+end
+
 function X.ConsiderEntityTarget(ability)
 	
 	local npcBot = GetBot();
@@ -115,8 +141,30 @@ function X.ConsiderEntityTarget(ability)
 	local nCastRange = ability:GetCastRange();
 	local nAttackRange = npcBot:GetAttackRange();
 	
-	if nCastRange < nAttackRange then
+	if nCastRange + 200 <= nAttackRange then
+		nCastRange = nAttackRange + 200;
+	elseif nCastRange + 200 <= 1600 then
 		nCastRange = nCastRange + 200;
+	elseif nCastRange > 1600 then
+		nCastRange = 1600;
+	end
+	
+	if ability:GetName() == "phantom_assassin_phantom_strike" or ability:GetName() == "riki_blink_strike"  then
+		if X.IsEngagingTarget(npcBot) 
+		then
+			local npcTarget = npcBot:GetTarget();
+			if ( npcTarget ~= nil and npcTarget:IsHero() and X.CanCastOnMagicImmune(npcTarget) and GetUnitToUnitDistance( npcTarget, npcBot ) < nCastRange ) 
+			then
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget, 'unit';
+			end
+		end
+		if X.IsRetreating(npcBot) and npcBot:WasRecentlyDamagedByAnyHero(2.0)
+		then
+			local furthestTarget = X.GetFurthestTarget(npcBot)
+			if furthestTarget ~= nil then
+				return BOT_ACTION_DESIRE_MODERATE, furthestTarget, 'unit';
+			end
+		end
 	end
 	
 	if ability:GetName() == "tiny_toss" then
@@ -239,10 +287,14 @@ function X.ConsiderPointTarget(ability)
 	local nCastPoint = ability:GetCastPoint();
 	local nAttackRange = npcBot:GetAttackRange();
 	
-	if nCastRange < nAttackRange then
+	if nCastRange + 200 <= nAttackRange then
+		nCastRange = nAttackRange + 200;
+	elseif nCastRange + 200 <= 1600 then
 		nCastRange = nCastRange + 200;
+	elseif nCastRange > 1600 then
+		nCastRange = 1600;
 	end
-
+	
 	if  X.AbilityNeedPathToBeClear(ability:GetName()) then
 		local an = ability:GetName();
 		if an == 'pudge_meat_hook' or an == 'rattletrap_hookshot' then

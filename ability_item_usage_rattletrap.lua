@@ -35,7 +35,7 @@ function AbilityUsageThink()
 	
 	
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:IsInvulnerable() ) then return end
 --[[
 	local unit = GetUnitList(UNIT_LIST_ALLIES )
 	local tableCogs = {};
@@ -388,7 +388,7 @@ function ConsiderCogs()
 	local nDamage = abilityCogs:GetAbilityDamage();
 
 	
-	--[[if npcBot:DistanceFromFountain() > 3000 then
+	--[[if npcBot:DistanceFromFountain() > 1300 then
 		return BOT_ACTION_DESIRE_ABSOLUTE
 	end]]--
 

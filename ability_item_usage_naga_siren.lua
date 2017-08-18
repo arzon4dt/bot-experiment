@@ -248,7 +248,10 @@ function ConsiderOvergrowth()
 		local npcTarget = npcBot:GetTarget();
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 800) and mutil.IsInRange(npcTarget, npcBot, 1300) ) 
 		then
-			return BOT_ACTION_DESIRE_HIGH;
+			local allies = npcTarget:GetNearbyHeroes(400, true, BOT_MODE_NONE)
+			if #allies >= 0 then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
 		end
 	end
 	

@@ -10,13 +10,47 @@ local LaneCreeps = {};
 local numCamp = 18;
 local farmState = 0;
 local teamPlayers = nil;
-local lanes = {LANE_TOP, LANE_MID, LANE_BOT}
+local lanes = {LANE_TOP, LANE_MID, LANE_BOT};
+local cause = "";
+local cogsTarget = nil;
+local t3Destroyed = false;
+local shrineTarget = nil;
+local cLoc = nil;
+local farmLane = false;
+
+local tPing = 0;
+local tChat = 0;
 
 function GetDesire()
+	
+	local num_cogs = 0;
+	
+	--[[local ab = bot:GetCurrentActiveAbility();
+	if ab ~= nil and not ab:IsItem() then
+		print(bot:GetUnitName().." is casting "..ab:GetName())
+	end]]--
+	
+	if IsUnitAroundLocation(GetAncient(GetTeam()):GetLocation(), 3000) then
+		return BOT_MODE_DESIRE_NONE;
+	end
+	
+	--print(bot:GetUnitName()..tostring(IsLocationPassable(bot:GetLocation())))
 	
 	if teamPlayers == nil then teamPlayers = GetTeamPlayers(GetTeam()) end
 	
 	local EnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	
+	--[[local avoidZones = GetAvoidanceZones();
+	
+	for _,zone in pairs(avoidZones) do
+	    print("testt");
+		print(zone.ability:GetName());
+		if zone.ability:GetName() == 'sandking_sand_storm' and DotaTime() - tChat >= 10  then
+			--bot:ActionImmediate_Chat("SK u'r channeling", true);
+			bot:ActionImmediate_Ping(zone.location.x, zone.location.y, true);
+			tChat = DotaTime();
+		end
+	end]]--
 	
 	minute = math.floor(DotaTime() / 60)
 	sec = DotaTime() % 60
@@ -28,9 +62,55 @@ function GetDesire()
 		--print(tostring(GetTeam())..tostring(#AvailableCamp))
 	end
 	
+	if bot:GetUnitName() == "npc_dota_hero_rattletrap" then
+		if ( bot:GetActiveMode() == BOT_MODE_RETREAT and bot:WasRecentlyDamagedByAnyHero(3.0) ) or #EnemyHeroes == 0 then
+			local units = GetUnitList(UNIT_LIST_ALLIED_OTHER);
+			local minDist = 10000;
+			for _,u in pairs(units)
+			do
+				if u:GetUnitName() == "npc_dota_rattletrap_cog" then
+					num_cogs = num_cogs + 1;
+					local cogDist = GetUnitToUnitDistance(u, GetAncient(GetTeam()));
+					if cogDist < minDist then
+						cogsTarget = u;
+						minDist = cogDist;
+					end
+				end
+			end
+			if num_cogs == 8 then
+				--print("attack cogs while retreat. Num cogs = "..tostring(num_cogs));
+				cause = "cogs";
+				return BOT_MODE_DESIRE_ABSOLUTE;
+			end
+		elseif bot:GetActiveMode() == BOT_MODE_ATTACK then
+			local npcTarget = bot:GetTarget();
+			if npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(bot, npcTarget) > 300 then
+				local units = GetUnitList(UNIT_LIST_ALLIED_OTHER);
+				local minDist = 10000;
+				for _,u in pairs(units)
+				do
+					if u:GetUnitName() == "npc_dota_rattletrap_cog" then
+						num_cogs = num_cogs + 1;
+						local cogDist = GetUnitToUnitDistance(u, npcTarget);
+						if cogDist < minDist then
+							cogsTarget = u;
+							minDist = cogDist;
+						end
+					end
+				end
+				if num_cogs == 8 then
+					cause = "cogs";
+					return BOT_MODE_DESIRE_ABSOLUTE;
+				end
+			end
+		end	
+		
+	end
+	
 	if #EnemyHeroes > 0 then
 		return BOT_MODE_DESIRE_NONE;
 	end		
+	
 	
 	if not bot:IsAlive() or bot:IsChanneling() or bot:GetCurrentActionType() == 1 or bot:GetNextItemPurchaseValue() == 0 
 	   or bot:WasRecentlyDamagedByAnyHero(3.0) or #EnemyHeroes >= 1 
@@ -40,9 +120,29 @@ function GetDesire()
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
+	if t3Destroyed == false then
+		t3Destroyed = IsThereT3Detroyed();
+	else
+		shrineTarget = GetTargetShrine();
+		if shrineTarget ~= nil and IsSuitableToDestroyShrine() then
+			cause = "shrine";
+			return BOT_MODE_DESIRE_VERYHIGH;
+		end
+	end
 	
+	if bot:GetUnitName() == "npc_dota_hero_faceless_void" and bot:GetLevel() >= 6 and bot:IsAlive() then
+		cLoc = GetSaveLocToFarmLane();
+		if cLoc ~= nil and DotaTime() - tPing >= 5  then
+			--bot:ActionImmediate_Ping(cLoc.x, cLoc.y, true);
+			--tPing = DotaTime();
+			farmLane = true;
+			return BOT_MODE_DESIRE_MODERATE+0.1;
+		else
+			farmLane = false;
+		end
+	end
 	
-	if bot:GetLevel() >= 6 and campUtils.IsStrongJungler(bot)
+	if bot:GetLevel() >= 6 and bot:GetLevel() < 25 and campUtils.IsStrongJungler(bot)
 	then
 		LaneCreeps = bot:GetNearbyLaneCreeps(1600, true);
 		if LaneCreeps ~= nil and #LaneCreeps > 0 then
@@ -72,16 +172,53 @@ end
 function OnEnd()
 	preferedCamp = nil;
 	farmState = 0;
+	cogsTarget = nil;
+	cogs = "";
+	cause = "";
+	shrineTarget = nil;
 end
 
 function Think()
-	if bot:IsUsingAbility() then 
+	if bot:IsUsingAbility() or bot:IsChanneling() then 
 		return
 	end
+	
+	if farmLane then
+		local laneCreeps = bot:GetNearbyLaneCreeps(1600, true);
+		local target = GetWeakestUnit(laneCreeps);
+		local t = bot:GetAttackPoint()+bot:GetAttackSpeed();
+		if bot:WasRecentlyDamagedByTower(2.0) then
+			bot:Action_MoveToLocation(GetAncient(GetTeam()):GetLocation());
+			return
+		elseif target ~= nil then
+			--print(tostring(bot:GetEstimatedDamageToTarget(false, target, t, DAMAGE_TYPE_PHYSICAL ).."><"..tostring(target:GetHealth())))
+			if  bot:GetEstimatedDamageToTarget(false, target, t, DAMAGE_TYPE_PHYSICAL ) <= target:GetHealth() then
+				bot:Action_AttackUnit(target, true);
+				return
+			end
+		else
+			bot:Action_MoveToLocation(cLoc);
+			return
+		end
+	end
+	
+	if cause == "cogs" then
+		bot:Action_AttackUnit( cogsTarget, true );
+		return;
+	elseif cause == "shrine" then
+		if GetUnitToUnitDistance(bot, shrineTarget) > 500 then
+			bot:Action_MoveToLocation(shrineTarget:GetLocation())
+			return
+		else
+			bot:Action_AttackUnit(shrineTarget, true)
+			return
+		end
+	end	
 	
 	if LaneCreeps ~= nil and #LaneCreeps > 0 then
 		local farmTarget = campUtils.FindFarmedTarget(LaneCreeps)
 		if farmTarget ~= nil then
+			--print("This")
 			bot:Action_AttackUnit(farmTarget, true);
 			return
 		end
@@ -115,5 +252,110 @@ function Think()
 	
 end
 
+function IsThereT3Detroyed()
+	
+	local T3s = {
+		TOWER_TOP_3,
+		TOWER_MID_3,
+		TOWER_BOT_3
+	}
+	
+	for _,t in pairs(T3s) do
+		local tower = GetTower(GetOpposingTeam(), t);
+		if tower == nil or not tower:IsAlive() then
+			return true;
+		end
+	end	
+	return false;
+end
+
+function GetTargetShrine()
+	local shrines = {
+		 SHRINE_BASE_1,
+		 SHRINE_BASE_2,
+		 SHRINE_BASE_3,
+		 SHRINE_JUNGLE_1,
+		 SHRINE_JUNGLE_2 
+	}
+	for _,s in pairs(shrines) do
+		--[[if bot:GetUnitName() == "npc_dota_hero_chen" then
+			if GetShrine(GetOpposingTeam(), s) ~= nil then
+				print("Health "..tostring(  GetShrine(GetOpposingTeam(), s):GetHealth() ))
+				print("Alive "..tostring( GetShrine(GetOpposingTeam(), s):IsAlive() ))
+			end
+		end]]--
+		if s < 3 and GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 1700 then
+			local shrine = GetShrine(GetOpposingTeam(), s);
+			if  shrine ~= nil and shrine:IsAlive() then
+				return shrine;
+			end	
+		end
+		if s >= 3 then
+			local shrine = GetShrine(GetOpposingTeam(), s);
+			if  shrine ~= nil and shrine:IsAlive() then
+				return shrine;
+			end	
+		end
+	end	
+	return nil;
+end
+
+function IsSuitableToDestroyShrine()
+	local mode = bot:GetActiveMode();
+	if bot:WasRecentlyDamagedByTower(2.0) or bot:WasRecentlyDamagedByAnyHero(3.0)
+	   or mode == BOT_MODE_DEFEND_TOWER_TOP
+	   or mode == BOT_MODE_DEFEND_TOWER_MID
+	   or mode == BOT_MODE_DEFEND_TOWER_BOT
+	   or mode == BOT_MODE_ATTACK
+	   or mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH
+	then
+		return false;
+	end
+	return true;
+end
+
+
+function GetSaveLocToFarmLane()
+	local minDist = 100000;
+	local clashLoc = nil;
+	for _,lane in pairs(lanes)
+	do
+		local tFLoc = GetLaneFrontLocation(GetTeam(), lane, 0);
+		local eFLoc = GetLaneFrontLocation(GetOpposingTeam(), lane, 0);
+		local fDist = utils.GetDistance(tFLoc, eFLoc);
+		local uDist = GetUnitToLocationDistance(bot, tFLoc);
+		if fDist <= 1000 and uDist < minDist and not IsUnitAroundLocation(eFLoc, 2000) then
+			minDist = uDist;
+			clashLoc = tFLoc;
+		end
+	end
+	return clashLoc;
+end
+
+function IsUnitAroundLocation(vLoc, nRadius)
+	local units = GetUnitList(UNIT_LIST_ENEMY_HEROES);
+	for _,unit in pairs(units)
+	do
+		if GetUnitToLocationDistance(unit, vLoc) < nRadius then
+		--print(unit:GetUnitName()..":".. GetUnitPotentialValue(unit, vLoc, 1300));
+			return true;
+		end
+	end
+	return false;
+end
+
+function GetWeakestUnit(units)
+	local lowestHP = 10000;
+	local lowestUnit = nil;
+	for _,unit in pairs(units)
+	do
+		local hp = unit:GetHealth();
+		if hp < lowestHP then
+			lowestHP = hp;
+			lowestUnit = unit;	
+		end
+	end
+	return lowestUnit;
+end
 
 

@@ -1,8 +1,18 @@
 local U = {};
 
-local RB = Vector(-7200,-6666)
-local DB = Vector(7137,6548)
+local RB = Vector(-7174.000000, -6671.00000,  0.000000)
+local DB = Vector(7023.000000, 6450.000000, 0.000000)
 local fSpamThreshold = 0.55;
+local listBoots = {
+	['item_boots'] = 45, 
+	['item_tranquil_boots'] = 90, 
+	['item_power_treads'] = 45, 
+	['item_phase_boots'] = 45, 
+	['item_arcane_boots'] = 50, 
+	['item_guardian_greaves'] = 55,
+	['item_travel_boots'] = 100,
+	['item_travel_boots_2'] = 100
+}
 
 local modifier = {
 	"modifier_winter_wyvern_winters_curse",
@@ -20,9 +30,24 @@ function U.IsValidTarget(npcTarget)
 end
 
 function U.IsSuspiciousIllusion(npcTarget)
-	if npcTarget:IsIllusion() then
+	--TO DO Need to detect enemy hero's illusions better
+	
+	--Detect allies's illusions
+	if npcTarget:IsIllusion() or npcTarget:HasModifier('modifier_illusion') 
+	   or npcTarget:HasModifier('modifier_phantom_lancer_doppelwalk_illusion') or npcTarget:HasModifier('modifier_phantom_lancer_juxtapose_illusion')
+       or npcTarget:HasModifier('modifier_darkseer_wallofreplica_illusion') or npcTarget:HasModifier('modifier_terrorblade_conjureimage')	   
+	then
 		return true;
-	else	
+	else
+	--Detect replicate and wall of replica illusions
+		local TeamMember = GetTeamPlayers(GetTeam());
+		for i = 1, #TeamMember
+		do
+			local ally = GetTeamMember(i);
+			if ally ~= nil and ally:GetUnitName() == npcTarget:GetUnitName() then
+				return true;
+			end
+		end
 		return false;
 	end
 end
@@ -74,6 +99,21 @@ function U.IsDisabled(enemy, npcTarget)
 	end
 end
 
+function U.IsSlowed(bot)
+	local speedPlusBoots =  U.GetUpgradedSpeed(bot);
+	return bot:GetCurrentMovementSpeed() < speedPlusBoots;
+end
+
+function U.GetUpgradedSpeed(bot)
+	for i=0,5 do
+		local item = bot:GetItemInSlot(i);
+		if item ~= nil and listBoots[item:GetName()] ~= nil then
+			return bot:GetBaseMovementSpeed()+listBoots[item:GetName()];
+		end
+	end
+	return bot:GetBaseMovementSpeed();
+end
+
 function U.IsTaunted(npcTarget)
 	return npcTarget:HasModifier("modifier_axe_berserkers_call") or npcTarget:HasModifier("modifier_legion_commander_duel") 
 	    or npcTarget:HasModifier("modifier_winter_wyvern_winters_curse");
@@ -89,7 +129,7 @@ function U.IsInTeamFight(npcBot, range)
 end
 
 function U.CanNotUseAbility(npcBot)
-	return npcBot:IsUsingAbility() or npcBot:IsInvulnerable() or npcBot:IsChanneling() or npcBot:IsSilenced();
+	return npcBot:IsCastingAbility() or npcBot:IsUsingAbility() or npcBot:IsInvulnerable() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:HasModifier("modifier_doom_bringer_doom");
 end
 
 function U.IsGoingOnSomeone(npcBot)
@@ -217,6 +257,20 @@ function U.GetEnemyFountain()
 		return RB;
 	else
 		return DB;
+	end
+end
+
+function U.GetEscapeLoc()
+	local bot = GetBot();
+	local team = GetTeam();
+	if bot:DistanceFromFountain() > 2500 then
+		return GetAncient(team):GetLocation();
+	else
+		if team == TEAM_DIRE then
+			return DB;
+		else
+			return RB;
+		end
 	end
 end
 

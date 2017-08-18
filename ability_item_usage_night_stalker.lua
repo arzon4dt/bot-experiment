@@ -19,10 +19,12 @@ end
 
 local castWBDesire = 0;
 local castCH1Desire = 0;
+local castEDesire = 0;
 local castCHDesire = 0;
 
 local abilityCH1 = nil;
 local abilityCH = nil;
+local abilityE = nil;
 local abilityWB = nil;
 
 local npcBot = nil;
@@ -36,11 +38,13 @@ function AbilityUsageThink()
 
 	if abilityCH1 == nil then abilityCH1 = npcBot:GetAbilityByName( "night_stalker_void" ) end
 	if abilityCH == nil then abilityCH = npcBot:GetAbilityByName( "night_stalker_crippling_fear" ) end
+	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "night_stalker_hunter_in_the_night" ) end
 	if abilityWB == nil then abilityWB = npcBot:GetAbilityByName( "night_stalker_darkness" ) end
 	
 	-- Consider using each ability
 	castCH1Desire, castCH1Target = ConsiderCorrosiveHaze1();
 	castCHDesire, castCHTarget = ConsiderCorrosiveHaze();
+	castEDesire = ConsiderE();
 	castWBDesire = ConsiderWildBoar();
 
 	if ( castCH1Desire > 0 ) 
@@ -60,11 +64,17 @@ function AbilityUsageThink()
 		npcBot:Action_UseAbility( abilityWB );
 		return;
 	end
+	
+	if ( castEDesire > 0  ) 
+	then
+		npcBot:Action_UseAbility( abilityE );
+		return;
+	end
 
 end
 
 function IsNightTime()
-	return GetTimeOfDay() == 0.0;
+	return GetTimeOfDay() == 0.0 or npcBot:HasModifier("modifier_night_stalker_darkness");
 end
 
 function ConsiderWildBoar()
@@ -96,6 +106,44 @@ function ConsiderWildBoar()
 	then
 		local npcTarget = npcBot:GetTarget();
 		if ( mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, distance) and not IsNightTime() ) 
+		then
+			return BOT_ACTION_DESIRE_MODERATE;
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
+end
+
+function ConsiderE()
+
+	-- Make sure it's castable
+	if ( not abilityE:IsFullyCastable() ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+	
+	local distance = 1000;
+	
+	if mutil.IsStuck(npcBot) and IsNightTime()
+	then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
+	
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( distance, true, BOT_MODE_NONE );
+		if IsNightTime() and npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and not IsLocationPassable(npcBot:GetXUnitsInFront(300)) 
+		then
+			return BOT_ACTION_DESIRE_MODERATE;
+		end
+	end
+	
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if ( mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, distance) and IsNightTime() and not IsLocationPassable(npcBot:GetXUnitsInFront(300)) ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end

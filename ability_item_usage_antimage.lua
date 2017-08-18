@@ -65,7 +65,8 @@ function ConsiderTimeWalk()
 
 	if mutil.IsStuck(npcBot)
 	then
-		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
+		local loc = mutil.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 	end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
@@ -73,7 +74,8 @@ function ConsiderTimeWalk()
 	then
 		if mutil.ShouldEscape(npcBot)
 		then
-			local location = npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
+			local loc = mutil.GetEscapeLoc();
+			local location = npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 			return BOT_ACTION_DESIRE_MODERATE, location;
 		end
 	end
@@ -81,7 +83,7 @@ function ConsiderTimeWalk()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 300) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  
+		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 2*npcBot:GetAttackRange()) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)  
 		then
 			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 			if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes < 2 then
@@ -112,7 +114,7 @@ function ConsiderCorrosiveHaze()
 			then
 				local EstDamage = nDamagaPerHealth * ( npcTarget:GetMaxMana() - npcTarget:GetMana() )
 				local TPerMana = npcTarget:GetMana()/npcTarget:GetMaxMana();
-				if mutil.CanKillTarget(npcTarget, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.10
+				if mutil.CanKillTarget(npcTarget, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.01
 				then
 					return BOT_ACTION_DESIRE_HIGH, npcTarget;
 				end
@@ -130,7 +132,7 @@ function ConsiderCorrosiveHaze()
 			local EstDamage = nDamagaPerHealth * ( npcEnemy:GetMaxMana() - npcEnemy:GetMana() )
 			local TPerMana = npcEnemy:GetMana()/npcEnemy:GetMaxMana();
 			if mutil.IsValidTarget(npcEnemy) and mutil.CanCastOnTargetAdvanced(npcEnemy) and mutil.IsInRange(npcEnemy, npcBot, nCastRange+200) and
-			   ( mutil.CanKillTarget(npcEnemy, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.05 ) 
+			   ( mutil.CanKillTarget(npcEnemy, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.01 ) 
 			then
 				npcToKill = npcEnemy;
 			end
@@ -148,7 +150,7 @@ function ConsiderCorrosiveHaze()
 		local EstDamage = nDamagaPerHealth * ( npcEnemy:GetMaxMana() - npcEnemy:GetMana() )
 		local TPerMana = npcEnemy:GetMana()/npcEnemy:GetMaxMana();
 		if mutil.IsValidTarget(npcEnemy) and mutil.CanCastOnTargetAdvanced(npcEnemy) and mutil.IsInRange(npcEnemy, npcBot, nCastRange+200) and
-		   ( mutil.CanKillTarget(npcEnemy, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.05 or npcEnemy:IsChanneling() ) 
+		   ( mutil.CanKillTarget(npcEnemy, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.01 or npcEnemy:IsChanneling() ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 		end

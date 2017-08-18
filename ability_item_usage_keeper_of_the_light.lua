@@ -53,11 +53,11 @@ function AbilityUsageThink()
 	CancelIlmDesire = ConsiderCancelIlm();
 	
 	if CancelIlmDesire > 0 then
-		npcBot:Action_MoveToLocation(npcBot:GetLocation()+RandomVector(200))
-		return
+		--npcBot:Action_MoveToLocation(npcBot:GetLocation()+RandomVector(200))
+		--return
 	end
 	
-	if mutil.CanNotUseAbility(npcBot) then return end
+	if mutil.CanNotUseAbility(npcBot)  or npcBot:NumQueuedActions() > 0  then return end
 
 	-- Consider using each ability
 	castFBDesire, castFBTarget = ConsiderFireblast();
@@ -77,41 +77,37 @@ function AbilityUsageThink()
 	
 	if ( castCS2Desire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnLocation( abilityCS2, castCS2Location );
 		return;
 	end	
 	
 	if ( castFBDesire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
 		return;
 	end
 	
 	if ( castCSDesire > 0 ) 
 	then
-		
-		npcBot:Action_UseAbilityOnLocation( abilityCS, castCSLocation );
+		npcBot:Action_ClearActions( true ); 
+		npcBot:ActionQueue_UseAbilityOnLocation( abilityCS, castCSLocation );
+		npcBot:ActionQueue_Delay( 0.5 );
 		return;
 	end	
 	if ( castCSSDesire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnLocation( abilityCSS, castCSSLocation );
 		return;
 	end	
 	
 	if ( castBLDesire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnEntity( abilityBL, castBLTarget );
 		return;
 	end
 	
 	if ( castRCDesire > 0 ) 
 	then
-		
 		npcBot:Action_UseAbilityOnEntity( abilityRC, castRCTarget );
 		return;
 	end

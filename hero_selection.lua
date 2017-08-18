@@ -6,9 +6,19 @@ local requiredHeroes = {
 	'npc_dota_hero_ember_spirit',
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
-	'npc_dota_hero_skywrath_mage';
-	'npc_dota_hero_tiny';
-	'npc_dota_hero_ember_spirit';
+	'npc_dota_hero_shadow_shaman';
+	'npc_dota_hero_keeper_of_the_light';
+	'npc_dota_hero_pugna';
+	'npc_dota_hero_elder_titan';
+	'npc_dota_hero_tinker';
+	'npc_dota_hero_puck';
+	'npc_dota_hero_witch_doctor';
+	'npc_dota_hero_pudge';
+	'npc_dota_hero_windrunner';
+	'npc_dota_hero_lion';
+	'npc_dota_hero_bane';
+	'npc_dota_hero_riki';
+	'npc_dota_hero_crystal_maiden';
 };
 
 local UnImplementedHeroes = {
