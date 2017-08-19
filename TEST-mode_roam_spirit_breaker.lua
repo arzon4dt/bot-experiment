@@ -7,6 +7,7 @@ local roamDistance = 600;
 local npcTarget = nil;
 local RADBase = Vector(-7200,-6666);
 local DIREBase = Vector(7137,6548);
+local cod = nil;
 
 function GetDesire()
 	
@@ -14,14 +15,11 @@ function GetDesire()
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
-	if npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness")
+	if cod == nil then cod = npcBot:GetAbilityByName( "spirit_breaker_charge_of_darkness" ) end
+	
+	if cod:IsInAbilityPhase()or npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness")
 	then
 		return BOT_MODE_DESIRE_ABSOLUTE;
-	end
-	
-	if npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() 
-	then
-		return BOT_MODE_DESIRE_NONE;
 	end
 	
 	local target = FindTarget();
@@ -55,6 +53,8 @@ function Think()
 		else
 			return;
 		end
+	else	
+		return;
 	end
 	
 	local target = FindTarget();

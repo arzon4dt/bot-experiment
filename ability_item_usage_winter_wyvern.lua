@@ -214,13 +214,13 @@ function ConsiderLivingArmor()
 		end
 	end
 
-	local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
+	local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1200, false, BOT_MODE_NONE );
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		for _,npcAlly in pairs( tableNearbyAllyHeroes )
 		do
-			if ( ( npcAlly:GetHealth() / npcAlly:GetMaxHealth() ) < 0.25 ) 
+			if ( mutil.CanCastOnNonMagicImmune(npcAlly) and npcAlly:GetHealth() / npcAlly:GetMaxHealth() ) < 0.25 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcAlly;
 			end
@@ -229,7 +229,7 @@ function ConsiderLivingArmor()
 	
 	for _,npcAlly in pairs( tableNearbyAllyHeroes )
 	do
-		if npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.25 
+		if mutil.CanCastOnNonMagicImmune(npcAlly) and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.25 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcAlly;
 		end

@@ -133,7 +133,8 @@ function ConsiderCharge()
 			not mutil.IsDisabled(true, npcTarget) ) 
 		then
 			local Ally = npcTarget:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
-			if ( Ally ~= nil and #Ally >= 1 ) or npcTarget:GetHealth() <= ( 100 + (5*npcBot:GetLevel()) ) then
+			local Enemy = npcTarget:GetNearbyHeroes(1600, false, BOT_MODE_NONE);
+			if ( #Ally + 1 >= #Enemy  ) or npcTarget:GetHealth() <= ( 100 + (5*npcBot:GetLevel()) ) then
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 			end	
 		end

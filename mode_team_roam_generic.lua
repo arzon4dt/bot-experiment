@@ -1,3 +1,4 @@
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 local bot = GetBot();
 local cAbility = nil;
 
@@ -32,6 +33,16 @@ function GetDesire()
 		if cAbility == nil then cAbility = bot:GetAbilityByName( "tinker_rearm" ) end;
 		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
 			return BOT_MODE_DESIRE_ABSOLUTE;
+		end
+	elseif bot:GetUnitName() == "npc_dota_hero_spirit_breaker" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "spirit_breaker_charge_of_darkness" ) end;
+		if cAbility:IsInAbilityPhase() or bot:HasModifier("modifier_spirit_breaker_charge_of_darkness") then
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end	
+	elseif bot:GetUnitName() == "npc_dota_hero_enigma" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "enigma_black_hole" ) end;
+		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
+			return BOT_MODE_DESIRE_ABSOLUTE;
 		end		
 	end
 	
@@ -48,8 +59,29 @@ function Think()
 	or  bot:GetUnitName() == "npc_dota_hero_elder_titan" 
 	or  bot:GetUnitName() == "npc_dota_hero_puck" 
 	or  bot:GetUnitName() == "npc_dota_hero_tinker" 
+	or  bot:GetUnitName() == "npc_dota_hero_enigma" 
 	then
 		return;	
+	elseif bot:GetUnitName() == "npc_dota_hero_spirit_breaker" then
+		local target = bot.chargeTarget;
+		if target ~= nil and not target:IsNull() and target:IsAlive() and target:CanBeSeen() and GetUnitToLocationDistance(target, mutil.GetEnemyFountain()) < 1200
+		then
+			bot:ActionImmediate_Chat("Target way too close to their base", false);
+			bot:Action_MoveToLocation(bot:GetLocation() + RandomVector(200));
+			return;
+		elseif target ~= nil and not target:IsNull() and target:IsAlive() then
+			local Ally = target:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+			local Enemy = target:GetNearbyHeroes(1600, false, BOT_MODE_NONE);
+			if Ally ~= nil and Enemy ~= nil and ( #Ally + 1 < #Enemy  ) then
+				bot:ActionImmediate_Chat("To many enemies", false);
+				bot:Action_MoveToLocation(bot:GetLocation() + RandomVector(200));
+				return;
+			else
+				return;
+			end	
+		else	
+			return;
+		end
 	end
 	
 end
