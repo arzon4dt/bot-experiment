@@ -8,9 +8,8 @@ local bot = GetBot();
 local minute = 0;
 local sec = 0;
 local closestRune  = -1;
-local mustSaveRune = -1;
-local ProxDist = 1200;
-local PingTimeGap = 15;
+local runeStatus = -1;
+local ProxDist = 1500;
 local teamPlayers = nil;
 
 local ListRune = {
@@ -21,9 +20,6 @@ local ListRune = {
 	RUNE_POWERUP_1,
 	RUNE_POWERUP_2
 }
-
-local DireMustSave = {RUNE_BOUNTY_3,RUNE_BOUNTY_4,RUNE_POWERUP_1,RUNE_POWERUP_2}
-local RadiMustSave = {RUNE_BOUNTY_1,RUNE_BOUNTY_2,RUNE_POWERUP_1,RUNE_POWERUP_2}
 
 function GetDesire()
 	
@@ -39,38 +35,27 @@ function GetDesire()
 	minute = math.floor(DotaTime() / 60)
 	sec = DotaTime() % 60
 	
-	closestRune = GetClosestRune();
-	mustSaveRune = GetClosestMustSave();
+	if not IsSuitableToPick() then
+		return BOT_MODE_DESIRE_NONE;
+	end	
 	
-	for _,r in pairs(ListRune)
-	do
-		local rLoc = GetRuneSpawnLocation(r);
-		if IsHumanPlayerNearby(rLoc) or IsPingedByHumanPlayer(rLoc)  then
-			return BOT_MODE_DESIRE_NONE;
-		elseif IsThereMidlaner(rLoc) or IsThereCarry(rLoc) then
-			return BOT_MODE_DESIRE_NONE;
-		elseif r == closestRune and GetRuneStatus( r ) == RUNE_STATUS_AVAILABLE and IsTheClosestOne(rLoc) and GetUnitToLocationDistance( bot , rLoc) < ProxDist / 3 then
-			return BOT_MODE_DESIRE_ABSOLUTE;
-		elseif r == closestRune and GetRuneStatus( r ) == RUNE_STATUS_AVAILABLE and IsTheClosestOne(rLoc) and IsSuitableToPick() then
-			return BOT_MODE_DESIRE_MODERATE;
-		elseif DotaTime() > 60 and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then	
-			return BOT_MODE_DESIRE_HIGH;
-		elseif DotaTime() > 60 and ( minute % 2 == 1 and sec > 52 ) and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then
-			return BOT_MODE_DESIRE_HIGH;
-		elseif r == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_RADIANT and IsTeamMustSaveRune(r)
-			and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
-		then
-			return BOT_MODE_DESIRE_MODERATE;
-		elseif r == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_DIRE and IsTeamMustSaveRune(r)
-			and GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
-		then
-			return BOT_MODE_DESIRE_MODERATE;		
+	if DotaTime() < 0 and not bot:WasRecentlyDamagedByAnyHero(5.0) then 
+		return BOT_MODE_DESIRE_MODERATE;
+	end	
+	
+	closestRune, closestDist = GetBotClosestRune();
+	if closestRune ~= -1 then
+		runeStatus = GetRuneStatus( closestRune );
+		if runeStatus == RUNE_STATUS_AVAILABLE then
+			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 6000);
+		elseif runeStatus == RUNE_STATUS_UNKNOWN and closestDist <= ProxDist then
+			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
+		elseif runeStatus == RUNE_STATUS_MISSING and DotaTime() > 60 and ( minute % 2 == 1 and sec > 52 ) and closestDist <= ProxDist then
+			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
+		elseif IsTeamMustSaveRune(closestRune) and runeStatus == RUNE_STATUS_UNKNOWN then
+			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 6000);
 		end
 	end
-	
-	if DotaTime() < 0 then 
-		return BOT_MODE_DESIRE_MODERATE;	
-	end	
 	
 	return BOT_MODE_DESIRE_NONE;
 end
@@ -84,31 +69,6 @@ function OnEnd()
 end
 
 function Think()
-	
-	for _,rune in pairs(ListRune)
-	do
-		local rLoc = GetRuneSpawnLocation(rune)
-		if rune == closestRune and GetRuneStatus( rune ) == RUNE_STATUS_AVAILABLE and IsTheClosestOne(rLoc) then
-			bot:Action_PickUpRune(rune);
-			return
-		elseif DotaTime() > 60 and GetRuneStatus( rune ) == RUNE_STATUS_UNKNOWN and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc) then	
-			bot:Action_MoveToLocation(rLoc);
-			return	
-		elseif DotaTime() > 60 and ( minute % 2 == 1 and sec > 50 ) and GetUnitToLocationDistance( bot , rLoc) < ProxDist and IsTheClosestOne(rLoc)	then
-			bot:Action_MoveToLocation(rLoc);
-			return
-		elseif rune == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_RADIANT and IsTeamMustSaveRune(rune)
-			and GetRuneStatus( rune ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
-		then
-			bot:Action_MoveToLocation(rLoc);
-			return	
-		elseif rune == mustSaveRune and DotaTime() > 60 and GetTeam() == TEAM_DIRE and IsTeamMustSaveRune(rune)
-			and GetRuneStatus( rune ) == RUNE_STATUS_UNKNOWN and IsTheClosestOne(rLoc) and IsSuitableToPick() 
-		then
-			bot:Action_MoveToLocation(rLoc);
-			return	
-		end			
-	end
 	
 	if DotaTime() < 0 then 
 		if GetTeam() == TEAM_RADIANT then
@@ -130,6 +90,41 @@ function Think()
 		end
 	end	
 	
+	if runeStatus == RUNE_STATUS_AVAILABLE then
+		if closestDist > 200 then
+			bot:Action_MoveToLocation(GetRuneSpawnLocation(closestRune));
+			return
+		else
+			bot:Action_PickUpRune(closestRune);
+			return
+		end
+	else 
+		bot:Action_MoveToLocation(GetRuneSpawnLocation(closestRune));
+		return
+	end
+	
+end
+
+function CountDesire(base_desire, dist, maxDist)
+	 return base_desire + RemapValClamped( dist, maxDist, 0, 0, 1-base_desire );
+end	
+
+function GetBotClosestRune()
+	local cDist = 100000;	
+	local cRune = -1;	
+	for _,r in pairs(ListRune)
+	do
+		local rLoc = GetRuneSpawnLocation(r);
+		if not IsHumanPlayerNearby(rLoc) and not IsPingedByHumanPlayer(rLoc) and not IsThereMidlaner(rLoc) and not IsThereCarry(rLoc) and IsTheClosestOne(rLoc)
+		then
+			local dist = GetUnitToLocationDistance(bot, rLoc);
+			if dist < cDist then
+				cDist = dist;
+				cRune = r;
+			end	
+		end
+	end
+	return cRune, cDist;
 end
 
 function GetDistance(s, t)
@@ -142,40 +137,6 @@ function IsTeamMustSaveRune(rune)
 	else
 		return rune == RUNE_BOUNTY_1 or rune == RUNE_BOUNTY_2 or rune == RUNE_POWERUP_1 or rune == RUNE_POWERUP_2
 	end
-end
-
-function GetClosestRune()
-	local closestD = 10000;	
-	local closestR = -1;	
-	for _,r in pairs(ListRune)
-	do
-		if GetRuneStatus( r ) == RUNE_STATUS_AVAILABLE then
-			local runeD = GetUnitToLocationDistance( bot , GetRuneSpawnLocation(r));
-			if runeD <= closestD then
-				closestD = runeD;
-				closestR = r;
-			end
-		end
-	end
-	return closestR;
-end
-
-function GetClosestMustSave()
-	local closestD = 10000;	
-	local closestR = -1;
-	local Runes = RadiMustSave;
-	if GetTeam() == TEAM_DIRE then Runes = DireMustSave end
-	for _,r in pairs(Runes)
-	do
-		if GetRuneStatus( r ) == RUNE_STATUS_UNKNOWN then
-			local runeD = GetUnitToLocationDistance( bot , GetRuneSpawnLocation(r));
-			if runeD <= closestD then
-				closestD = runeD;
-				closestR = r;
-			end
-		end
-	end
-	return closestR;
 end
 
 function IsHumanPlayerNearby(runeLoc)
@@ -265,13 +226,8 @@ end
 function IsSuitableToPick()
 	local mode = bot:GetActiveMode();
 	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
-	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_HIGH )
-		or mode == BOT_MODE_ATTACK
-		or mode == BOT_MODE_DEFEND_ALLY
-		or mode == BOT_MODE_DEFEND_TOWER_TOP
-		or mode == BOT_MODE_DEFEND_TOWER_MID
-		or mode == BOT_MODE_DEFEND_TOWER_BOT
-		or ( ( Enemies ~= nil or #Enemies >= 1 ) and bot:WasRecentlyDamagedByAnyHero(2.0) )
+	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE )
+		or ( ( Enemies ~= nil or #Enemies >= 1 ) and bot:WasRecentlyDamagedByAnyHero(5.0) )
 		) 
 	then
 		return false;

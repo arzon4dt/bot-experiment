@@ -350,7 +350,7 @@ function ConsiderR()
 	if mutil.IsRetreating(npcBot) and tableNearbyEnemyHeroes[1] ~=nil 
 	then
 		local tableNearbyAllyHeroes = tableNearbyEnemyHeroes[1]:GetNearbyHeroes( nCastRange-200, true, BOT_MODE_NONE );
-		if #tableNearbyAllyHeroes == 1 and tableNearbyAllyHeroes ~= nil and #tableNearbyAllyHeroes >= 2  
+		if tableNearbyAllyHeroes ~= nil and #tableNearbyAllyHeroes >= 2  
 		then
 			return BOT_ACTION_DESIRE_HIGH,  tableNearbyEnemyHeroes[1];
 		end

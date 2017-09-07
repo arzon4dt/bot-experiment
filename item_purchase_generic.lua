@@ -78,7 +78,8 @@ function ItemPurchaseThink()
 
 	PurchaseTP();
 	
-	if DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and role.CanBeMidlaner(npcBot:GetUnitName()) and npcBot:GetAssignedLane() == LANE_MID then
+	--if DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and role.CanBeMidlaner(npcBot:GetUnitName()) and npcBot:GetAssignedLane() == LANE_MID then
+	if DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and npcBot.theRole == "midlaner" then
 		local salve = npcBot:FindItemSlot("item_flask");
 		if salve >= 0 then
 			npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(salve));
@@ -100,8 +101,9 @@ function ItemPurchaseThink()
 		buyBottle = true;
 	end
 	
-	if  supportExist ~= nil and supportExist and 
-		role.CanBeSupport(npcBot:GetUnitName()) and npcBot:GetAssignedLane() ~= LANE_MID  
+	if  supportExist ~= nil and supportExist 
+		--role.CanBeSupport(npcBot:GetUnitName()) and npcBot:GetAssignedLane() ~= LANE_MID  
+		and npcBot.theRole == "support"  
 	then
 		PurchaseSmoke();
 		if invisEnemyExist then
@@ -145,7 +147,8 @@ function ItemPurchaseThink()
 end	
 
 function IsSupportExist()
-	if role.CanBeSupport(npcBot:GetUnitName()) then
+	--if role.CanBeSupport(npcBot:GetUnitName()) then
+	if npcBot.theRole == "support" then
 		return true;
 	end
 	local TeamMember = GetTeamPlayers(GetTeam())
@@ -158,7 +161,8 @@ function IsSupportExist()
 	for i = 1, #TeamMember
 	do
 		local ally = GetTeamMember(i);
-		if ally ~= nil and ally:IsHero() and role.CanBeSupport(ally:GetUnitName()) 
+		--if ally ~= nil and ally:IsHero() and role.CanBeSupport(ally:GetUnitName()) 
+		if ally ~= nil and ally:IsHero() and ally.theRole == "support" 
 		then
 			return true;
 		end
@@ -187,6 +191,18 @@ function GeneralPurchase()
 	local CanPurchaseFromSecret = IsItemPurchasedFromSecretShop(sNextItem);
 	local CanPurchaseFromSide   = IsItemPurchasedFromSideShop(sNextItem);
 	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
+		
+		local courier = GetCourier(0);
+		if npcBot.SecretShop and courier ~= nil and GetCourierState(courier) == COURIER_STATE_IDLE and courier:DistanceFromSecretShop() == 0 then
+			if courier:ActionImmediate_PurchaseItem( sNextItem ) == PURCHASE_ITEM_SUCCESS then
+				table.remove( npcBot.tableItemsToBuy, 1 );
+				courier.latestUser = npcBot;
+				npcBot.SecretShop = false;
+			    npcBot.SideShop = false;
+				return
+			end
+		end
+		
 		if CanPurchaseFromSecret and not CanPurchaseFromSide and npcBot:DistanceFromSecretShop() > 0 
 		then
 			--print("secret 1"..npcBot:GetUnitName()..tostring(npcBot:DistanceFromSecretShop()))
@@ -212,6 +228,7 @@ function GeneralPurchase()
 				table.remove( npcBot.tableItemsToBuy, 1 );
 				npcBot.SecretShop = false;
 				npcBot.SideShop = false;	
+				return
 			else
 				print("[Generic]"..npcBot:GetUnitName().." failed to purchase "..sNextItem.." : "..tostring(npcBot:ActionImmediate_PurchaseItem( sNextItem )))	
 			end
@@ -265,7 +282,7 @@ function SwapBoots()
 	if itemSlot >= 0 and npcBot:GetItemSlotType(itemSlot) == ITEM_SLOT_TYPE_BACKPACK and not HasItem(npcBot, "item_travel_boots") and not HasItem(npcBot, "item_travel_boots_2")
 	then
 		local lessValItem = getLessValuableItemSlot();
-		if lessValItem ~= -1
+		if lessValItem ~= -1 and GetItemCost(npcBot:GetItemInSlot(lessValItem):GetName()) <  GetItemCost(npcBot:GetItemInSlot(itemSlot):GetName()) 
 		then
 			npcBot:ActionImmediate_SwapItems( itemSlot, lessValItem );
 			return
@@ -318,7 +335,7 @@ end
 
 function SellEarlyGameItem()
 
-	if ( npcBot:DistanceFromFountain() < 100 or npcBot:DistanceFromSecretShop() < 100 ) and DotaTime() > 25*60 and GetEmptySlotAmount() < 3 then
+	if ( npcBot:DistanceFromFountain() == 0 or npcBot:DistanceFromSecretShop() == 0 ) and DotaTime() > 25*60 and GetEmptySlotAmount() < 3 then
 		for _,item in pairs(earlyGameItem)
 		do
 			local itemSlot = npcBot:FindItemSlot(item);

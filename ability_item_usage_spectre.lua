@@ -41,7 +41,7 @@ function AbilityUsageThink()
 	
 	-- Consider using each ability
 	castOODesire, castOOLocation = ConsiderOverwhelmingOdds();
-	castFBDesire, castFBTarget = ConsiderFireblast();
+	castFBDesire, castFBTarget, stuck = ConsiderFireblast();
 	castVDDesire = ConsiderVendetta();
 
 	if ( castOODesire > 0 ) 
@@ -52,8 +52,13 @@ function AbilityUsageThink()
 	
 	if ( castFBDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
-		return;
+		if stuck ~= nil then
+			npcBot:Action_UseAbilityOnLocation( abilityFB, castFBTarget );
+			return;
+		else
+			npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
+			return;
+		end
 	end
 	
 	if ( castVDDesire > 0 ) 
@@ -108,7 +113,8 @@ function ConsiderFireblast()
 
 	if mutil.IsStuck(npcBot)
 	then
-		return BOT_ACTION_DESIRE_HIGH, npcBot;
+		local loc = mutil.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange/2 ), true;
 	end
 	
 	--------------------------------------

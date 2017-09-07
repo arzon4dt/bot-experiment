@@ -2,7 +2,11 @@ local U = {};
 
 local RB = Vector(-7174.000000, -6671.00000,  0.000000)
 local DB = Vector(7023.000000, 6450.000000, 0.000000)
+local maxGetRange = 1600;
+local maxAddedRange = 200;
+
 local fSpamThreshold = 0.55;
+
 local listBoots = {
 	['item_boots'] = 45, 
 	['item_tranquil_boots'] = 90, 
@@ -21,8 +25,144 @@ local modifier = {
 	"modifier_oracle_fates_edict"
 }
 
+function U.InitiateAbilities(hUnit, tSlots)
+	local abilities = {};
+	for _,i in pairs(tSlots) do
+		table.insert(abilities, hUnit:GetAbilityInSlot(i));
+	end
+	return abilities;
+end
+
+function U.CantUseAbility(bot)
+	return bot:NumQueuedActions() > 0 
+		   or not bot:IsAlive() or bot:IsInvulnerable() or bot:IsCastingAbility() or bot:IsUsingAbility() or bot:IsChanneling()  
+	       or bot:IsSilenced() or bot:IsStunned() or bot:IsHexed() or bot:IsHexed()   
+		   or bot:HasModifier("modifier_doom_bringer_doom")
+		   or bot:HasModifier('modifier_item_forcestaff_active')
+end
+
+function U.CanBeCast(ability)
+	return ability:IsTrained() and ability:IsFullyCastable() and not ability:IsHidden();
+end
+
+function U.GetProperCastRange(bIgnore, hUnit, abilityCR)
+	local attackRng = hUnit:GetAttackRange();
+	if bIgnore then
+		return abilityCR;
+	elseif abilityCR <= attackRng then
+		return attackRng + maxAddedRange;
+	elseif abilityCR + maxAddedRange <= maxGetRange then
+		return abilityCR + maxAddedRange;
+	elseif abilityCR > maxGetRange then
+		return maxAddedRange;
+	end
+end
+
+function U.GetVulnerableWeakestUnit(bHero, bEnemy, nRadius, bot)
+	local units = {};
+	local weakest = nil;
+	local weakestHP = 10000;
+	if bHero then
+		units = bot:GetNearbyHeroes(nRadius, bEnemy, BOT_MODE_NONE);
+	else
+		units = bot:GetNearbyLaneCreeps(nRadius, bEnemy);
+	end
+	for _,u in pairs(units) do
+		if u:GetHealth() < weakestHP and U.CanCastOnNonMagicImmune(u) then
+			weakest = u;
+			weakestHP = u:GetHealth();
+		end
+	end
+	return weakest;
+end
+
+function U.GetVulnerableUnitNearLoc(bHero, bEnemy, nCastRange, nRadius, vLoc, bot)
+	local units = {};
+	local weakest = nil;
+	if bHero then
+		units = bot:GetNearbyHeroes(nCastRange, bEnemy, BOT_MODE_NONE);
+	else
+		units = bot:GetNearbyLaneCreeps(nCastRange, bEnemy);
+	end
+	for _,u in pairs(units) do
+		if GetUnitToLocationDistance(u, vLoc) < nRadius and U.CanCastOnNonMagicImmune(u) then
+			weakest = u;
+			break;
+		end
+	end
+	return weakest;
+end
+
+function U.CanSpamSpell(bot, manaCost)
+	local initialRatio = 1.0;
+	if manaCost < 100 then
+		initialRatio = 0.6;
+	end
+	return ( bot:GetMana() - manaCost ) / bot:GetMaxMana() >= ( initialRatio - bot:GetLevel()/(2*25) );
+end
+
+
+function U.GetAllyWithNoBuff(nCastRange, sModifier, bot)
+	local target = nil;
+	local allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
+	for _,u in pairs(allies) do
+		if not u:HasModifier(sModifier) and U.CanCastOnNonMagicImmune(u) then
+			target = u;
+			break;
+		end
+	end
+	return target;
+end
+
+function U.GetBuildingWithNoBuff(nCastRange, sModifier, bot)
+	local ancient = GetAncient(GetTeam());
+	if not ancient:IsInvulnerable() and GetUnitToUnitDistance(ancient, bot) < nCastRange then
+		return ancient;
+	end
+	local barracks = bot:GetNearbyBarracks(nCastRange, false);
+	for _,u in pairs(barracks) do
+		if not u:HasModifier(sModifier) and not u:IsInvulnerable() then
+			return u;
+		end
+	end
+	local towers = bot:GetNearbyTowers(nCastRange, false);
+	for _,u in pairs(towers) do
+		if not u:HasModifier(sModifier) and not u:IsInvulnerable() then
+			return u;
+		end
+	end
+	return nil;
+end
+
+function U.GetSpellKillTarget(bot, bHero, nRadius, nDamage, nDamageType)
+	local units = {};
+	if bHero then
+		units = bot:GetNearbyHeroes(nRadius, true, BOT_MODE_NONE);
+	else
+		units = bot:GetNearbyLaneCreeps(nRadius, true);
+	end
+	for _,unit in pairs(units) do
+		if unit ~= nil and unit:GetHealth() <= unit:GetActualIncomingDamage(nDamage, nDamageType) then
+			return unit;
+		end
+	end
+	return nil;
+end
+
+function U.IsEnemyTargetMyTarget(bot, hTarget)
+	local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	for _,enemy in pairs(enemies) do
+		local eaTarget = enemy:GetAttackTarget(); 
+		if eaTarget ~= nil and eaTarget == hTarget then
+			return true;
+		end	
+	end
+	return false;
+end
+--============== ^^^^^^^^^^ NEW FUNCTION ABOVE ^^^^^^^^^ ================--
+
 function U.IsRetreating(npcBot)
-	return npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and npcBot:DistanceFromFountain() > 0
+	return npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE and npcBot:DistanceFromFountain() > 0
 end
 
 function U.IsValidTarget(npcTarget)
@@ -305,6 +445,52 @@ function U.IsStuck(npcBot)
 		end
 	end
 	return false
+end
+
+function U.IsExistInTable(u, tUnit)
+	for _,t in pairs(tUnit) do
+		if u:GetUnitName() == t:GetUnitName() then
+			return true;
+		end
+	end
+	return false;
+end 
+
+function U.FindNumInvUnitInLoc(pierceImmune, bot, nRange, nRadius, loc)
+	local nUnits = 0;
+	if nRange > 1600 then nRange = 1600 end
+	local units = bot:GetNearbyHeroes(nRange, true, BOT_MODE_NONE);
+	for _,u in pairs(units) do
+		if ( ( pierceImmune and U.CanCastOnMagicImmune(u) ) or ( not pierceImmune and U.CanCastOnNonMagicImmune(u) ) ) and GetUnitToLocationDistance(u, loc) <= nRadius then
+			nUnits = nUnits + 1;
+		end
+	end
+	return nUnits;
+end
+
+function U.CountInvUnits(pierceImmune, units)
+	local nUnits = 0;
+	if units ~= nil then
+		for _,u in pairs(units) do
+			if ( pierceImmune and U.CanCastOnMagicImmune(u) ) or ( not pierceImmune and U.CanCastOnNonMagicImmune(u) )  then
+				nUnits = nUnits + 1;
+			end
+		end
+	end
+	return nUnits;
+end
+
+function U.CanBeDominatedCreeps(name)
+	return name == "npc_dota_neutral_centaur_khan"
+		 or name == "npc_dota_neutral_polar_furbolg_ursa_warrior"	
+		 or name == "npc_dota_neutral_satyr_hellcaller"	
+		 or name == "npc_dota_neutral_dark_troll_warlord"	
+		 or name == "npc_dota_neutral_mud_golem"	
+		 or name == "npc_dota_neutral_harpy_storm"	
+		 or name == "npc_dota_neutral_ogre_magi"	
+		 or name == "npc_dota_neutral_alpha_wolf"	
+		 or name == "npc_dota_neutral_enraged_wildkin"	
+		 or name == "npc_dota_neutral_satyr_trickster"	
 end
 
 return U;

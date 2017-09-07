@@ -191,7 +191,10 @@ function ConsiderChrono()
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
 		if ( locationAoE.count >= 2 ) then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			local nInvUnit = mutil.FindNumInvUnitInLoc(true, npcBot, nCastRange, nRadius/2, locationAoE.targetloc);
+			if nInvUnit >= locationAoE.count then
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			end
 		end
 	end
 	
@@ -200,8 +203,9 @@ function ConsiderChrono()
 		local npcTarget = npcBot:GetTarget();
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+(nRadius/2)) )   
 		then
-			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( nRadius, false, BOT_MODE_NONE );
-			if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 then
+			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( nRadius/2, false, BOT_MODE_NONE );
+			local nInvUnit = mutil.CountInvUnits(true, tableNearbyEnemyHeroes);
+			if nInvUnit >= 2 then
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 			end
 		end

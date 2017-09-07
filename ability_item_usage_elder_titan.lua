@@ -229,7 +229,10 @@ function ConsiderShadowPoison()
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), 1000, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2 ) then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			local nInvUnit = mutil.FindNumInvUnitInLoc(false, npcBot, 1200, nRadius, locationAoE.targetloc);
+			if nInvUnit >= locationAoE.count then
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			end
 		end
 	end
 	
@@ -237,11 +240,13 @@ function ConsiderShadowPoison()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1000) and 
-		   tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1000)
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint + nCrackTime - 1.5 );
+			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
+			local nInvUnit = mutil.CountInvUnits(true, tableNearbyEnemyHeroes);
+			if nInvUnit >= 2 then
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint + nCrackTime - 1.5 );
+			end
 		end
 	end
 

@@ -100,20 +100,14 @@ function ConsiderDevour()
 		canEatAncient = true;
 	end
 	
-	if not mutil.IsRetreating(npcBot) then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( 1600, true );
-		if ( not npcBot:HasModifier("modifier_doom_bringer_devour") ) 
-		then
-			for _,npcCreep in pairs( tableNearbyEnemyCreeps )
-			do
-				if ( mutil.CanCastOnNonMagicImmune(npcCreep) and 
-					( ( not canEatAncient and not npcCreep:IsAncientCreep() ) or canEatAncient )
-				) 
-				then
-					return BOT_ACTION_DESIRE_HIGH, npcCreep;
-				end
+	if not mutil.IsRetreating(npcBot) and not mutil.IsGoingOnSomeone(npcBot) and not npcBot:HasModifier("modifier_doom_bringer_devour") then
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 1300, true );
+		for _,npcCreep in pairs( tableNearbyEnemyCreeps )
+		do
+			if ( mutil.CanCastOnNonMagicImmune(npcCreep) ) then
+				return BOT_ACTION_DESIRE_HIGH, npcCreep;
 			end
-		end	
+		end
 	end	
 
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -272,7 +266,10 @@ function ConsiderDoom()
 		local npcTarget = npcBot:GetTarget();
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			local allies = npcTarget:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+			if allies ~= nil and #allies >= 2 then
+				return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			end
 		end
 	end
 	

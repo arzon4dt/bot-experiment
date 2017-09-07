@@ -2,7 +2,7 @@ local npcBot = GetBot();
 local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 200;
-local ProxRange = 1000;
+local ProxRange = 1300;
 function  MinionThink(  hMinionUnit ) 
 	
 	if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
@@ -38,11 +38,15 @@ end
 
 function ConsiderAttacking(hMinionUnit)
 	
-	local target = npcBot:GetAttackTarget();
+	local target = npcBot:GetTarget();
 	local AR = hMinionUnit:GetAttackRange();
 	local AD = hMinionUnit:GetAttackDamage();
 	
-	if target ~= nil and CanBeAttacked(target) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
+	if target == nil or target:IsTower() or target:IsBuilding() then
+		target = npcBot:GetAttackTarget();
+	end
+	
+	if target ~= nil and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
 		return BOT_ACTION_DESIRE_MODERATE, target;
 	end
 	

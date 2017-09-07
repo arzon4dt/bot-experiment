@@ -158,7 +158,7 @@ function ConsiderIcarusDive()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) 
 		then
-			print("retreat"..tostring(utils.GetTowardsFountainLocation(npcBot:GetLocation(), nCastRange)))
+			--print("retreat"..tostring(utils.GetTowardsFountainLocation(npcBot:GetLocation(), nCastRange)))
 			return BOT_ACTION_DESIRE_MODERATE, utils.GetTowardsFountainLocation(npcBot:GetLocation(), nCastRange);
 		end
 	end

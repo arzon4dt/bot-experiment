@@ -7,7 +7,7 @@ local RetreatDesire = 0;
 local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 0;
-local ProxRange = 1100;
+local ProxRange = 1300;
 local bearState = "";
 
 local BearItem = {
@@ -163,7 +163,6 @@ function ConsiderSavageRoar(hMinionUnit)
 
 	-- If we're going after someone
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
 		 npcBot:GetActiveMode() == BOT_MODE_GANK or
 		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
 		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY 
@@ -226,12 +225,16 @@ end
 
 function ConsiderAttacking(hMinionUnit)
 	
-	local target = npcBot:GetAttackTarget();
+	local target = npcBot:GetTarget();
 	local AR = hMinionUnit:GetAttackRange();
 	local OAR = npcBot:GetAttackRange();
 	local AD = hMinionUnit:GetAttackDamage();
 	
-	if target ~= nil and CanBeAttacked(target) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
+	if target == nil or target:IsTower() or target:IsBuilding() then
+		target = npcBot:GetAttackTarget();
+	end
+	
+	if target ~= nil and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
 		return BOT_ACTION_DESIRE_MODERATE, target;
 	end
 	
@@ -239,7 +242,7 @@ function ConsiderAttacking(hMinionUnit)
 end
 
 function ConsiderMove(hMinionUnit)
-
+	
 	local target = npcBot:GetAttackTarget();
 	
 	if target == nil or ( target ~= nil and not CanBeAttacked(target) ) or (target ~= nil and GetUnitToUnitDistance(target, npcBot) > ProxRange) then

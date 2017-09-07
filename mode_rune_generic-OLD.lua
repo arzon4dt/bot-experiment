@@ -68,11 +68,19 @@ function GetDesire()
 		end
 	end
 	
-	if DotaTime() < 0 then 
-		return BOT_MODE_DESIRE_MODERATE;	
+	if DotaTime() < 0 and not bot:WasRecentlyDamagedByAnyHero(5.0) then 
+		return BOT_MODE_DESIRE_MODERATE;
 	end	
 	
 	return BOT_MODE_DESIRE_NONE;
+end
+
+function OnStart()
+	
+end
+
+function OnEnd()
+	
 end
 
 function Think()
@@ -257,12 +265,15 @@ end
 function IsSuitableToPick()
 	local mode = bot:GetActiveMode();
 	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
-	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_HIGH )
+	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE )
 		or mode == BOT_MODE_ATTACK
 		or mode == BOT_MODE_DEFEND_ALLY
 		or mode == BOT_MODE_DEFEND_TOWER_TOP
 		or mode == BOT_MODE_DEFEND_TOWER_MID
 		or mode == BOT_MODE_DEFEND_TOWER_BOT
+		or mode == BOT_MODE_PUSH_TOWER_TOP
+		or mode == BOT_MODE_PUSH_TOWER_MID
+		or mode == BOT_MODE_PUSH_TOWER_BOT
 		or ( ( Enemies ~= nil or #Enemies >= 1 ) and bot:WasRecentlyDamagedByAnyHero(2.0) )
 		) 
 	then
@@ -270,3 +281,4 @@ function IsSuitableToPick()
 	end
 	return true;
 end
+

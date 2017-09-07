@@ -89,7 +89,7 @@ function ConsiderQ()
 	if ( abUtils.IsPushing(bot) or abUtils.IsDefending(bot) ) and abUtils.AllowedToSpam(bot, manaCost)
 	then
 		local lanecreeps = bot:GetNearbyLaneCreeps(castRange, true);
-		local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), castRange, nRadius, castPoint, 0 );
+		local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), castRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 4 and #lanecreeps >= 4  ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
@@ -98,7 +98,7 @@ function ConsiderQ()
 	
 	if abUtils.IsInTeamFight(bot, 1300)
 	then
-		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), castRange, nRadius, castPoint, 0 );
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), castRange, nRadius, 0, 0 );
 		local unitCount = abUtils.CountVulnerableUnit(enemies, locationAoE, nRadius, 2);
 		if ( unitCount >= 2 ) 
 		then

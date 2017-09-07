@@ -185,6 +185,14 @@ function X.ConsiderEntityTarget(ability)
 		end
 	end
 	
+	if X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_CREEP) then
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nCastRange, true );
+		if tableNearbyEnemyCreeps[1] ~= nil
+		then
+			return BOT_ACTION_DESIRE_MODERATE, tableNearbyEnemyCreeps[1];
+		end
+	end	
+	
 	if X.CheckFlag(ability:GetTargetTeam(), ABILITY_TARGET_TEAM_ENEMY) and 
 	   X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_HERO) and 
 	   X.CheckFlag(ability:GetTargetFlags(), ABILITY_TARGET_FLAG_MAGIC_IMMUNE_ENEMIES)  
@@ -247,15 +255,7 @@ function X.ConsiderEntityTarget(ability)
 				end
 			end
 		end
-	elseif X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_CREEP) then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nCastRange, true );
-		for _,npcCreepTarget in pairs(tableNearbyEnemyCreeps) 
-		do
-			if ( GetUnitToUnitDistance( npcCreepTarget, npcBot  ) < nCastRange ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcCreepTarget;
-			end
-		end
+		
 	elseif X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_TREE) then
 		if X.IsEngagingTarget(npcBot) 
 		then
@@ -368,7 +368,7 @@ function X.ConsiderPointTarget(ability)
 			end
 		end
 	else
-		if X.CheckFlag(ability:GetTargetType(), ABILITY_TARGET_TYPE_TREE) then
+		if ability:GetName() == 'furion_force_of_nature' then
 			if X.IsEngagingTarget(npcBot)
 			then
 				local npcTarget = npcBot:GetTarget();

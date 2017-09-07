@@ -23,6 +23,18 @@ local tChat = 0;
 
 function GetDesire()
 	
+	if bot:GetUnitName() == "npc_dota_hero_faceless_voids" and bot:IsAlive() then
+		cLoc = GetSaveLocToFarmLane();
+		if cLoc ~= nil  then
+			--bot:ActionImmediate_Ping(cLoc.x, cLoc.y, true);
+			--tPing = DotaTime();
+			farmLane = true;
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		else
+			farmLane = false;
+		end
+	end
+	
 	local num_cogs = 0;
 	
 	--[[local ab = bot:GetCurrentActiveAbility();
@@ -124,23 +136,14 @@ function GetDesire()
 		t3Destroyed = IsThereT3Detroyed();
 	else
 		shrineTarget = GetTargetShrine();
-		if shrineTarget ~= nil and IsSuitableToDestroyShrine() then
+		local barracks = bot:GetNearbyBarracks(1000, true);
+		if shrineTarget ~= nil and ( barracks == nil or #barracks == 0 ) and IsSuitableToDestroyShrine()  then
 			cause = "shrine";
 			return BOT_MODE_DESIRE_VERYHIGH;
 		end
 	end
 	
-	if bot:GetUnitName() == "npc_dota_hero_faceless_void" and bot:GetLevel() >= 6 and bot:IsAlive() then
-		cLoc = GetSaveLocToFarmLane();
-		if cLoc ~= nil and DotaTime() - tPing >= 5  then
-			--bot:ActionImmediate_Ping(cLoc.x, cLoc.y, true);
-			--tPing = DotaTime();
-			farmLane = true;
-			return BOT_MODE_DESIRE_MODERATE+0.1;
-		else
-			farmLane = false;
-		end
-	end
+	
 	
 	if bot:GetLevel() >= 6 and bot:GetLevel() < 25 and campUtils.IsStrongJungler(bot)
 	then
@@ -186,18 +189,21 @@ function Think()
 	if farmLane then
 		local laneCreeps = bot:GetNearbyLaneCreeps(1600, true);
 		local target = GetWeakestUnit(laneCreeps);
-		local t = bot:GetAttackPoint()+bot:GetAttackSpeed();
-		if bot:WasRecentlyDamagedByTower(2.0) then
-			bot:Action_MoveToLocation(GetAncient(GetTeam()):GetLocation());
-			return
-		elseif target ~= nil then
-			--print(tostring(bot:GetEstimatedDamageToTarget(false, target, t, DAMAGE_TYPE_PHYSICAL ).."><"..tostring(target:GetHealth())))
-			if  bot:GetEstimatedDamageToTarget(false, target, t, DAMAGE_TYPE_PHYSICAL ) <= target:GetHealth() then
+		if target ~= nil then
+			local t = 2.0*bot:GetAttackPoint()+((GetUnitToUnitDistance(target, bot))/bot:GetCurrentMovementSpeed());
+			print(tostring(bot:GetEstimatedDamageToTarget(false, target, t, DAMAGE_TYPE_PHYSICAL ).."><"..tostring(target:GetHealth())))
+			if bot:WasRecentlyDamagedByTower(1.0) or bot:WasRecentlyDamagedByCreep(1.0) then
+				bot:Action_MoveToLocation(GetAncient(GetTeam()):GetLocation());
+				return
+			elseif  bot:GetEstimatedDamageToTarget(false, target, t, DAMAGE_TYPE_PHYSICAL) >= target:GetHealth() then
 				bot:Action_AttackUnit(target, true);
+				return
+			else
+				bot:Action_MoveToLocation(target:GetLocation());
 				return
 			end
 		else
-			bot:Action_MoveToLocation(cLoc);
+			bot:Action_MoveToLocation(cLoc+RandomVector(200));
 			return
 		end
 	end
@@ -284,13 +290,12 @@ function GetTargetShrine()
 				print("Alive "..tostring( GetShrine(GetOpposingTeam(), s):IsAlive() ))
 			end
 		end]]--
-		if s < 3 and GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 1700 then
+		if GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 2000 and s < 3 then
 			local shrine = GetShrine(GetOpposingTeam(), s);
 			if  shrine ~= nil and shrine:IsAlive() then
 				return shrine;
 			end	
-		end
-		if s >= 3 then
+		elseif s >= 3 then
 			local shrine = GetShrine(GetOpposingTeam(), s);
 			if  shrine ~= nil and shrine:IsAlive() then
 				return shrine;

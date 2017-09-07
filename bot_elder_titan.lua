@@ -4,20 +4,32 @@ local MoveDesire = 0;
 local ReturnTime = 0;
 local npcBot = GetBot();
 local abilityW = "";
+local abilitySC = "";
 local radius = 350;
 local RB = Vector(-7200,-6666)
 local DB = Vector(7137,6548)
+local castReturn = false;
+
+print(GetBot():GetUnitName())
 
 function  MinionThink(  hMinionUnit ) 
 	
+	if npcBot:HasModifier('modifier_elder_titan_ancestral_spirit_buff') or not npcBot:IsAlive() then
+		castReturn = false;
+	end
+	
 	if hMinionUnit:GetUnitName() == "npc_dota_elder_titan_ancestral_spirit" and npcBot:IsAlive() then
+		
+		if abilitySC == "" then abilitySC = npcBot:GetAbilityByName( "elder_titan_echo_stomp" ); end
+		
 		if abilityW == "" then abilityW = npcBot:GetAbilityByName('elder_titan_ancestral_spirit'); end
 		
 		if not abilityW:IsHidden() then return; end
+		
+		if abilitySC:IsInAbilityPhase() or npcBot:IsChanneling() then npcBot:Action_ClearActions(false) return end
+		
+		if ( npcBot:IsUsingAbility() or npcBot:IsCastingAbility() ) then return end
 	
-		if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() ) then return end
-	
-		abilitySC = npcBot:GetAbilityByName( "elder_titan_echo_stomp" );
 		abilityRT = npcBot:GetAbilityByName( "elder_titan_return_spirit" );
 		MoveDesire, Location = ConsiderMove(hMinionUnit); 
 		ReturnDesire = Return(hMinionUnit); 
@@ -25,19 +37,23 @@ function  MinionThink(  hMinionUnit )
 		
 		if ( castSCDesire > 0 ) 
 		then
+			--print("Stomp")
 			npcBot:Action_UseAbility( abilitySC );
 			return;
 		end
 		
-		if ( ReturnDesire > 0  ) 
+		if ( ReturnDesire > 0 and castReturn == false  ) 
 		then
+			--print("Return")
+			castReturn = true;
 			npcBot:Action_UseAbility( abilityRT );
 			return;
 		end
 		
 		if ( MoveDesire > 0  )
 		then
-			hMinionUnit:ActionPush_MoveToLocation( Location );
+			--print("Move")
+			hMinionUnit:Action_MoveToLocation( Location );
 			return
 		end
 		
@@ -142,7 +158,7 @@ end
 
 function ConsiderMove(hMinionUnit)
 	
-	if ( castSCDesire > 0 or ReturnDesire > 0 or abilitySC:GetCooldownTimeRemaining() <= 4 ) 
+	if ( castSCDesire > 0 or ReturnDesire > 0 or castReturn == true ) 
 	then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

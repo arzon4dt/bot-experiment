@@ -101,7 +101,7 @@ end
 
 function U.IsSuspiciousIllusion(target)
 	--TO DO Need to detect enemy hero's illusions better
-	
+	local bot = GetBot();
 	--Detect allies's illusions
 	if target:IsIllusion() or target:HasModifier('modifier_illusion') 
 	   or target:HasModifier('modifier_phantom_lancer_doppelwalk_illusion') or target:HasModifier('modifier_phantom_lancer_juxtapose_illusion')
@@ -110,12 +110,14 @@ function U.IsSuspiciousIllusion(target)
 		return true;
 	else
 	--Detect replicate and wall of replica illusions
-		local TeamMember = GetTeamPlayers(GetTeam());
-		for i = 1, #TeamMember
-		do
-			local ally = GetTeamMember(i);
-			if ally ~= nil and ally:GetUnitName() == target:GetUnitName() then
-				return true;
+		if target:GetTeam() ~= bot:GetTeam() then
+			local TeamMember = GetTeamPlayers(GetTeam());
+			for i = 1, #TeamMember
+			do
+				local ally = GetTeamMember(i);
+				if ally ~= nil and ally:GetUnitName() == target:GetUnitName() then
+					return true;
+				end
 			end
 		end
 		return false;

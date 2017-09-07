@@ -84,6 +84,11 @@ function ConsiderOvergrowth()
 	
 	local nRadius = 1000;
 	
+	if mutil.IsStuck(npcBot)
+	then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
@@ -220,7 +225,7 @@ function ConsiderLivingArmor()
 	then
 		for _,npcAlly in pairs( tableNearbyAllyHeroes )
 		do
-			if ( mutil.CanCastOnNonMagicImmune(npcAlly) and npcAlly:GetHealth() / npcAlly:GetMaxHealth() ) < 0.25 
+			if mutil.CanCastOnNonMagicImmune(npcAlly) and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.25 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcAlly;
 			end
@@ -318,8 +323,8 @@ function ConsiderFireblast()
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
 			local NearbyEnemyHeroes = npcTarget:GetNearbyHeroes( nRadius, false, BOT_MODE_NONE );
-			if ( NearbyEnemyHeroes ~= nil and #NearbyEnemyHeroes >= 2 )
-			then
+			local nInvUnit = mutil.CountInvUnits(true, NearbyEnemyHeroes);
+			if nInvUnit >= 3 then
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 			end
 		end

@@ -20,6 +20,8 @@ local castSNDesire = 0;
 local castFFDesire = 0;
 local castFBDesire = 0;
 local castFLDesire = 0;
+local castBlinkDesire = 0;
+local castForceDesire = 0;
 
 local abilitySN = nil;
 local abilityFB = nil;
@@ -45,6 +47,18 @@ function AbilityUsageThink()
 	castFBDesire, castFBLocation = ConsiderFlameBreak();
 	castFFDesire = ConsiderFireFly();
 	castFLDesire, castFLTarget = ConsiderFlamingLasso();
+	castBlinkDesire, itemBlink, castBlinkLoc = ConsiderBlink();
+	castForceDesire, itemForce, castForceTarget = ConsiderForceStaff();
+	
+	if castForceDesire > 0 then
+		npcBot:Action_UseAbilityOnEntity( itemForce, castForceTarget );
+		return;
+	end
+	
+	if castBlinkDesire > 0 then
+		npcBot:Action_UseAbilityOnLocation( itemBlink, castBlinkLoc );
+		return;
+	end
 	
 	if ( castFLDesire > 0 ) 
 	then
@@ -205,6 +219,10 @@ function ConsiderFireFly()
 		return BOT_ACTION_DESIRE_HIGH;
 	end
 	
+	if npcBot:HasModifier('modifier_batrider_flaming_lasso_self') then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
@@ -289,4 +307,46 @@ function ConsiderFlamingLasso()
 	end
 
 	return BOT_ACTION_DESIRE_NONE, 0;
+end
+
+function ConsiderBlink()
+	local blink = nil;
+	
+	for i=0,5 do
+		local item = npcBot:GetItemInSlot(i)
+		if item ~= nil and item:GetName() == "item_blink" then
+			blink = item;
+			break
+		end
+	end
+	
+	if mutil.IsGoingOnSomeone(npcBot) and blink ~= nil and blink:IsFullyCastable() and abilityFL:IsFullyCastable()
+	then
+		local npcTarget = npcBot:GetTarget();
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 600) and mutil.IsInRange(npcTarget, npcBot, 1000) ) 
+		then
+			return BOT_ACTION_DESIRE_MODERATE, blink, npcTarget:GetExtrapolatedLocation(0.1);
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil, nil;
+end
+
+function ConsiderForceStaff()
+	local force = nil;
+	
+	for i=0,5 do
+		local item = npcBot:GetItemInSlot(i)
+		if item ~= nil and item:GetName() == "item_force_staff" then
+			force = item;
+			break
+		end
+	end
+	
+	if force ~= nil and force:IsFullyCastable() and npcBot:HasModifier('modifier_batrider_flaming_lasso_self') and npcBot:IsFacingLocation(mutil.GetTeamFountain(),10)
+	then
+		return BOT_ACTION_DESIRE_MODERATE, force, npcBot
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil, nil;
 end

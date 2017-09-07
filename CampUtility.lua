@@ -28,9 +28,9 @@ local jungler = {
 	'npc_dota_hero_alchemist',
 	'npc_dota_hero_bloodseeker',
 	'npc_dota_hero_legion_commander',
-	'npc_dota_hero_life_stealer',
-	'npc_dota_hero_skeleton_king',
-	'npc_dota_hero_ursa'
+	'npc_dota_hero_life_stealer'
+	--'npc_dota_hero_skeleton_king',
+	--'npc_dota_hero_ursa'
 }
 
 function X.GetCampMoveToStack(id)

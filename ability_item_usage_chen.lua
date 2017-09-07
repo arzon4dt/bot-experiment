@@ -54,7 +54,7 @@ function AbilityUsageThink()
 	castFBDesire, castFBTarget = ConsiderFireblast();
 	castUFBDesire, castUFBTarget = ConsiderUnrefinedFireblast();
 	castACDesire, castACTarget = ConsiderAphoticShield();
-	castHPDesire, castHPTarget = ConsiderHolyPersuasion();
+	--castHPDesire, castHPTarget = ConsiderHolyPersuasion();
 	castHoGDesire = ConsiderHandofGod();
 	
 	if ( castHoGDesire > 0 ) 
@@ -84,12 +84,12 @@ function AbilityUsageThink()
 	if ( castHPDesire > 0 ) 
 	then
 		--print(tostring(castHPTarget))
-		AddedToDominated(castHPTarget);
+		--AddedToDominated(castHPTarget);
 		npcBot:Action_UseAbilityOnEntity( abilityHP, castHPTarget );
 		return;
 	end
 	
-	UpdateDominatedCreeps();
+	--UpdateDominatedCreeps();
 
 end
 
@@ -108,7 +108,7 @@ end
 function UpdateDominatedCreeps()
 	local removedkey = -1;
 	for i,u in pairs(npcBot.creeps) do
-		if u:IsNull() or u == nil or not u:IsAlive() or not u:HasModifier('modifier_chen_holy_persuasion') or IsDuplicated(u) then
+		if u:IsNull() or u == nil or not u:IsAlive() or not u:HasModifier('modifier_chen_holy_persuasion') or u:GetTeam() ~= npcBot:GetTeam() or IsDuplicated(u) then
 			removedkey = i;
 			break;
 		end

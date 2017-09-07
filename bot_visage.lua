@@ -4,7 +4,7 @@ local castSFDesire = 0;
 local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 0;
-local ProxRange = 1200;
+local ProxRange = 1500;
 function  MinionThink(  hMinionUnit ) 
 
 if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
@@ -23,17 +23,17 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 			hMinionUnit:Action_UseAbility(abilitySF);
 			return
 		end
-		if ( RetreatDesire > 0 ) 
-		then
-			--print("retreat")
-			hMinionUnit:Action_MoveToLocation( RetreatLocation );
-			return;
-		end
 		if (AttackDesire > 0)
 		then
 			--print("attack")
 			hMinionUnit:Action_AttackUnit( AttackTarget, true );
 			return
+		end
+		if ( RetreatDesire > 0 ) 
+		then
+			--print("retreat")
+			hMinionUnit:Action_MoveToLocation( RetreatLocation );
+			return;
 		end
 		if (MoveDesire > 0)
 		then
@@ -118,14 +118,44 @@ function ConsiderAttacking(hMinionUnit)
 		return BOT_ACTION_DESIRE_NONE, {};
 	end	
 	
-	local target = npcBot:GetAttackTarget();
+	local target = npcBot:GetTarget();
 	local AR = hMinionUnit:GetAttackRange();
 	local OAR = npcBot:GetAttackRange();
 	local AD = hMinionUnit:GetAttackDamage();
 	
+	if target == nil or target:IsTower() or target:IsBuilding() then
+		target = npcBot:GetAttackTarget();
+	end
+	
 	if target ~= nil and CanBeAttacked(target) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
 		return BOT_ACTION_DESIRE_MODERATE, target;	
 	end
+	
+	local enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+	if not npcBot:IsAlive() or ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and #enemies == 0 ) then
+		local followTarget = nil;
+		local closest = nil;
+		local closestDist = 100000;
+		for i,id in pairs(GetTeamPlayers(GetTeam())) do
+			local member = GetTeamMember(i);
+			if member ~= nil and member:IsAlive() then
+				local target =  member:GetTarget();
+				if target == nil or target:IsTower() or target:IsBuilding() then
+					target = member:GetAttackTarget();
+				end
+				local distance = GetUnitToUnitDistance(member, hMinionUnit);
+				if target ~= nil and GetUnitToUnitDistance(member, target) <= ProxRange and distance < closestDist then
+					closest = member;
+					closestDist = distance;
+					followTarget = target;
+				end
+			end
+		end
+		if closest ~= nil and followTarget ~= nil then
+			return BOT_ACTION_DESIRE_MODERATE, followTarget;
+		end
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 

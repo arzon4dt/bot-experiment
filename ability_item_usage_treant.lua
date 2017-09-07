@@ -223,7 +223,8 @@ function ConsiderOvergrowth()
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 then
+		local nInvUnit = mutil.CountInvUnits(true, tableNearbyEnemyHeroes);
+		if nInvUnit >= 2 then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end

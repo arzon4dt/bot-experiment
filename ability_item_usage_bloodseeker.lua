@@ -226,12 +226,9 @@ function ConsiderW()
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange - 200, nRadius/2, nCastPoint, 0 );
 		if ( locationAoE.count >= 2 ) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc;
-		elseif tableNearbyEnemyHeroes[1] ~= ni then
-			if  tableNearbyEnemyHeroes[1]:GetMovementDirectionStability() >= 0.75 then
-				return BOT_ACTION_DESIRE_HIGH, tableNearbyEnemyHeroes[1]:GetExtrapolatedLocation(nDelay);
-			else
-				return BOT_ACTION_DESIRE_HIGH, tableNearbyEnemyHeroes[1]:GetLocation();
+			local nInvUnit = mutil.FindNumInvUnitInLoc(false, npcBot, nCastRange, nRadius/2, locationAoE.targetloc);
+			if nInvUnit >= locationAoE.count then
+				return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc;
 			end
 		end
 	end

@@ -33,7 +33,7 @@ function AbilityUsageThink()
 	-- Check if we're already using an ability
 	if mutil.CanNotUseAbility(npcBot) then return end
 	
-	if abilityBS == nil then abilityFB = npcBot:GetAbilityByName( "enchantress_enchant" ) end
+	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "enchantress_enchant" ) end
 	if abilityTD == nil then abilityTD = npcBot:GetAbilityByName( "enchantress_natures_attendants" ) end
 	if abilityBS == nil then abilityBS = npcBot:GetAbilityByName( "enchantress_impetus" ) end
 
@@ -88,7 +88,7 @@ function ConsiderFireblast()
 		end
 	end
 	
-	local maxHP = 0;
+	--[[local maxHP = 0;
 	local NCreep = nil;
 	local tableNearbyNeutrals = npcBot:GetNearbyNeutralCreeps( 1200 );
 	if tableNearbyNeutrals ~= nil and #tableNearbyNeutrals >= 3 then
@@ -105,7 +105,7 @@ function ConsiderFireblast()
 	
 	if NCreep ~= nil then
 		return BOT_ACTION_DESIRE_LOW, NCreep;
-	end	
+	end]]--	
 	
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)

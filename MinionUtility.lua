@@ -5,7 +5,7 @@ local MoveDesire = 0;
 local AttackDesire = 0;
 local RetreatDesire = 0;
 local npcBotAR = 0;
-local ProxRange = 1000;
+local ProxRange = 1300;
 local castWSDesire = 0;
 local castTCDesire = 0;
 local castSWDesire = 0;
@@ -388,87 +388,39 @@ function ConsiderAttacking(hMinionUnit)
 	local OAR = npcBot:GetAttackRange();
 	local AD = hMinionUnit:GetAttackDamage();
 	
-	if target ~= nil and CanBeAttacked(target) and GetUnitToUnitDistance(target, npcBot) <= OAR + 200 and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
-		return BOT_ACTION_DESIRE_MODERATE, target;
-	else
-		if hMinionUnit:WasRecentlyDamagedByTower( 2.0 ) then
-			local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(800, false);
-			if NearbyLaneCreeps[1] ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, NearbyLaneCreeps[1];
-			end
-		end
-		if npcBot:GetActiveMode() == BOT_MODE_LANING and GetUnitToUnitDistance(npcBot, hMinionUnit) < ProxRange then
-			local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(1000, true);
-			local TCreep = nil;
-			for _,creep in pairs(NearbyLaneCreeps)
-			do
-				local CHealth = creep:GetHealth();
-				if CHealth < 4*AD then
-					TCreep = creep;
-				end
-			end
-			if TCreep ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, TCreep;
-			end
-		elseif ( npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_TOP or
-				 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_MID or
-				 npcBot:GetActiveMode() == BOT_MODE_PUSH_TOWER_BOT 
-				 ) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange
-		then
-			local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(1000, true);
-			local TCreep = nil;
-			local MinHealth = 10000;
-			for _,creep in pairs(NearbyLaneCreeps)
-			do
-				local CHealth = creep:GetHealth();
-				if CHealth < MinHealth then
-					TCreep = creep;
-					MinHealth = CHealth;
-				end
-			end
-			if TCreep ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, TCreep;
-			end
-		elseif ( npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_TOP or
-				 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_MID or
-				 npcBot:GetActiveMode() == BOT_MODE_DEFEND_TOWER_BOT ) and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange
-		then
-			local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-			if tableNearbyEnemyHeroes == nil then
-				local NearbyLaneCreeps = hMinionUnit:GetNearbyLaneCreeps(1000, true);
-				local TCreep = nil;
-				local MinHealth = 10000;
-				for _,creep in pairs(NearbyLaneCreeps)
-				do
-					local CHealth = creep:GetHealth();
-					if CHealth < MinHealth then
-						TCreep = creep;
-						MinHealth = CHealth;
-					end
-				end
-				if TCreep ~= nil then
-					return BOT_ACTION_DESIRE_MODERATE, TCreep;
-				end
-			end
-		elseif 	npcBot:GetActiveMode() == BOT_MODE_FARM and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange
-		then
-			local NearbyCreeps = hMinionUnit:GetNearbyCreeps(1000, true);
-			local TCreep = nil;
-			local MinHealth = 10000;
-			for _,creep in pairs(NearbyCreeps)
-			do
-				local CHealth = creep:GetHealth();
-				if CHealth < MinHealth then
-					TCreep = creep;
-					MinHealth = CHealth;
-				end
-			end
-			if TCreep ~= nil then
-				return BOT_ACTION_DESIRE_MODERATE, TCreep;
-			end
-		end
-		
+	if target == nil or target:IsTower() or target:IsBuilding() then
+		target = npcBot:GetAttackTarget();
 	end
+	
+	if target ~= nil and GetUnitToUnitDistance(hMinionUnit, npcBot) <= ProxRange then
+		return BOT_ACTION_DESIRE_MODERATE, target;	
+	end
+	
+	local enemies = npcBot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+	if not npcBot:IsAlive() or ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and #enemies == 0 )  then
+		local followTarget = nil;
+		local closest = nil;
+		local closestDist = 100000;
+		for i,id in pairs(GetTeamPlayers(GetTeam())) do
+			local member = GetTeamMember(i);
+			if member ~= nil and member:IsAlive() then
+				local target =  member:GetTarget();
+				if target == nil or target:IsTower() or target:IsBuilding() then
+					target = member:GetAttackTarget();
+				end
+				local distance = GetUnitToUnitDistance(member, hMinionUnit);
+				if target ~= nil and GetUnitToUnitDistance(member, target) <= ProxRange and distance < closestDist then
+					closest = member;
+					closestDist = distance;
+					followTarget = target;
+				end
+			end
+		end
+		if closest ~= nil and followTarget ~= nil then
+			return BOT_ACTION_DESIRE_MODERATE, followTarget;
+		end
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
@@ -480,7 +432,7 @@ function ConsiderMove(hMinionUnit)
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	if target == nil or ( target ~= nil and not CanBeAttacked(target) ) or (target ~= nil and GetUnitToUnitDistance(target, npcBot) > ProxRange) then
+	if target == nil or ( target ~= nil and not CanBeAttacked(target) ) or (target ~= nil and GetUnitToUnitDistance(target, npcBot) > ProxRange and  GetUnitToUnitDistance(target, npcBot) > 300) then
 		return BOT_ACTION_DESIRE_MODERATE, npcBot:GetLocation();
 	end
 	
@@ -499,12 +451,15 @@ function ConsiderRetreat(hMinionUnit)
 	local DB = Vector(7137,6548)
 	
 	if not npcBot:IsAlive() then
-		if GetTeam( ) == TEAM_DIRE then
-			location = DB;
-		elseif GetTeam( ) == TEAM_RADIANT then
-			location = RB;
+		local allies = hMinionUnit:GetNearbyHeroes(1300, true ,BOT_MODE_NONE);
+		if #allies == 0 then
+			if GetTeam( ) == TEAM_DIRE then
+				location = DB;
+			elseif GetTeam( ) == TEAM_RADIANT then
+				location = RB;
+			end
+			return BOT_ACTION_DESIRE_LOW, location;
 		end
-		return BOT_ACTION_DESIRE_LOW, location;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;

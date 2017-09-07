@@ -97,11 +97,11 @@ function AbilityUsageThink()
 		npcBot:Action_UseAbility( abilitySPO );
 		return;
 	end
-	if moveDesire > 0 
+	--[[if moveDesire > 0 
 	then
 		npcBot:Action_MoveToLocation( moveLocation );
 		return;
-	end
+	end]]--
 	
 	
 end
@@ -382,7 +382,7 @@ function ConsiderRelocate()
 			if ( CanCastDeathCoilOnTarget( npcAlly ) )
 			then
 				local nAllyHP = npcAlly:GetHealth();
-				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 ) or isDisabled(npcAlly) )
+				if npcAlly:HasModifier('modifier_wisp_tether') and ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 ) or isDisabled(npcAlly) )
 				then
 					nLowestHealth = nAllyHP;
 					lowHpAlly = npcAlly;
@@ -401,8 +401,8 @@ function ConsiderRelocate()
 		local npcTarget = npcBot:GetTarget();
 		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) > 3000  ) 
 		then
-			local tableNearbyAllies = npcBot:GetNearbyHeroes( 800, false, BOT_MODE_NONE  );
-			if tableNearbyAllies ~= nil and #tableNearbyAllies >= 1 and abilityDC:IsFullyCastable() then
+			local tableNearbyAllies = npcTarget:GetNearbyHeroes( 1300, true, BOT_MODE_NONE  );
+			if tableNearbyAllies ~= nil and #tableNearbyAllies >= 2 and abilityDC:IsFullyCastable() then
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 			end
 		end

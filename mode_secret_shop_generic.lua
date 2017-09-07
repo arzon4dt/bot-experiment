@@ -1,7 +1,9 @@
 local npcBot = GetBot();
-
+local preferedSS = nil;
 local RAD_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET )
 local DIRE_SECRET_SHOP = GetShopLocation(GetTeam(), SHOP_SECRET2 )
+local reason = "";
+local have = false;
 
 function GetDesire()
 	
@@ -22,37 +24,87 @@ function GetDesire()
 	end
 	
 	if invFull then
-		return BOT_MODE_DESIRE_NONE
+		if DotaTime() > 25*60 then
+			have, itemSlot = HaveItemToSell();
+			if have then
+				preferedSS = GetPreferedSecretShop();
+				if  preferedSS ~= nil then
+					return RemapValClamped(  GetUnitToLocationDistance(npcBot, preferedSS), 6000, 0, 0.75, 1.0 );
+				end	
+			end
+		end
+		return BOT_MODE_DESIRE_NONE;
 	end
 	
-	if npcBot.SecretShop then
-		return BOT_MODE_DESIRE_HIGH
+	local npcCourier = GetCourier(0);	
+	local cState = GetCourierState( npcCourier );
+	
+	if npcBot.SecretShop and cState ~= COURIER_STATE_MOVING  then
+		preferedSS = GetPreferedSecretShop();
+		if  preferedSS ~= nil and cState == COURIER_STATE_DEAD then
+			return RemapValClamped(  GetUnitToLocationDistance(npcBot, preferedSS), 6000, 0, 0.5, 0.75 );
+		else
+			if preferedSS ~= nil and GetUnitToLocationDistance(npcBot, preferedSS) <= 2500 then
+				return RemapValClamped(  GetUnitToLocationDistance(npcBot, preferedSS), 2500, 0, 0.5, 0.75 );
+			end
+		end
 	end
 	
 	return BOT_MODE_DESIRE_NONE
 
 end
 
-function Think()
+function OnEnd()
+	reason = "";
+end
 
+function Think()
+	
+	npcBot:Action_MoveToLocation(preferedSS);
+	return
+	
+end
+
+function HaveItemToSell()
+	 local earlyGameItem = {
+		 "item_clarity",
+		 "item_faerie_fire",
+		 "item_tango",  
+		 "item_flask", 
+		 "item_infused_raindrop",
+		 "item_iron_talon",
+		 "item_poor_mans_shield",
+		 "item_magic_wand",
+		 "item_bottle",  
+		 "item_ring_of_aquila", 
+		 "item_urn_of_shadows",
+		 "item_dust",
+		 "item_ward_observer",
+	}
+	for _,item in pairs(earlyGameItem) do
+		local slot = npcBot:FindItemSlot(item);
+		if slot >= 0 and slot <= 8 then
+			return true, slot;
+		end
+	end
+	return false, nil;
+end
+
+function GetPreferedSecretShop()
 	if GetTeam() == TEAM_RADIANT then
 		if GetUnitToLocationDistance(npcBot, DIRE_SECRET_SHOP) <= 2000 then
-			npcBot:Action_MoveToLocation(DIRE_SECRET_SHOP);
-			return
+			return DIRE_SECRET_SHOP;
 		else
-			npcBot:Action_MoveToLocation(RAD_SECRET_SHOP);
-			return
+			return RAD_SECRET_SHOP;
 		end
 	elseif GetTeam() == TEAM_DIRE then
 		if GetUnitToLocationDistance(npcBot, RAD_SECRET_SHOP) <= 2000 then
-			npcBot:Action_MoveToLocation(RAD_SECRET_SHOP);
-			return
+			return RAD_SECRET_SHOP;
 		else
-			npcBot:Action_MoveToLocation(DIRE_SECRET_SHOP);
-			return
+			return DIRE_SECRET_SHOP;
 		end
 	end
-	
+	return nil;
 end
 
 function IsSuitableToBuy()

@@ -170,7 +170,10 @@ function ConsiderFlakCannon()
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nAttackRange, 400, 0, 0 );
 		if ( locationAoE.count >= 2 ) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			local nInvUnit = mutil.FindNumInvUnitInLoc(true, npcBot, nAttackRange+200, 400, locationAoE.targetloc);
+			if nInvUnit >= locationAoE.count then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
 		end
 		
 	end

@@ -236,7 +236,10 @@ function ConsiderStaticStorm()
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
 		if  locationAoE.count >= 2  then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			local nInvUnit = mutil.FindNumInvUnitInLoc(false, npcBot, nCastRange, nRadius/2, locationAoE.targetloc);
+			if nInvUnit >= locationAoE.count then
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			end
 		end
 	end
 	
@@ -247,8 +250,8 @@ function ConsiderStaticStorm()
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
 			local EnemyHeroes = npcTarget:GetNearbyHeroes( nRadius, false, BOT_MODE_NONE );
-			if ( #EnemyHeroes >= 2 )
-			then
+			local nInvUnit = mutil.CountInvUnits(false, EnemyHeroes);
+			if nInvUnit >= 2 then
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
 			end
 		end
@@ -292,7 +295,10 @@ function ConsiderKineticField()
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
 		if locationAoE.count >= 2 then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			local nInvUnit = mutil.FindNumInvUnitInLoc(false, npcBot, nCastRange, nRadius/2, locationAoE.targetloc);
+			if nInvUnit >= locationAoE.count then
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			end
 		end
 	end
 	
