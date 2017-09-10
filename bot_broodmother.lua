@@ -3,9 +3,9 @@ local MoveDesire = 0;
 local AttackDesire = 0;
 local npcBotAR = 200;
 local ProxRange = 1300;
-function  MinionThink(  hMinionUnit ) 
-	
-	if not hMinionUnit:IsNull() and hMinionUnit ~= nil then 
+
+function  MinionThink(  hMinionUnit ) 	
+	if not hMinionUnit:IsNull() and hMinionUnit ~= nil and ( hMinionUnit:GetUnitName() == 'npc_dota_broodmother_spiderling' or hMinionUnit:IsIllusion() ) then 
 		AttackDesire, AttackTarget = ConsiderAttacking(hMinionUnit); 
 		MoveDesire, Location = ConsiderMove(hMinionUnit); 
 		

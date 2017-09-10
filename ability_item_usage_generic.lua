@@ -221,6 +221,7 @@ end
 local courierTime = -90;
 local cState = -1;
 npcBot.SShopUser = false;
+local returnTime = -90;
 function CourierUsageThink()
 
 	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() or npcBot:HasModifier("modifier_arc_warden_tempest_double") or GetNumCouriers() == 0 then
@@ -239,9 +240,23 @@ function CourierUsageThink()
 	
 	if IsFlyingCourier(npcCourier) then
 		local burst = npcCourier:GetAbilityByName('courier_burst');
-		if burst:IsFullyCastable() and IsEnemyNearCourier(npcCourier) then
-			npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_BURST );
-			return	
+		if IsTargetedByUnit(npcCourier) then
+			if burst:IsFullyCastable()  then
+				npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_BURST );
+				return
+			elseif not burst:IsFullyCastable() and not npcCourier:HasModifier('modifier_courier_burst') and DotaTime() - returnTime > 7.0 then
+				npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+				returnTime = DotaTime();
+				return
+			end
+		end
+	else	
+		if IsTargetedByUnit(npcCourier) then
+			if DotaTime() - returnTime > 7.0 then
+				npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+				returnTime = DotaTime();
+				return
+			end
 		end
 	end
 	
@@ -254,7 +269,7 @@ function CourierUsageThink()
 		npcCourier.latestUser = nil;
 	end
 	
-	if npcBot.SShopUser and ( not npcBot:IsAlive() or npcBot:GetActiveMode() == BOT_MODE_SECRET_SHOP  ) then
+	if npcBot.SShopUser and ( not npcBot:IsAlive() or npcBot:GetActiveMode() == BOT_MODE_SECRET_SHOP or not npcBot.SecretShop  ) then
 		npcBot:ActionImmediate_Chat( "Releasing the courier to anticipate secret shop stuck", true );
 		npcCourier.latestUser = "temp";
 		npcBot.SShopUser = false;
@@ -262,7 +277,11 @@ function CourierUsageThink()
 		return
 	end
 	
-	if npcCourier.latestUser ~= nil and ( IsCourierAvailable() or cState == COURIER_STATE_RETURNING_TO_BASE ) then 
+	if npcCourier.latestUser ~= nil and ( IsCourierAvailable() or cState == COURIER_STATE_RETURNING_TO_BASE ) and DotaTime() - returnTime > 7.0  then 
+		
+		if cState == COURIER_STATE_AT_BASE and courierPHP < 1.0 then
+			return;
+		end
 		
 		--RETURN COURIER TO BASE WHEN IDLE 
 		if cState == COURIER_STATE_IDLE then
@@ -387,21 +406,19 @@ function UpdateSShopUserStatus(bot)
 			member.SShopUser = false;
 		end
 	end
-	--[[for i = 1, #numPlayer
-	do
-		local member =  GetTeamMember(i);
-		if member ~= nil and IsPlayerBot(numPlayer[i]) 
-		then
-			print(member:GetUnitName()..":"..tostring(member.SShopUser))
-		end
-	end]]--
 end
 
-function IsEnemyNearCourier(courier)
+function IsTargetedByUnit(courier)
+	for i = 0, 10 do
+		local tower = GetTower(GetOpposingTeam(), i);
+		if tower ~= nil and GetUnitToUnitDistance(courier, tower) <= 800 then
+			return true;
+		end
+	end
 	local heroes = GetUnitList(UNIT_LIST_ENEMY_HEROES);
 	for _,hero in pairs(heroes)
 	do
-		if GetUnitToUnitDistance(courier, hero) <= 1000 then
+		if ( GetUnitToUnitDistance(courier, hero) <= 1000 and hero:GetAttackTarget() == courier ) or GetUnitToUnitDistance(courier, hero) <= 600 then
 			return true;
 		end
 	end

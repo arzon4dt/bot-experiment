@@ -63,38 +63,21 @@ function ConsiderDeathCoil()
 	local nSelfDamage = abilityDC:GetSpecialValueInt("self_damage");
 	
 	-- If we're seriously retreating, see if we can suicide
-	if mutil.IsRetreating(npcBot)
+	if mutil.IsRetreating(npcBot) and npcBot:GetHealth() <= nSelfDamage
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) and npcBot:GetHealth() <= nSelfDamage  ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
-			end
+		local target = mutil.GetVulnerableWeakestUnit(true, true, nCastRange, npcBot);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_MODERATE, target;
 		end
 	end
 	
 	if npcBot:HasModifier("modifier_abaddon_borrowed_time") then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
-			then
-				return BOT_ACTION_DESIRE_LOW, npcEnemy
-			end
+		local target = mutil.GetVulnerableWeakestUnit(true, true, nCastRange, npcBot);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_MODERATE, target;
 		end
 	end
 	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTarget = npcBot:GetTarget();
-	if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) )
-	then
-		if mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
-		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
-		end
-	end
 	
 	-- If we're in a teamfight, use it on the protect ally
 	if mutil.IsInTeamFight(npcBot, 1200)
@@ -126,7 +109,10 @@ function ConsiderDeathCoil()
 	then
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
+			local enemies = npcTarget:GetNearbyHeroes(1200, false, BOT_MODE_NONE);
+			if #enemies == 1 then 
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
+			end
 		end
 	end
 	
@@ -144,16 +130,9 @@ function ConsiderAphoticShield()
 	-- Get some of its values
 	local nCastRange = abilityAC:GetCastRange();
 
-	if mutil.IsRetreating(npcBot)
+	if mutil.IsRetreating(npcBot) and npcBot:WasRecentlyDamagedByAnyHero( 3.0 ) 
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcBot;
-			end
-		end
+		return BOT_ACTION_DESIRE_MODERATE, npcBot;
 	end
 	
 	-- If we're in a teamfight, use it on the scariest enemy
@@ -186,7 +165,7 @@ function ConsiderAphoticShield()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1300) ) 
 		then
 			local closestAlly = nil;
 			local nDist = 10000;
@@ -197,7 +176,7 @@ function ConsiderAphoticShield()
 				if ( mutil.CanCastOnMagicImmune(npcAlly) )
 				then
 					local nAllyDist = GetUnitToUnitDistance(npcTarget, npcAlly);
-					if ( ( nAllyDist < nDist ) or mutil.IsDisabled(false, npcAlly) )
+					if nAllyDist < nDist  
 					then
 						nDist = nAllyDist;
 						closestAlly = npcAlly;

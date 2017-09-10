@@ -30,17 +30,26 @@ local abilityPN = nil;
 
 local npcBot = nil;
 
+local splitEarthLoc = nil;
+
 function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
 	
-	-- Check if we're already using an ability
-	if mutil.CanNotUseAbility(npcBot) then return end
-
 	if abilityOO == nil then abilityOO = npcBot:GetAbilityByName( "leshrac_split_earth" ) end
 	if abilityTD == nil then abilityTD = npcBot:GetAbilityByName( "leshrac_diabolic_edict" ) end
 	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "leshrac_lightning_storm" ) end
 	if abilityPN == nil then abilityPN = npcBot:GetAbilityByName( "leshrac_pulse_nova" ) end
+		
+	local radius = abilityOO:GetSpecialValueInt( "radius" );
+
+	if abilityOO:IsInAbilityPhase() and not IsThereHeroWithinRadius(splitEarthLoc, radius) then
+		npcBot:Action_ClearActions(true);
+		return
+	end 	
+		
+	-- Check if we're already using an ability
+	if mutil.CanNotUseAbility(npcBot) then return end
 
 	-- Consider using each ability
 	castOODesire, castOOLocation = ConsiderOverwhelmingOdds();
@@ -50,7 +59,8 @@ function AbilityUsageThink()
 	castPNOFFDesire = ConsiderPulseNovaOff();
 
 	if ( castOODesire > 0 ) 
-	then
+	then	
+		splitEarthLoc = castOOLocation;
 		npcBot:Action_UseAbilityOnLocation( abilityOO, castOOLocation );
 		return;
 	end
@@ -82,6 +92,15 @@ function AbilityUsageThink()
 
 end
 
+function IsThereHeroWithinRadius(vLoc, nRadius)
+	local units = npcBot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+	for _,u in pairs(units) do
+		if GetUnitToLocationDistance(u, vLoc) < nRadius then
+			return true;
+		end
+	end
+	return false;
+end
 
 function ConsiderOverwhelmingOdds()
 

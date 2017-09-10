@@ -7,7 +7,8 @@ local requiredHeroes = {
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
 	--'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_faceless_void';
+	'npc_dota_hero_abaddon';
+	--'npc_dota_hero_leshrac';
 	--[['npc_dota_hero_visage';
 	'npc_dota_hero_lone_druid';
 	'npc_dota_hero_doom_bringer';

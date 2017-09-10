@@ -11,6 +11,8 @@ local closestRune  = -1;
 local runeStatus = -1;
 local ProxDist = 1500;
 local teamPlayers = nil;
+local PingTimeGap = 10;
+
 
 local ListRune = {
 	RUNE_BOUNTY_1,
@@ -24,7 +26,7 @@ local ListRune = {
 function GetDesire()
 	
 	if teamPlayers == nil then teamPlayers = GetTeamPlayers(GetTeam()) end
-
+	
 	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or bot:HasModifier("modifier_arc_warden_tempest_double") or
        bot:IsUsingAbility() or bot:IsChanneling() or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE or 
 	   GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 2500 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 2500 
@@ -108,6 +110,7 @@ end
 function CountDesire(base_desire, dist, maxDist)
 	 return base_desire + RemapValClamped( dist, maxDist, 0, 0, 1-base_desire );
 end	
+
 
 function GetBotClosestRune()
 	local cDist = 100000;	
@@ -226,9 +229,9 @@ end
 function IsSuitableToPick()
 	local mode = bot:GetActiveMode();
 	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
-	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE )
-		or ( ( Enemies ~= nil or #Enemies >= 1 ) and bot:WasRecentlyDamagedByAnyHero(5.0) )
-		) 
+	if ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE )
+		or #Enemies >= 1 
+		or bot:WasRecentlyDamagedByAnyHero(5.0)
 	then
 		return false;
 	end
