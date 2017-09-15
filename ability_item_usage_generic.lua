@@ -25,6 +25,7 @@ local IdleTime = 0;
 local AllowedIddle = 15;
 local npcBot = GetBot();
 local TimeDeath = nil;
+local count = 1;
 
 function AbilityLevelUpThink()  
 	
@@ -66,42 +67,86 @@ function AbilityLevelUpThink()
 		npcBot.stuckLoc = nil;
 	end
 	
-	if npcBot:GetAbilityPoints() < 1 or #BotAbilityPriority == 0 or  (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
-		return;
-	end
+	if GetGameMode() == GAMEMODE_MO then
 	
-	if BotAbilityPriority[1] ~= "-1" 
-	then
-		local sNextAbility = npcBot:GetAbilityByName(BotAbilityPriority[1])
-		if ( sNextAbility ~= nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel() ) 
+		if npcBot:GetLevel() > 25 or (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
+			return;
+		end
+		
+		if npcBot:GetAbilityPoints() > 0 then
+			if BotAbilityPriority[count] ~= "-1" then
+				local sNextAbility = npcBot:GetAbilityByName(BotAbilityPriority[count]);
+				if sNextAbility ~= nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel() then
+					if npcBot:GetUnitName() == "npc_dota_hero_troll_warlord" and BotAbilityPriority[count] == "troll_warlord_whirling_axes_ranged" 
+					then
+						if sNextAbility:IsHidden() then
+							npcBot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
+						else
+							npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[count])
+						end
+					elseif npcBot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" and BotAbilityPriority[count] == "keeper_of_the_light_illuminate" then
+						if sNextAbility:IsHidden() then 
+							local ability = npcBot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
+							if not ability:IsHidden() then
+								npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
+							else
+								return;
+							end	
+						else
+							npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[count])
+						end			
+					elseif sNextAbility:IsHidden() then
+						return;	
+					else
+						npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[count])
+					end
+					count = count + 1;
+				end
+			else
+				count = count + 1;
+			end
+		end
+		
+	else
+	
+		if npcBot:GetAbilityPoints() < 1 or #BotAbilityPriority == 0 or  (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
+			return;
+		end
+	
+		if BotAbilityPriority[1] ~= "-1" 
 		then
-			if npcBot:GetUnitName() == "npc_dota_hero_troll_warlord" and BotAbilityPriority[1] == "troll_warlord_whirling_axes_ranged" 
+			local sNextAbility = npcBot:GetAbilityByName(BotAbilityPriority[1])
+			if ( sNextAbility ~= nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel() ) 
 			then
-				if sNextAbility:IsHidden() then
-					npcBot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
+				if npcBot:GetUnitName() == "npc_dota_hero_troll_warlord" and BotAbilityPriority[1] == "troll_warlord_whirling_axes_ranged" 
+				then
+					if sNextAbility:IsHidden() then
+						npcBot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
+					else
+						npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
+					end
+				elseif npcBot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
+					if sNextAbility:IsHidden() then 
+						local ability = npcBot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
+						if not ability:IsHidden() then
+							npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
+						else
+							return;
+						end	
+					else
+						npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
+					end			
+				elseif sNextAbility:IsHidden() then
+					return;	
 				else
 					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
 				end
-			elseif npcBot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" and BotAbilityPriority[1] == "keeper_of_the_light_illuminate" then
-				if sNextAbility:IsHidden() then 
-					local ability = npcBot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
-					if not ability:IsHidden() then
-						npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
-					else
-						return;
-					end	
-				else
-					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-				end			
-			elseif sNextAbility:IsHidden() then
-				return;	
-			else
-				npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
-			end
+				table.remove( BotAbilityPriority, 1 )
+			end	
+		else
 			table.remove( BotAbilityPriority, 1 )
 		end	
-	else
-		table.remove( BotAbilityPriority, 1 )
+	
 	end	
 	
 end
@@ -373,7 +418,7 @@ function IsTheClosestToCourier(npcBot, npcCourier)
 			end
 		end
 	end
-	return closest ~= nil and closest:GetUnitName() == npcBot:GetUnitName()
+	return closest ~= nil and closest == npcBot
 end
 
 function GetCourierEmptySlot(courier)
@@ -592,7 +637,6 @@ function UnImplementedItemUsage()
 	if msh~=nil and msh:IsFullyCastable() then
 		if not npcBot:HasModifier("modifier_item_moon_shard_consumed")
 		then
-			print("use Moon")
 			npcBot:Action_UseAbilityOnEntity(msh, npcBot);
 			return;
 		end
@@ -872,12 +916,18 @@ function IsItemAvailable(item_name)
     return nil;
 end
 
+function IsTargetedByEnemy(building)
+	local heroes = GetUnitList(UNIT_LIST_ENEMY_HEROES);
+	for _,hero in pairs(heroes)
+	do
+		if ( GetUnitToUnitDistance(building, hero) <= hero:GetAttackRange() + 200 and hero:GetAttackTarget() == building ) then
+			return true;
+		end
+	end
+	return false;
+end
 
 function UseGlyph()
-
-	if npcBot:IsIllusion() then
-		return;
-	end	
 
 	if GetGlyphCooldown( ) > 0 then
 		return
@@ -914,7 +964,7 @@ function UseGlyph()
 	for _,b in pairs(MeleeBarrack)
 	do
 		local barrack = GetBarracks(GetTeam(), b);
-		if barrack ~= nil and barrack:GetHealth() > 0 and barrack:GetHealth()/barrack:GetMaxHealth() < 0.5  
+		if barrack ~= nil and barrack:GetHealth() > 0 and barrack:GetHealth()/barrack:GetMaxHealth() < 0.5 and IsTargetedByEnemy(barrack)
 		then
 			npcBot:ActionImmediate_Glyph( )
 			return
@@ -922,7 +972,7 @@ function UseGlyph()
 	end
 	
 	local Ancient = GetAncient(GetTeam())
-	if Ancient ~= nil and Ancient:GetHealth() > 0 and Ancient:GetHealth()/Ancient:GetMaxHealth() < 0.5 
+	if Ancient ~= nil and Ancient:GetHealth() > 0 and Ancient:GetHealth()/Ancient:GetMaxHealth() < 0.5 and IsTargetedByEnemy(Ancient)
 	then
 		npcBot:ActionImmediate_Glyph( )
 		return

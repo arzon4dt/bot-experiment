@@ -83,7 +83,6 @@ function AbilityUsageThink()
 	end
 	if ( castBCDesire > 0 ) 
 	then
-		print("Use bc")
 		npcBot:Action_UseAbility( abilityBC );
 		return;
 	end

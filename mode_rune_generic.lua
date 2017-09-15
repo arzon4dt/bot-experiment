@@ -25,6 +25,10 @@ local ListRune = {
 
 function GetDesire()
 	
+	if GetGameMode() == GAMEMODE_MO and DotaTime() <= 0 then
+		return BOT_MODE_DESIRE_NONE;
+	end
+	
 	if teamPlayers == nil then teamPlayers = GetTeamPlayers(GetTeam()) end
 	
 	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or bot:HasModifier("modifier_arc_warden_tempest_double") or
@@ -191,7 +195,7 @@ function IsTheClosestOne(r)
 			end
 		end
 	end
-	return closest:GetUnitName() == bot:GetUnitName();
+	return closest == bot;
 end
 
 function IsThereMidlaner(runeLoc)
@@ -230,11 +234,20 @@ function IsSuitableToPick()
 	local mode = bot:GetActiveMode();
 	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
 	if ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE )
-		or #Enemies >= 1 
+		or ( #Enemies >= 1 and IsIBecameTheTarget(Enemies) )
 		or bot:WasRecentlyDamagedByAnyHero(5.0)
 	then
 		return false;
 	end
 	return true;
+end
+
+function IsIBecameTheTarget(units)
+	for _,u in pairs(units) do
+		if u:GetAttackTarget() == bot then
+			return true;
+		end
+	end
+	return false;
 end
 

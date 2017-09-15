@@ -79,16 +79,20 @@ function ConsiderDarkPact()
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
-	local WARStatus = abilityPC2:IsHidden();
+	--WARStatus true = melee form, otherwise = range form
+	local inMelee = abilityPC2:IsHidden();
 
 	-- Get some of its values
 	local nCastRange = 500;
 
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
+	if #tableNearbyEnemyHeroes == 0 and not inMelee then
+		return BOT_ACTION_DESIRE_MODERATE;
+	end
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
 	if ( npcBot:GetActiveMode() == BOT_MODE_LANING ) then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		local longestAR = 0;
 		for _,enemy in pairs(tableNearbyEnemyHeroes)
 		do
@@ -97,39 +101,28 @@ function ConsiderDarkPact()
 				longestAR = enemyAR;
 			end
 		end
-		if longestAR < 320 and not WARStatus then
+		if longestAR < 320 and not inMelee then
 			return BOT_ACTION_DESIRE_MODERATE;
-		elseif longestAR > 320 and WARStatus then
-			return BOT_ACTION_DESIRE_MODERATE;
-		end
-	end
-	
-	if npcBot:GetActiveMode() == BOT_MODE_ROSHAN then
-		if not WARStatus then
+		elseif longestAR > 320 and inMelee then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
-	
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) and not WARStatus  ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
+		if #tableNearbyEnemyHeroes > 0 and abilityPC2:IsFullyCastable() and inMelee then
+			return BOT_ACTION_DESIRE_MODERATE;
+		elseif not abilityPC2:IsFullyCastable() and not inMelee then   	
+			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 
 	if mutil.IsPushing(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1 and WARStatus then
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1 and inMelee then
 			return BOT_ACTION_DESIRE_MODERATE;
-		elseif 	tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes < 1 and not WARStatus then
+		elseif 	tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes < 1 and not inMelee then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
@@ -138,15 +131,21 @@ function ConsiderDarkPact()
 	if mutil.IsGoingOnSomeone(npcBot) 
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero()) 
+		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
 		then
 			local Dist = GetUnitToUnitDistance(npcTarget, npcBot);
-			if Dist > nCastRange + 200 and not WARStatus then
-				return BOT_ACTION_DESIRE_MODERATE;
-			elseif Dist > nCastRange / 2 and Dist < nCastRange + 200 and WARStatus then
-				return BOT_ACTION_DESIRE_MODERATE;
-			elseif Dist < nCastRange / 2 and not WARStatus then
-				return BOT_ACTION_DESIRE_MODERATE;
+			if mutil.IsDisabled(true, npcTarget) or npcTarget:IsChanneling() then
+				if not inMelee then
+					return BOT_ACTION_DESIRE_MODERATE;
+				end
+			else
+				if Dist > nCastRange + 200 and not inMelee then
+					return BOT_ACTION_DESIRE_MODERATE;
+				elseif Dist > nCastRange / 2 and Dist < nCastRange + 200 and inMelee then
+					return BOT_ACTION_DESIRE_MODERATE;
+				elseif Dist < nCastRange / 2 and not inMelee then
+					return BOT_ACTION_DESIRE_MODERATE;
+				end
 			end
 		end
 	end

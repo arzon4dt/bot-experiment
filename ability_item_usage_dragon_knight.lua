@@ -88,7 +88,7 @@ function ConsiderQ()
 	if npcBot:GetActiveMode() == BOT_MODE_FARM 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
-		if npcTarget ~= nil then
+		if npcTarget ~= nil and not npcTarget:IsBuilding() then
 			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
 		end
 	end	

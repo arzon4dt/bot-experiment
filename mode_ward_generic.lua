@@ -254,7 +254,6 @@ end
 --check if the condition is suitable for warding
 function IsSuitableToWard()
 	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
-	local Allies = bot:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
 	local mode = bot:GetActiveMode();
 	if ( ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		or mode == BOT_MODE_ATTACK
@@ -263,8 +262,8 @@ function IsSuitableToWard()
 		or mode == BOT_MODE_DEFEND_TOWER_TOP
 		or mode == BOT_MODE_DEFEND_TOWER_MID
 		or mode == BOT_MODE_DEFEND_TOWER_BOT
-		or Enemies ~= nil and #Enemies >= 2
-		or ( #Enemies == 1 and #Enemies > #Allies and Enemies[1] ~= nil and IsStronger(Enemies[1]) )
+		or ( #Enemies >= 1 and IsIBecameTheTarget(Enemies) )
+		or bot:WasRecentlyDamagedByAnyHero(5.0)
 		) 
 	then
 		return false;
@@ -272,10 +271,13 @@ function IsSuitableToWard()
 	return true;
 end
 
-function IsStronger(enemy)
-	local BPower = bot:GetEstimatedDamageToTarget(true, enemy, 4.0, DAMAGE_TYPE_ALL);
-	local EPower = enemy:GetEstimatedDamageToTarget(true, bot, 4.0, DAMAGE_TYPE_ALL);
-	return EPower > BPower;
+function IsIBecameTheTarget(units)
+	for _,u in pairs(units) do
+		if u:GetAttackTarget() == bot then
+			return true;
+		end
+	end
+	return false;
 end
 
 function IsSafelaneCarry()

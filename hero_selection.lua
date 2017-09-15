@@ -7,8 +7,13 @@ local requiredHeroes = {
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
 	--'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_abaddon';
-	--'npc_dota_hero_leshrac';
+	'npc_dota_hero_zuus';
+	'npc_dota_hero_slardar';
+	'npc_dota_hero_skeleton_king';
+	'npc_dota_hero_rubick';
+	'npc_dota_hero_spirit_breaker';
+	'npc_dota_hero_chaos_knight';
+	'npc_dota_hero_axe';
 	--[['npc_dota_hero_visage';
 	'npc_dota_hero_lone_druid';
 	'npc_dota_hero_doom_bringer';
@@ -189,7 +194,143 @@ function Think()
 	elseif GetGameMode() == GAMEMODE_CM then
 		CaptainModeLogic();
 		AddToList();
+	elseif GetGameMode() == GAMEMODE_AR then
+		AllRandomLogic();
+	elseif GetGameMode() == GAMEMODE_MO then
+		MidOnlyLogic();	
+	else 
+		print("GAME MODE NOT SUPPORTED")
 	end
+end
+
+function GetSelectedHumanHero(team)
+	for i,id in pairs(GetTeamPlayers(team)) 
+	do 
+		if not IsPlayerBot(id) and GetSelectedHeroName(id) ~= ""
+		then 
+			return  GetSelectedHeroName(id);
+		end
+	end 
+end
+
+function IsHumanPresentInGame()
+	for i,id in pairs(GetTeamPlayers(GetTeam())) 
+	do 
+		if not IsPlayerBot(id) 
+		then 
+			return true;
+		end
+	end 
+	for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) 
+	do 
+		if not IsPlayerBot(id) 
+		then 
+			return true;
+		end
+	end 
+	return false;
+end
+
+local RandomedHero = nil;
+function MidOnlyLogic()
+	if IsHumanPresentInGame() then
+		if IsHumansDonePicking() then
+			if IsHumanPlayerExist() then
+				local selectedHero = GetSelectedHumanHero(GetTeam())
+				if selectedHero ~= "" and  selectedHero ~= nil then
+					for i,id in pairs(GetTeamPlayers(GetTeam())) 
+					 do 
+						if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+						then 
+							SelectHero(id, selectedHero); 
+							return;
+						end
+					end 
+				end 
+			else
+				local selectedHero = GetSelectedHumanHero(GetOpposingTeam())
+				if selectedHero ~= "" and  selectedHero ~= nil then
+					for i,id in pairs(GetTeamPlayers(GetTeam())) 
+					do 
+						if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+						then 
+							SelectHero(id, selectedHero); 
+							return;
+						end
+					end 
+				end 
+			end 
+		end 
+	else
+		if GetTeam() ==	TEAM_DIRE then
+			if not IsOpposingTeamDonePicking() then
+				return
+			else
+				local selectedHero = GetOpposingTeamSelectedHero()
+				for i,id in pairs(GetTeamPlayers(GetTeam())) 
+				do 
+					if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+					then 
+						SelectHero(id, selectedHero); 
+						return;
+					end
+				end 
+			end
+		else
+			local selectedHero = SetRandomHero();
+			for i,id in pairs(GetTeamPlayers(GetTeam())) 
+			do 
+				if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+				then 
+					SelectHero(id, selectedHero); 
+					return;
+				end
+			end 
+		end
+	end	
+end
+
+function GetOpposingTeamSelectedHero()
+	for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) 
+	do 
+		if GetSelectedHeroName(id) ~= ""
+		then 
+			return GetSelectedHeroName(id);
+		end
+	end
+end
+
+function SetRandomHero()
+	if RandomedHero == nil then
+		RandomedHero = GetRandomHero();
+	else
+		return RandomedHero;
+	end
+end
+
+function IsOpposingTeamDonePicking()
+	for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) 
+	do 
+		if GetSelectedHeroName(id) == ""
+		then 
+			return false;
+		end
+	end
+	return true;
+end
+
+function AllRandomLogic()
+
+	for i,id in pairs(GetTeamPlayers(GetTeam())) 
+	 do 
+		if  GetHeroPickState() == HEROPICK_STATE_AR_SELECT and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+		then 
+			hero = GetRandomHero(); 
+			SelectHero(id, hero); 
+			return;
+		end
+	end
+	
 end
 
 function AddToList()
@@ -598,6 +739,10 @@ function UpdateLaneAssignments()
 	elseif GetGameMode() == GAMEMODE_CM then
 		--print("CM Lane Assignment")
 		return CMLaneAssignment()	
+	elseif GetGameMode() == GAMEMODE_AR then
+		return APLaneAssignment()	
+	elseif GetGameMode() == GAMEMODE_MO then
+		return MOLaneAssignment()		
 	end
    
 end
@@ -651,6 +796,17 @@ function GetFromHumanPick(hero_name)
 		end	
 	end
 	return i;
+end
+
+function MOLaneAssignment()
+	local lanes = {
+        [1] = LANE_MID,
+        [2] = LANE_MID,
+        [3] = LANE_MID,
+        [4] = LANE_MID,
+        [5] = LANE_MID,
+        };
+	return lanes;	
 end
 
 function CMLaneAssignment()

@@ -7,8 +7,40 @@ local castTime = 0;
 local distance = 1000;
 local targetShrine = nil;
 local alreadyFoundCreep = false;
+local pLane;
+
+function GetProperLane(pId)
+	local lane = -1;
+	local idx = -1;
+	
+	for i,id in pairs(GetTeamPlayers(GetTeam())) do	
+		if id == pId then
+			idx = i;
+			break;
+		end
+	end
+	
+	if idx == 1 then
+		lane = LANE_MID ;
+	elseif ( idx == 2 or idx == 3 ) then
+		lane = LANE_TOP;
+	elseif ( idx == 4 or idx == 5 ) then
+		lane = LANE_BOT;	
+	end
+	
+	return lane;
+	
+end
 
 function GetDesire()
+	
+	if ( bot:GetUnitName() == "npc_dota_hero_elder_titan" or  bot:GetUnitName() == 'npc_dota_hero_wisp' ) and DotaTime() < 0 then
+		local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+		if #enemies == 0 then
+			pLane = GetProperLane(bot:GetPlayerID())
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end
+	end
 	
 	if not bot:IsAlive() or bot:GetCurrentActionType() == BOT_ACTION_TYPE_DELAY then
 		targetShrine = nil;
@@ -132,6 +164,18 @@ function OnEnd()
 end
 
 function Think()
+
+	if ( bot:GetUnitName() == 'npc_dota_hero_elder_titan' or  bot:GetUnitName() == 'npc_dota_hero_wisp' ) and DotaTime() < 0 then
+		local loc  = GetLocationAlongLane(pLane, GetLaneFrontAmount( GetTeam(), pLane, false ));
+		local dist = GetUnitToLocationDistance(bot, loc);
+		if dist > 400 then
+			bot:Action_MoveToLocation(loc);
+			return
+		else
+			bot:Action_ClearActions(true);
+			return
+		end
+	end
 
 	if alreadyFoundCreep then
 		local neutrals = bot:GetNearbyNeutralCreeps(800);

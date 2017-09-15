@@ -396,6 +396,20 @@ function X.ConsiderPointTarget(ability)
 
 end
 
+function X.GetProperRadius(ability)
+	local aoe = ability:GetAOERadius();
+	if aoe == 0 then
+		aoe = ability:GetSpecialValueInt('radius');
+	end
+	if aoe == 0 then
+		aoe = ability:GetSpecialValueInt('pounce_distance');
+	end
+	if aoe == 0 then
+		aoe = ability:GetSpecialValueInt('starfall_radius');
+	end
+	return aoe;
+end
+
 function X.ConsiderNoTarget(ability)
 	
 	local npcBot = GetBot();
@@ -404,11 +418,13 @@ function X.ConsiderNoTarget(ability)
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
-	local nRadius = ability:GetAOERadius();
+	local nRadius = X.GetProperRadius(ability);
 	local nAttackRange = npcBot:GetAttackRange();
 	
 	if nRadius == nil or nRadius == 0 then
 		nRadius = nAttackRange + 200;
+	elseif nRadius > nAttackRange then
+		nRadius = nRadius / 2 + 200; 
 	end
 	
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );

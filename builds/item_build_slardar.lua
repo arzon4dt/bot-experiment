@@ -11,7 +11,7 @@ X["items"] = {
 	"item_tranquil_boots",
 	"item_blink",
 	"item_force_staff",
-	"item_silver_edge",
+	"item_black_king_bar",
 	"item_assault",
 	"item_heart"
 };			

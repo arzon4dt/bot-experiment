@@ -159,6 +159,14 @@ function U.IsEnemyTargetMyTarget(bot, hTarget)
 	end
 	return false;
 end
+
+function U.GetProperTarget(bot)
+	local target = bot:GetTarget();
+	if target == nil then
+		target = bot:GetAttackTarget();
+	end
+	return target;
+end
 --============== ^^^^^^^^^^ NEW FUNCTION ABOVE ^^^^^^^^^ ================--
 
 function U.IsRetreating(npcBot)
@@ -179,14 +187,16 @@ function U.IsSuspiciousIllusion(npcTarget)
 	then
 		return true;
 	else
-	--Detect replicate and wall of replica illusions
-		if npcTarget:GetTeam() ~= bot:GetTeam() then
-			local TeamMember = GetTeamPlayers(GetTeam());
-			for i = 1, #TeamMember
-			do
-				local ally = GetTeamMember(i);
-				if ally ~= nil and ally:GetUnitName() == npcTarget:GetUnitName() then
-					return true;
+	   --Detect replicate and wall of replica illusions
+	    if GetGameMode() ~= GAMEMODE_MO then
+			if npcTarget:GetTeam() ~= bot:GetTeam() then
+				local TeamMember = GetTeamPlayers(GetTeam());
+				for i = 1, #TeamMember
+				do
+					local ally = GetTeamMember(i);
+					if ally ~= nil and ally:GetUnitName() == npcTarget:GetUnitName() then
+						return true;
+					end
 				end
 			end
 		end

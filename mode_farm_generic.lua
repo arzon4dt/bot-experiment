@@ -22,7 +22,7 @@ local tPing = 0;
 local tChat = 0;
 
 function GetDesire()
-	
+
 	if bot:GetUnitName() == "npc_dota_hero_faceless_voids" and bot:IsAlive() then
 		cLoc = GetSaveLocToFarmLane();
 		if cLoc ~= nil  then
@@ -136,16 +136,14 @@ function GetDesire()
 		t3Destroyed = IsThereT3Detroyed();
 	else
 		shrineTarget = GetTargetShrine();
-		local barracks = bot:GetNearbyBarracks(1000, true);
+		local barracks = bot:GetNearbyBarracks(700, true);
 		if shrineTarget ~= nil and ( barracks == nil or #barracks == 0 ) and IsSuitableToDestroyShrine()  then
 			cause = "shrine";
 			return BOT_MODE_DESIRE_VERYHIGH;
 		end
 	end
 	
-	
-	
-	if bot:GetLevel() >= 6 and bot:GetLevel() < 25 and campUtils.IsStrongJungler(bot)
+	if campUtils.IsStrongJungler(bot) and bot:GetLevel() >= 6 and bot:GetLevel() < 25 and not IsHumanPlayerInTeam() and GetGameMode() ~= GAMEMODE_MO 
 	then
 		LaneCreeps = bot:GetNearbyLaneCreeps(1600, true);
 		if LaneCreeps ~= nil and #LaneCreeps > 0 then
@@ -256,6 +254,17 @@ function Think()
 		end	
 	end
 	
+end
+
+function IsHumanPlayerInTeam()
+	for _,id in pairs(GetTeamPlayers(GetTeam())) 
+	do 
+		if not IsPlayerBot(id) 
+		then 
+			return true;
+		end
+	end 
+	return false;
 end
 
 function IsThereT3Detroyed()

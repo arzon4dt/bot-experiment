@@ -27,7 +27,10 @@ local castWDesire = 0;
 local castEDesire = 0;
 local castRDesire = 0;
 
-function AbilityUsageThinks()
+function AbilityUsageThink()
+	
+	if bot:GetTarget() ~= nil then print("Target :"..bot:GetTarget():GetUnitName()) end
+	if bot:GetAttackTarget() ~= nil then print("Attack Target :"..bot:GetAttackTarget():GetUnitName()) end
 	
 	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,3,4}) end
 	
@@ -162,11 +165,13 @@ function ConsiderR()
 	local nCastRange = 1600;
 	local nCastPoint = abilities[4]:GetCastPoint();
 	local manaCost  = abilities[4]:GetManaCost();
+	local nDamage  = abilities[4]:GetSpecialValueInt('damage');
+	local nDamageType  = abilities[4]:GetDamageType();
 	
 	
 	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
 	then
-		local target = mutils.GetSpellKillTarget(bot, true, nCastRange, abilities[4]:GetAbilityDamage(), abilities[4]:GetDamageType());
+		local target = mutils.GetSpellKillTarget(bot, true, nCastRange, nDamage, nDamageType);
 		if target ~= nil then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
@@ -175,22 +180,22 @@ function ConsiderR()
 	if mutils.IsInTeamFight(bot, 1300)
 	then
 		local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
-		local nInvUnit = mutil.CountInvUnits(false, tableNearbyEnemyHeroes);
+		local nInvUnit = mutils.CountInvUnits(false, tableNearbyEnemyHeroes);
 		if nInvUnit >= 3 then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 	
-	local lowHPCount = 2;
+	local lowHPCount = 0;
 	
 	local gEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES);
 	for _,e in pairs (gEnemies) do
-		if e ~= nil and mutils.CanCastOnNonMagicImmune(e) and e:GetHealth() <= e:GetActualIncomingDamage(abilities[4]:GetAbilityDamage(), abilities[4]:GetDamageType()) then
+		if e ~= nil and mutils.CanCastOnNonMagicImmune(e) and e:GetHealth() > 0 and e:GetHealth() <= e:GetActualIncomingDamage(nDamage, nDamageType) then
 			lowHPCount = lowHPCount + 1;
 		end
 	end
 	
-	if lowHPCount >= 2 then
+	if lowHPCount >= 1 then
 		return BOT_ACTION_DESIRE_MODERATE;
 	end
 	

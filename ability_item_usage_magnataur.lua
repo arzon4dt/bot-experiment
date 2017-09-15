@@ -246,23 +246,17 @@ function ConsiderSlithereenCrush()
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius-100, true, BOT_MODE_NONE );
 		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 800, false, BOT_MODE_ATTACK );
-		if tableNearbyAllyHeroes ~= nil and #tableNearbyAllyHeroes >= 2 and tableNearbyEnemyHeroes ~= nil and #tableNearbyAllyHeroes > 0 then
+		if #tableNearbyAllyHeroes >= 2 and #tableNearbyEnemyHeroes > 0 then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
 
-	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
-		then
-			local EnemyHeroes = npcBot:GetNearbyHeroes( nRadius - 100, true, BOT_MODE_NONE );
-			if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
-				 and EnemyHeroes ~= nil and #EnemyHeroes >= 2 )
-			then
-				return BOT_ACTION_DESIRE_HIGH;
-			end
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+		local nInvUnit = mutil.CountInvUnits(true, tableNearbyEnemyHeroes);
+		if nInvUnit >= 2 then
+			return BOT_ACTION_DESIRE_HIGH;
 		end
 	end
 

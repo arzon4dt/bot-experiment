@@ -73,9 +73,9 @@ ItemModule["basic_items"] = {
 
 ItemModule["item_abyssal_blade"] = { "item_skull_basher"; "item_vanguard"; "item_recipe_abyssal_blade" }
 
-ItemModule["item_aether_lens"] = { "item_energy_booster"; "item_void_stone"; "item_recipe_aether_lens" }
+ItemModule["item_aether_lens"] = { "item_void_stone"; "item_energy_booster"; "item_recipe_aether_lens" }
 
-ItemModule["item_ultimate_scepter"] = { "item_point_booster"; "item_staff_of_wizardry"; "item_blade_of_alacrity"; "item_ogre_axe" }
+ItemModule["item_ultimate_scepter"] = { "item_point_booster"; "item_ogre_axe"; "item_staff_of_wizardry"; "item_blade_of_alacrity" }
 
 ItemModule["item_arcane_boots"] = { "item_boots"; "item_energy_booster"}
 
@@ -85,9 +85,9 @@ ItemModule["item_assault"] = { "item_platemail"; "item_hyperstone"; "item_chainm
 
 ItemModule["item_bfury"] = {  "item_pers"; "item_claymore"; "item_broadsword"; "item_quelling_blade" }
 
-ItemModule["item_black_king_bar"] = { "item_mithril_hammer"; "item_ogre_axe"; "item_recipe_black_king_bar" }
+ItemModule["item_black_king_bar"] = { "item_ogre_axe"; "item_mithril_hammer"; "item_recipe_black_king_bar" }
 
-ItemModule["item_blade_mail"] = { "item_robe"; "item_chainmail"; "item_broadsword" }
+ItemModule["item_blade_mail"] = {  "item_chainmail"; "item_robe"; "item_broadsword" }
 
 ItemModule["item_bloodstone"] = { "item_soul_ring"; "item_point_booster"; "item_vitality_booster"; "item_energy_booster"; "item_recipe_bloodstone" }
 

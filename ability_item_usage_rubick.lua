@@ -32,11 +32,13 @@ local ability5 = nil;
 
 local setTarget = false;
 local npcBot = nil;
+local castUltDelay = 0;
+local castUltTime = -90;
 
 function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
-	-- Check if we're already using an ability
+	-- Check if we're already using an ability	
 	if mutil.CanNotUseAbility(npcBot) then return end
 
 	if abilityUFB == nil then abilityUFB = npcBot:GetAbilityByName( "rubick_spell_steal" ) end
@@ -45,7 +47,7 @@ function AbilityUsageThink()
 	if abilityIG == nil then abilityIG = npcBot:GetAbilityByName( "rubick_fade_bolt" ) end
 	ability4 = npcBot:GetAbilityInSlot(4) 
 	ability5 = npcBot:GetAbilityInSlot(5)
-
+	
 	-- Consider using each ability
 	castFBDesire, castFBTarget = ConsiderFireblast();
 	castTLDesire, castTLLocation = ConsiderTeleLand();
@@ -55,6 +57,7 @@ function AbilityUsageThink()
 	if ( castUFBDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityUFB, castUFBTarget );
+		castUltTime = DotaTime();
 		return;
 	end
 
@@ -229,7 +232,7 @@ end
 function ConsiderUnrefinedFireblast()
 
 	-- Make sure it's castable
-	if ( not abilityUFB:IsFullyCastable() ) then 
+	if ( not abilityUFB:IsFullyCastable() or DotaTime() - castUltTime <= castUltDelay ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
@@ -239,7 +242,7 @@ function ConsiderUnrefinedFireblast()
 
 	-- Get some of its values
 	local nCastRange = abilityUFB:GetCastRange();
-	
+	local projSpeed = abilityUFB:GetSpecialValueInt('projectile_speed')
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
@@ -250,6 +253,7 @@ function ConsiderUnrefinedFireblast()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + 200) 
 		then
+			castUltDelay = GetUnitToUnitDistance(npcBot, npcTarget) / projSpeed + ( 2*0.1 ); 
 			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end
 	end
