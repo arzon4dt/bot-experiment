@@ -34,11 +34,15 @@ end
 
 function GetDesire()
 	
-	if ( bot:GetUnitName() == "npc_dota_hero_elder_titan" or  bot:GetUnitName() == 'npc_dota_hero_wisp' ) and DotaTime() < 0 then
+	if GetGameMode() == GAMEMODE_1V1MID and bot:GetAssignedLane() ~= LANE_MID then
+		return BOT_MODE_DESIRE_ABSOLUTE;
+	end
+	
+	if ( bot:GetUnitName() == "npc_dota_hero_elder_titan" or  bot:GetUnitName() == 'npc_dota_hero_wisp' ) and DotaTime() < 15 then
 		local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
 		if #enemies == 0 then
 			pLane = GetProperLane(bot:GetPlayerID())
-			return BOT_MODE_DESIRE_ABSOLUTE;
+			return BOT_MODE_DESIRE_MODERATE;
 		end
 	end
 	
@@ -165,7 +169,12 @@ end
 
 function Think()
 
-	if ( bot:GetUnitName() == 'npc_dota_hero_elder_titan' or  bot:GetUnitName() == 'npc_dota_hero_wisp' ) and DotaTime() < 0 then
+	if GetGameMode() == GAMEMODE_1V1MID and bot:GetAssignedLane() ~= LANE_MID then
+		bot:Action_ClearActions(true);
+		return; 
+	end
+
+	if ( bot:GetUnitName() == 'npc_dota_hero_elder_titan' or  bot:GetUnitName() == 'npc_dota_hero_wisp' ) and DotaTime() < 15 then
 		local loc  = GetLocationAlongLane(pLane, GetLaneFrontAmount( GetTeam(), pLane, false ));
 		local dist = GetUnitToLocationDistance(bot, loc);
 		if dist > 400 then

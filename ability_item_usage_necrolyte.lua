@@ -85,7 +85,7 @@ function ConsiderGuardianSprint()
 		end
 	end
 	
-	if SadStack >= 8 and npcBot:GetHealth() / npcBot:GetMaxHealth() < 0.65 then
+	if SadStack >= 8 and npcBot:GetHealth() / npcBot:GetMaxHealth() < 0.5 then
 		return BOT_ACTION_DESIRE_LOW;
 	end
 	
@@ -94,12 +94,9 @@ function ConsiderGuardianSprint()
 	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
+		if npcBot:WasRecentlyDamagedByAnyHero( 2.0 ) and #tableNearbyEnemyHeroes > 0  
+		then
+			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 
@@ -108,9 +105,12 @@ function ConsiderGuardianSprint()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius - 200)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius - 100)
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			local targetAllies = npcTarget:GetNearbyHeroes(1000, false, BOT_MODE_NONE);
+			if #targetAllies == 1 then 
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
 		end
 	end
 	
@@ -138,20 +138,17 @@ function ConsiderSlithereenCrush()
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 2*nRadius, true, BOT_MODE_NONE );
+		if npcBot:WasRecentlyDamagedByAnyHero( 2.0 ) and #tableNearbyEnemyHeroes > 0  
+		then
+			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
 	
 	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nRadius, true );
-		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 3 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65 then
+		if #tableNearbyEnemyCreeps >= 3 and npcBot:GetMana() / npcBot:GetMaxMana() > 0.65 then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
@@ -169,7 +166,7 @@ function ConsiderSlithereenCrush()
 			end
 		end
 		
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 ) or lowHPAllies >= 1 then
+		if #tableNearbyEnemyHeroes >= 2 or lowHPAllies >= 1 then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end

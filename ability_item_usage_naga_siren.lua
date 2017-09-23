@@ -248,8 +248,8 @@ function ConsiderOvergrowth()
 		local npcTarget = npcBot:GetTarget();
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 800) and mutil.IsInRange(npcTarget, npcBot, 1300) ) 
 		then
-			local allies = npcTarget:GetNearbyHeroes(400, true, BOT_MODE_NONE)
-			if #allies >= 0 then
+			local allies = npcTarget:GetNearbyHeroes(600, true, BOT_MODE_NONE)
+			if not npcTarget:WasRecentlyDamagedByAnyHero(3.0) and #allies == 0 then
 				return BOT_ACTION_DESIRE_MODERATE;
 			end
 		end
@@ -337,7 +337,7 @@ function ConsiderSongStop()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 400)
 		then
-			local allies = npcTarget:GetNearbyHeroes(350, true, BOT_MODE_NONE)
+			local allies = npcTarget:GetNearbyHeroes(400, true, BOT_MODE_NONE)
 			if allies ~= nil and #allies >= 3 
 			then
 				return BOT_ACTION_DESIRE_MODERATE;

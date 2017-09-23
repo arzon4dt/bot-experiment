@@ -153,7 +153,7 @@ function ConsiderLifeBreak()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget;
+			return BOT_ACTION_DESIRE_VERYHIGH, npcTarget;
 		end
 	end
 	

@@ -79,7 +79,7 @@ function ItemPurchaseThink()
 	PurchaseTP();
 	
 	--if DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and role.CanBeMidlaner(npcBot:GetUnitName()) and npcBot:GetAssignedLane() == LANE_MID then
-	if  GetGameMode() ~= GAMEMODE_1V1MID and DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and npcBot.theRole == "midlaner" then
+	if DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and npcBot.theRole == "midlaner" then
 		local salve = npcBot:FindItemSlot("item_flask");
 		if salve >= 0 then
 			npcBot:ActionImmediate_SellItem(npcBot:GetItemInSlot(salve));
@@ -93,7 +93,7 @@ function ItemPurchaseThink()
 	end
 	
 	--Buy bottle for mid heroes
-	if GetGameMode() ~= GAMEMODE_1V1MID and DotaTime() > 0 and DotaTime() < 15 then
+	if DotaTime() > 0 and DotaTime() < 15 then
 		if role["bottle"][npcBot:GetUnitName()] == 1 and npcBot:GetAssignedLane() == LANE_MID and not buyBottle 
 		then
 			table.insert(npcBot.tableItemsToBuy, 1, "item_bottle");

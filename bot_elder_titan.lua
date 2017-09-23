@@ -166,10 +166,7 @@ function ConsiderMove(hMinionUnit)
 	local NearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( radius, true, BOT_MODE_NONE );
 	
 	if NearbyEnemyHeroes[1] == nil then
-		local location = Vector(0, 0)
-		if GetTeam( ) == TEAM_DIRE then
-			location = RB;
-		end
+		local location = RB;
 		if GetTeam( ) == TEAM_RADIANT then
 			location = DB;
 		end

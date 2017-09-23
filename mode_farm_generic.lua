@@ -293,12 +293,6 @@ function GetTargetShrine()
 		 SHRINE_JUNGLE_2 
 	}
 	for _,s in pairs(shrines) do
-		--[[if bot:GetUnitName() == "npc_dota_hero_chen" then
-			if GetShrine(GetOpposingTeam(), s) ~= nil then
-				print("Health "..tostring(  GetShrine(GetOpposingTeam(), s):GetHealth() ))
-				print("Alive "..tostring( GetShrine(GetOpposingTeam(), s):IsAlive() ))
-			end
-		end]]--
 		if GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 2000 and s < 3 then
 			local shrine = GetShrine(GetOpposingTeam(), s);
 			if  shrine ~= nil and shrine:IsAlive() then

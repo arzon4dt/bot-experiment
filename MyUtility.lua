@@ -20,9 +20,10 @@ local listBoots = {
 
 local modifier = {
 	"modifier_winter_wyvern_winters_curse",
-	"modifier_modifier_dazzle_shallow_grave",
-	"modifier_modifier_oracle_false_promise",
-	"modifier_oracle_fates_edict"
+	"modifier_winter_wyvern_winters_curse_aura"
+	--"modifier_modifier_dazzle_shallow_grave",
+	--"modifier_modifier_oracle_false_promise",
+	--"modifier_oracle_fates_edict"
 }
 
 function U.InitiateAbilities(hUnit, tSlots)
@@ -167,6 +168,72 @@ function U.GetProperTarget(bot)
 	end
 	return target;
 end
+
+function U.GetHumanPlayers()
+	local listHumanPlayer = {};
+	for i,id in pairs(GetTeamPlayers(GetTeam())) do
+		if not IsPlayerBot(id) then
+			local humanPlayer = GetTeamMember(i);
+			if humanPlayer ~=  nil then
+				table.insert(listHumanPlayer, humanPlayer);
+			end
+		end
+	end
+	return listHumanPlayer;
+end
+
+function U.IsHumanPlayerCanKill(target)
+	local bot = GetBot();
+	if target:GetTeam() ~= bot:GetTeam() and target:IsHero() then
+		local humanPlayers = U.GetHumanPlayers();
+		if U.IsHumanPingNotToKill(target, humanPlayers) then
+			print("Human Pinging! You're not Allowed to Kill The Target!");
+			return true;
+		elseif U.IsHumanCanKillTheTarget(target, humanPlayers) then
+			print("Human Can Kill The Target! You're not Allowed to Kill The Target!");	
+			return true;
+		end
+	end
+	return false;
+end
+
+function U.IsHumanPingNotToKill(target, listHumanPlayer)
+	for _,human in pairs(listHumanPlayer) do
+		if human ~= nil and not human:IsNull() and human:GetAttackTarget() == target then
+			local ping = human:GetMostRecentPing();
+			if ping ~= nil and not ping.normal_ping and GetUnitToLocationDistance(target, ping.location) <= 1200 and GameTime() - ping.time < 3.0 then
+				return true;
+			end	
+		end	
+	end
+	return false;
+end
+
+function U.IsHumanCanKillTheTarget(target, listHumanPlayer)
+	local total_damage = 0;
+	for _,human in pairs(listHumanPlayer) do
+		if human ~= nil and not human:IsNull() and human:GetAttackTarget() == target then
+			local damage = human:GetEstimatedDamageToTarget(true, target, 2.0, DAMAGE_TYPE_ALL);
+			total_damage = total_damage + damage;
+		end	
+	end
+	if total_damage > target:GetHealth() then
+		print("Total Damage:"..tostring(total_damage))
+		return true;
+	end
+	return false;
+end
+
+function U.GetAlliesNearLoc(vLoc, nRadius)
+	local allies = {};
+	for i,id in pairs(GetTeamPlayers(GetTeam())) do
+		local member = GetTeamMember(i);
+		if member ~= nil and member:IsAlive() and GetUnitToLocationDistance(member, vLoc) <= nRadius then
+			table.insert(allies, member);
+		end
+	end
+	return allies;
+end
 --============== ^^^^^^^^^^ NEW FUNCTION ABOVE ^^^^^^^^^ ================--
 
 function U.IsRetreating(npcBot)
@@ -205,11 +272,11 @@ function U.IsSuspiciousIllusion(npcTarget)
 end
 
 function U.CanCastOnMagicImmune(npcTarget)
-	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable() and not U.IsSuspiciousIllusion(npcTarget);
+	return npcTarget:CanBeSeen() and not npcTarget:IsInvulnerable() and not U.IsSuspiciousIllusion(npcTarget) and not U.HasForbiddenModifier(npcTarget) and not U.IsHumanPlayerCanKill(npcTarget);
 end
 
 function U.CanCastOnNonMagicImmune(npcTarget)
-	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable() and not U.IsSuspiciousIllusion(npcTarget);
+	return npcTarget:CanBeSeen() and not npcTarget:IsMagicImmune() and not npcTarget:IsInvulnerable() and not U.IsSuspiciousIllusion(npcTarget) and not U.HasForbiddenModifier(npcTarget) and not U.IsHumanPlayerCanKill(npcTarget);
 end
 
 function U.CanCastOnTargetAdvanced( npcTarget )

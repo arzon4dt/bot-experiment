@@ -25,6 +25,26 @@ local ListRune = {
 
 function GetDesire()
 	
+	--[[if bot:GetActiveMode() == BOT_MODE_ITEM  then
+		bot:ActionImmediate_Chat("I'm doing mode item", true);
+	end]]--
+	
+	--[[if bot:GetUnitName() == "npc_dota_hero_puck" then
+		for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) do
+			local info = GetHeroLastSeenInfo(id);
+			if info ~= nil then
+				print("Hero:"..GetSelectedHeroName(id))
+				for key,value in pairs(info) do
+					print(tostring(key)..":"..tostring(value.time_since_seen))
+				end
+			end
+		end
+	end]]--
+	
+	if GetGameMode() == GAMEMODE_1V1MID then
+		return BOT_MODE_DESIRE_NONE;
+	end
+	
 	if GetGameMode() == GAMEMODE_MO and DotaTime() <= 0 then
 		return BOT_MODE_DESIRE_NONE;
 	end
@@ -53,13 +73,13 @@ function GetDesire()
 	if closestRune ~= -1 then
 		runeStatus = GetRuneStatus( closestRune );
 		if runeStatus == RUNE_STATUS_AVAILABLE then
-			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 6000);
+			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 5000);
 		elseif runeStatus == RUNE_STATUS_UNKNOWN and closestDist <= ProxDist then
 			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
 		elseif runeStatus == RUNE_STATUS_MISSING and DotaTime() > 60 and ( minute % 2 == 1 and sec > 52 ) and closestDist <= ProxDist then
 			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
 		elseif IsTeamMustSaveRune(closestRune) and runeStatus == RUNE_STATUS_UNKNOWN then
-			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 6000);
+			return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 5000);
 		end
 	end
 	
@@ -174,7 +194,7 @@ function IsPingedByHumanPlayer(runeLoc)
 	end
 	for _,p in pairs(listPings)
 	do
-		if p ~= nil and GetDistance(p.location, runeLoc) < 1200 and dist2 < 1200 and GameTime() - p.time < PingTimeGap then
+		if p ~= nil and not p.normal_ping and GetDistance(p.location, runeLoc) < 1200 and dist2 < 1200 and GameTime() - p.time < PingTimeGap then
 			return true;
 		end
 	end

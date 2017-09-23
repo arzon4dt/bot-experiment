@@ -100,7 +100,11 @@ function ConsiderTimeWalk()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 200) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot) / 3000) + nCastPoint );
+			local tableNearbyEnemies = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
+			local tableNearbyAllies = npcTarget:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
+			if #tableNearbyEnemies <= #tableNearbyAllies then
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot) / 3000) + nCastPoint );
+			end
 		end
 	end
 	
@@ -181,7 +185,10 @@ function ConsiderChrono()
 			do
 				if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) 
 				then
-					return BOT_ACTION_DESIRE_LOW, npcEnemy:GetLocation();
+					local allies = mutil.GetAlliesNearLoc(npcEnemy:GetLocation(), nRadius);
+					if #allies <= 2 then
+						return BOT_ACTION_DESIRE_LOW, npcEnemy:GetLocation();
+					end	
 				end
 			end
 		end
@@ -193,7 +200,10 @@ function ConsiderChrono()
 		if ( locationAoE.count >= 2 ) then
 			local nInvUnit = mutil.FindNumInvUnitInLoc(true, npcBot, nCastRange, nRadius/2, locationAoE.targetloc);
 			if nInvUnit >= locationAoE.count then
-				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+				local allies = mutil.GetAlliesNearLoc(locationAoE.targetloc, nRadius);
+				if #allies <= 2 then
+					return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+				end
 			end
 		end
 	end
@@ -206,7 +216,10 @@ function ConsiderChrono()
 			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( nRadius/2, false, BOT_MODE_NONE );
 			local nInvUnit = mutil.CountInvUnits(true, tableNearbyEnemyHeroes);
 			if nInvUnit >= 2 then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+				local allies = mutil.GetAlliesNearLoc(npcTarget:GetLocation(), nRadius);
+				if #allies <= 2 then
+					return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+				end
 			end
 		end
 	end

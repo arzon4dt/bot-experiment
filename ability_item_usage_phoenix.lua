@@ -99,7 +99,7 @@ function AbilityUsageThink()
 		return;
 	end
 	
-	if castFSLDesire > 0 and DotaTime() >= spiritCT + FSETA then 
+	if castFSLDesire > 0 and DotaTime() >= spiritCT + FSETA + 0.25 then 
 		npcBot:Action_UseAbilityOnLocation( FireSpiritLaunch, castFSLLocation );
 		--print("cast FSL")
 		spiritCT = DotaTime();

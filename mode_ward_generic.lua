@@ -49,7 +49,10 @@ function GetDesire()
 		if not IsSafelaneCarry() and bot:GetAssignedLane() ~= LANE_MID 
 		   and ( (GetTeam() == TEAM_RADIANT and bot:GetAssignedLane() == LANE_TOP) 
 		      or (GetTeam() == TEAM_DIRE and bot:GetAssignedLane() == LANE_BOT) 
-			  or  role.IsSupport(bot:GetUnitName()) ) 
+			  or  role.IsSupport(bot:GetUnitName()) 
+			  or bot:GetUnitName() == "npc_dota_hero_elder_titan" 
+			  or  bot:GetUnitName() == 'npc_dota_hero_wisp'
+			  ) 
 		  and #enemies == 0 
 		then
 			bot.steal = true;
@@ -66,7 +69,6 @@ function GetDesire()
 		if pinged then	
 			return RemapValClamped(GetUnitToUnitDistance(bot, wt), 1000, 0, BOT_MODE_DESIRE_HIGH, BOT_MODE_DESIRE_VERYHIGH);
 		end
-		
 		AvailableSpots = wardUtils.GetAvailableSpot(bot);
 		targetLoc, targetDist = wardUtils.GetClosestSpot(bot, AvailableSpots);
 		if targetLoc ~= nil then
@@ -74,7 +76,6 @@ function GetDesire()
 			return RemapValClamped(targetDist, 6000, 0, BOT_MODE_DESIRE_MODERATE, BOT_MODE_DESIRE_HIGH);
 		end
 	end
-	
 	return BOT_MODE_DESIRE_NONE;
 end
 
@@ -120,7 +121,7 @@ function Think()
 	
 	if bot.ward then
 		if targetDist <= nWardCastRange then
-			if  DotaTime() - swapTime > 6.25 then
+			if  DotaTime() - swapTime > 6.75 then
 				bot:Action_UseAbilityOnLocation(itemWard, targetLoc);
 				wardCastTime = DotaTime();	
 				return

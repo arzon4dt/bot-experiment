@@ -26,12 +26,14 @@ local AllowedIddle = 15;
 local npcBot = GetBot();
 local TimeDeath = nil;
 local count = 1;
+local humanInTeam = nil;
 
 function AbilityLevelUpThink()  
 	
 	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() then
 		return;
 	end
+
 	
 	if DotaTime() < 15 then
 		npcBot.theRole = role.GetCurrentSuitableRole(npcBot, npcBot:GetUnitName());	
@@ -601,11 +603,17 @@ function UnImplementedItemUsage()
 	end
 	
 	local its=IsItemAvailable("item_tango_single");
-	if its~=nil and its:IsFullyCastable() and its:GetCooldownTimeRemaining() == 0 then
-		if DotaTime() > 10*60 and npcBot:DistanceFromFountain() > 1300
+	if its~=nil and its:IsFullyCastable() and npcBot:DistanceFromFountain() > 1300 then
+		if DotaTime() > 10*60 
 		then
+			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
 			local trees = npcBot:GetNearbyTrees(1300);
-			if trees[1] ~= nil then
+			
+			if trees[1] ~= nil and #tableNearbyEnemyHeroes == 0 and GetHeightLevel(npcBot:GetLocation()) == GetHeightLevel(GetTreeLocation(trees[1])) then
+				if npcBot:GetUnitName() == 'npc_dota_hero_lion' then
+				print("Bot"..tostring( GetHeightLevel(npcBot:GetLocation())))
+				print("Tree"..tostring( GetHeightLevel(GetTreeLocation(trees[1]))))
+			end
 				npcBot:Action_UseAbilityOnTree(its, trees[1]);
 				return;
 			end
@@ -644,7 +652,7 @@ function UnImplementedItemUsage()
 	
 	local mg=IsItemAvailable("item_enchanted_mango");
 	if mg~=nil and mg:IsFullyCastable() then
-		if  npcBot:GetMaxMana() - npcBot:GetMana() > 150 
+		if npcBot:GetActiveMode() ==   npcBot:GetMaxMana() - npcBot:GetMana() > 150 
 		then
 			npcBot:Action_UseAbility(mg);
 			return;

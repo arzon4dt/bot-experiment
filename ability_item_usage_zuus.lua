@@ -29,9 +29,6 @@ local castRDesire = 0;
 
 function AbilityUsageThink()
 	
-	if bot:GetTarget() ~= nil then print("Target :"..bot:GetTarget():GetUnitName()) end
-	if bot:GetAttackTarget() ~= nil then print("Attack Target :"..bot:GetAttackTarget():GetUnitName()) end
-	
 	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,3,4}) end
 	
 	if mutils.CantUseAbility(bot) then return end

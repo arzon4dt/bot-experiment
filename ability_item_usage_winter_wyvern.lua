@@ -270,7 +270,7 @@ function ConsiderFireblast()
 		if ( #tableNearbyEnemyHeroes >= 3 ) then
 			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 			do
-				if ( mutil.CanCastOnMagicImmune( npcEnemy ) )
+				if ( mutil.CanCastOnMagicImmune( npcEnemy ) and not mutil.IsDisabled(true, npcEnemy) )
 				then
 					local nHealth = npcEnemy:GetHealth()
 					if ( nHealth < nMostWeakHP )
@@ -292,7 +292,7 @@ function ConsiderFireblast()
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 	do
-		if ( npcEnemy:IsChanneling() and  mutil.CanCastOnMagicImmune( npcEnemy ) ) 
+		if ( npcEnemy:IsChanneling() and  mutil.CanCastOnMagicImmune( npcEnemy ) and not mutil.IsDisabled(true, npcEnemy) ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 		end
@@ -308,7 +308,7 @@ function ConsiderFireblast()
 		then
 			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 			do
-				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and  mutil.CanCastOnMagicImmune( npcEnemy ) ) 
+				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and  mutil.CanCastOnMagicImmune( npcEnemy ) and not mutil.IsDisabled(true, npcEnemy) ) 
 				then
 					return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
 				end
@@ -320,7 +320,7 @@ function ConsiderFireblast()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and not mutil.IsDisabled(true, npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) 
 		then
 			local NearbyEnemyHeroes = npcTarget:GetNearbyHeroes( nRadius, false, BOT_MODE_NONE );
 			local nInvUnit = mutil.CountInvUnits(true, NearbyEnemyHeroes);

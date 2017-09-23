@@ -183,42 +183,41 @@ end
 
 function ConsiderAttacking(hMinionUnit)
     local radius = 1600;
-	local Target = nil;
+	local target = nil;
+	
 	if IsDisabled(hMinionUnit) then
-		return BOT_ACTION_DESIRE_NONE, 0;
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
-    local NearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( radius, true, BOT_MODE_NONE );
-	if NearbyEnemyHeroes ~= nil and #NearbyEnemyHeroes > 0 then
-		Target = GetClosestUnit(NearbyEnemyHeroes);
-		return BOT_ACTION_DESIRE_LOW, Target;
+	local units = hMinionUnit:GetNearbyHeroes(radius, true, BOT_MODE_NONE);
+	
+	if units == nil or #units == 0 then
+		units = hMinionUnit:GetNearbyLaneCreeps(radius, true);
 	end
-	local NearbyEnemyCreeps = hMinionUnit:GetNearbyLaneCreeps( radius, true );
-	if  NearbyEnemyCreeps ~= nil and #NearbyEnemyCreeps > 0 then
-	    Target = GetClosestUnit(NearbyEnemyCreeps);
-		return BOT_ACTION_DESIRE_LOW, Target;
+	if units == nil or #units == 0 then
+		units = hMinionUnit:GetNearbyTowers(radius, true);
 	end
-	local NearbyEnemyTowers = hMinionUnit:GetNearbyTowers( radius, true );
-	if  NearbyEnemyTowers ~= nil and #NearbyEnemyTowers > 0 then
-		Target = GetClosestUnit(NearbyEnemyTowers);
-		return BOT_ACTION_DESIRE_LOW, Target;
-	end
-	local NearbyEnemyBarracks = hMinionUnit:GetNearbyBarracks( radius, true );
-	if  NearbyEnemyBarracks ~= nil and #NearbyEnemyBarracks > 0 then
-		Target = GetClosestUnit(NearbyEnemyBarracks);
-		return BOT_ACTION_DESIRE_LOW, Target;
+	if units == nil or #units == 0 then
+		units = hMinionUnit:GetNearbyBarracks(radius, true);
 	end
 	
-	return BOT_ACTION_DESIRE_NONE, 0;
+	if units ~= nil and #units > 0 then
+		target = GetWeakestUnit(units);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, target; 	
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
-function GetClosestUnit(tableNearbyEntity)	
-	local target = tableNearbyEntity[1];
-	local minHP = tableNearbyEntity[1]:GetHealth();
+function GetWeakestUnit(tableNearbyEntity)	
+	local target = nil;
+	local minHP = 100000;
 	for _,unit in pairs(tableNearbyEntity)
 	do
 		local HP = unit:GetHealth();
-		if HP < minHP then
+		if not unit:IsInvulnerable() and HP < minHP then
 			target = unit;
 			minHP = HP;
 		end
@@ -233,9 +232,11 @@ function ConsiderMove(hMinionUnit)
 	local NearbyEnemyTowers = hMinionUnit:GetNearbyTowers( radius, true );
 	local NearbyEnemyBarracks = hMinionUnit:GetNearbyBarracks( radius, true );
 	
-	if NearbyEnemyHeroes[1] == nil and NearbyEnemyCreeps[1] == nil and NearbyEnemyTowers[1] == nil and NearbyEnemyBarracks[1] == nil then
-		local location = GetFountain(true)
-		return BOT_ACTION_DESIRE_LOW, location;
+	if #NearbyEnemyHeroes == 0 and #NearbyEnemyCreeps == 0 and #NearbyEnemyTowers == 0 and #NearbyEnemyBarracks == 0 then
+		local ancient = GetAncient(GetOpposingTeam());
+		if ancient ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, ancient:GetLocation();
+		end
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -246,7 +247,7 @@ function ConsiderRetreat(hMinionUnit)
 	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 	if #tableNearbyAllyHeroes == 0 and #tableNearbyEnemyHeroes >= 2 then
 		local location = GetFountain(false)
-		return BOT_ACTION_DESIRE_LOW, location+RandomVector(300);
+		return BOT_ACTION_DESIRE_LOW, location;
 	end
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
@@ -434,30 +435,12 @@ function ConsiderHB(hMinionUnit)
 	
 	local nCastRange = abilityHB:GetCastRange();
 	
-	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 	
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-	do
-		if ( CanCastCYOnTarget( npcEnemy ) and npcEnemy:IsChanneling() ) 
-		then
-			return BOT_ACTION_DESIRE_LOW, npcEnemy;
-		end
-	end
+	local target = GetWeakestUnit(tableNearbyEnemyHeroes);
 	
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-	do
-		if ( CanCastCYOnTarget( npcEnemy ) and GetUnitToUnitDistance(npcEnemy, hMinionUnit) < nCastRange ) 
-		then
-			return BOT_ACTION_DESIRE_LOW, npcEnemy;
-		end
-	end
-	
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-	do
-		if ( CanCastCYOnTarget( npcEnemy ) and npcEnemy:GetActiveMode() == BOT_MODE_RETREAT )
-		then
-			return BOT_ACTION_DESIRE_LOW, npcEnemy;
-		end
+	if target ~= nil then
+		return BOT_ACTION_DESIRE_HIGH, target;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;

@@ -382,6 +382,16 @@ function CanCastOnNonMagicImmuneTarget( npcTarget )
 end
 
 function ConsiderAttacking(hMinionUnit)
+
+	if hMinionUnit:DistanceFromFountain() == 0 and hMinionUnit:GetHealth() / hMinionUnit:GetMaxHealth() < 0.9
+	then
+		return BOT_ACTION_DESIRE_NONE, {};
+	end	
+
+	if hMinionUnit:GetHealth() / hMinionUnit:GetMaxHealth() < 0.25 then
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+	
 	local npcBot = GetBot();
 	local target = npcBot:GetTarget();
 	local AR = hMinionUnit:GetAttackRange();
@@ -425,15 +435,25 @@ function ConsiderAttacking(hMinionUnit)
 end
 
 function ConsiderMove(hMinionUnit)
-
-	local target = npcBot:GetTarget()
 	
+	if hMinionUnit:DistanceFromFountain() == 0 and hMinionUnit:GetHealth() / hMinionUnit:GetMaxHealth() < 0.9
+	then
+		return BOT_ACTION_DESIRE_NONE, {};
+	end	
+	
+	if hMinionUnit:GetHealth() / hMinionUnit:GetMaxHealth() < 0.25 then
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+	
+	local target = npcBot:GetTarget()
+		
 	if AttackDesire > 0 or not npcBot:IsAlive() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
 	if target == nil or ( target ~= nil and not CanBeAttacked(target) ) or (target ~= nil and GetUnitToUnitDistance(target, npcBot) > ProxRange and  GetUnitToUnitDistance(target, npcBot) > 300) then
-		return BOT_ACTION_DESIRE_MODERATE, npcBot:GetLocation();
+		--return BOT_ACTION_DESIRE_MODERATE, npcBot:GetLocation();
+		return BOT_ACTION_DESIRE_MODERATE, npcBot:GetXUnitsTowardsLocation(GetAncient(GetOpposingTeam()):GetLocation(), 250);
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
@@ -442,7 +462,7 @@ end
 
 function ConsiderRetreat(hMinionUnit)
 	
-	if hMinionUnit:DistanceFromFountain() == 0 
+	if hMinionUnit:DistanceFromFountain() == 0 and hMinionUnit:GetHealth() / hMinionUnit:GetMaxHealth() > 0.9
 	then
 		return BOT_ACTION_DESIRE_NONE, {};
 	end	
@@ -450,12 +470,22 @@ function ConsiderRetreat(hMinionUnit)
 	local RB = Vector(-7200,-6666)
 	local DB = Vector(7137,6548)
 	
+	if ( hMinionUnit:DistanceFromFountain() == 0 and hMinionUnit:GetHealth() / hMinionUnit:GetMaxHealth() < 0.9 ) 
+	    or hMinionUnit:GetHealth() / hMinionUnit:GetMaxHealth() < 0.25 
+	then
+		local location = DB;
+		if GetTeam( ) == TEAM_RADIANT then
+			location = RB;
+		end
+		return BOT_ACTION_DESIRE_LOW, location;
+	end
+	
 	if not npcBot:IsAlive() then
-		local allies = hMinionUnit:GetNearbyHeroes(1300, true ,BOT_MODE_NONE);
-		if #allies == 0 then
-			if GetTeam( ) == TEAM_DIRE then
-				location = DB;
-			elseif GetTeam( ) == TEAM_RADIANT then
+		local enemies = hMinionUnit:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+		local allies = hMinionUnit:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
+		if #allies == 0 or #enemies == 0 then
+			local location = DB;
+			if GetTeam( ) == TEAM_RADIANT then
 				location = RB;
 			end
 			return BOT_ACTION_DESIRE_LOW, location;
@@ -941,7 +971,7 @@ function ConsiderChainLighting(hMinionUnit)
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
-function ConsiderFrostArmor()
+function ConsiderFrostArmor(hMinionUnit)
 
 	-- Make sure it's castable
 	if ( abilityFA:IsNull() or not abilityFA:IsFullyCastable() ) then 
@@ -954,7 +984,7 @@ function ConsiderFrostArmor()
 		return BOT_ACTION_DESIRE_MODERATE, npcBot;
 	end
 	
-	local tableNearbyFriendlyHeroes = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE );
+	local tableNearbyFriendlyHeroes = hMinionUnit:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE );
 	for _,myFriend in pairs(tableNearbyFriendlyHeroes) do
 		if ( not myFriend:HasModifier("modifier_ogre_magi_frost_armor") ) 
 		then

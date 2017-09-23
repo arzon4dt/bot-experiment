@@ -142,7 +142,9 @@ function ConsiderIceShards()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( ((GetUnitToUnitDistance(npcTarget, npcBot)+200)/nSpeed) + nCastPoint );
+			local dist =  GetUnitToUnitDistance(npcBot, npcTarget);
+			return BOT_ACTION_DESIRE_MODERATE, npcBot:GetXUnitsTowardsLocation( npcTarget:GetLocation(), dist + (dist/nSpeed+nCastPoint)*200);
+			--return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( ((GetUnitToUnitDistance(npcTarget, npcBot)+200)/nSpeed) + nCastPoint );
 		end
 	end
 --

@@ -707,7 +707,7 @@ function ConsiderSunStrike(bot)
     -- Global Usage
     --------------------------------------
     local globalEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
-    for _, enemy in pairs(globalEnemies) do
+    for _,enemy in pairs(globalEnemies) do
         if enemy:GetHealth() <= nDamage and CanCastSunStrikeOnTarget(enemy) then
             if IsDisabled(enemy) then
                 return BOT_ACTION_DESIRE_MODERATE, enemy:GetLocation()

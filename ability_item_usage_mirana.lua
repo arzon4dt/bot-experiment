@@ -175,7 +175,7 @@ function ConsiderHook()
 			local distance = GetUnitToUnitDistance(npcTarget, npcBot)
 			local moveCon = npcTarget:GetMovementDirectionStability();
 			local pLoc = npcTarget:GetExtrapolatedLocation( nCastPoint + ( distance / speed ) );
-			if moveCon == 0 then
+			if moveCon < 1 then
 				pLoc = npcTarget:GetLocation();
 			end
 			if not utils.AreEnemyCreepsBetweenMeAndLoc(pLoc, nRadius)  then

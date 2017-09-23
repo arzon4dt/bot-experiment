@@ -7,13 +7,7 @@ local requiredHeroes = {
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
 	--'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_zuus';
-	'npc_dota_hero_slardar';
-	'npc_dota_hero_skeleton_king';
-	'npc_dota_hero_rubick';
-	'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_chaos_knight';
-	'npc_dota_hero_axe';
+	'npc_dota_hero_faceless_void';
 	--[['npc_dota_hero_visage';
 	'npc_dota_hero_lone_druid';
 	'npc_dota_hero_doom_bringer';
@@ -25,11 +19,71 @@ local UnImplementedHeroes = {
 	
 };
 
---[[function GetBotNames ()
---fill the bot name in the bracket bellow
-return { "test1", "test2", "test3", "test4", "test5", "test6", "test7", "test8", "test9", "test10" }
-end]]--
+----------------------------------------------------------GIVE THE BOT A PRO PLAYER NAME---------------------------------------------------------------------------------------------
 
+local selectedName = {};
+
+function IsExistInSelectedName(name) 
+	for _,str in pairs(selectedName) do
+		if str == name then
+			return true;
+		end
+	end
+	return false;
+end
+
+local team = "";
+local sponsorship = ""; 
+function GenerateBotName(listName)
+	while #selectedName < 5 do
+		local name = listName[RandomInt(1,#listName)];
+		if IsExistInSelectedName(name) then
+			name = listName[RandomInt(1,#listName)];	
+		else
+			table.insert(selectedName, name);
+		end			
+	end
+	
+	if team == "" then 
+		if GetTeam() == TEAM_RADIANT then
+			local teams = {"OG", "VP", "EG", "Liquid", "IG", "Newbee", "Secret", "HR", "Empire", "Na'Vi", "Standin" };
+			team = teams[RandomInt(1,#teams)];
+		else
+			local teams = { "IG.V", "LFY", "LGD", "TNC", "Fnatic", "XctN", "Infamous", "Cloud9", "DC", "Alliance" };
+			team = teams[RandomInt(1,#teams)];
+		end
+	end
+	
+	if sponsorship == "" then 
+		local sponsorships = { "GG.bet", "VPGAME", "LOOT.bet", "", "Esports.bet", "G2A", "Dota2.net" };
+		sponsorship = sponsorships[RandomInt(1,#sponsorships)];
+	end
+	
+	for i,str in pairs(selectedName) do
+		selectedName[i] = team.."."..str.."."..sponsorship;
+	end
+end
+
+function GetBotNames ()
+	if GetTeam() == TEAM_RADIANT then
+		local rName = { "Ame", "BoBoKa", "BurNIng", "dogf1ghts", "eLeVeN", "Faith", "Inflame", "InJuly", "Kaka", "Maybe", "Monet", "Moogy", "Op", "Paparazi灬", "Q", "Sakata", "Sccc", 
+		         "super", "Super", "Victoria", "Xxs", "Yao", "DuBu", "Febby", "Forev", "MP", "QO", "1437", "Arteezy", "Aui_2000", "EternaLEnVy", "BuLba", "mason", "MSS", 
+				 "UNiVeRsE", "FATA-", "KheZu", "KuroKy", "JerAx", "MATUMBAMAN", "Miracle-", "YapzOr", "Puppey", "DDC", "Swiftending", "2GD", "Luminous", "LD", "Blitz", "Bruno",
+				 "Purge", "SyndereN", "SirActionSlacks", "V1lat"
+		}
+		GenerateBotName(rName);
+		return selectedName;
+	else
+		local dName = { "Abed", "Bimbo", "CartMaN", "DJ", "Kim0", "Kuku", "Nando", "Raven", "RR", "Sam_H", "Tims", "9pasha", "Miposhka", "RAMZES666", "RodjER", "Solo", 
+				 "Accel", "Benjaz", "Kingteka", "Matthew", "Timado", "fn", "Ghostik", "Lil", "No[o]ne", "Resolut1on", "Ahfu", "Ahjit", "MidOne", "Ohaiyo", "pieliedie", "s4", 
+				 "zai", "ana", "kpii", "Cr1t-", "N0tail", "Fly", "33", "j4", "MiLAN", "MinD_ContRoL", "Keyser", "GH", "SumaiL", "Dendi", "Maut", "Merlini", "ODPixel", "Capitalist",
+				 "Sheever", "SUNSfan", "GoDz", "TobiWan", "WinteR" 
+				}
+		GenerateBotName(dName);
+		return selectedName;		
+	end
+end
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- change quickMode to true for testing
 -- quickMode eliminates the 30s delay before picks begin
@@ -188,8 +242,52 @@ local HeroLanes = {
 
 local PairsHeroNameNRole = {};
 local humanPick = {};
+
+-----------------------------------------------------SELECT HERO FOR BOT WITH CHAT FEATURE-------------------------------------------
+--function to get hero name that match the expression
+function GetHumanChatHero(name)
+	if name == nil then return ""; end	
+	for _,hero in  pairs(allBotHeroes) do
+		if string.find(hero, name) then
+			return hero;
+		end
+	end
+	return "";
+end	
+--function to decide which team should get the hero
+function SelectHeroChatCallback(PlayerID, ChatText, bTeamOnly)
+	local text = string.lower(ChatText);
+	local hero = GetHumanChatHero(text);
+	if hero ~= "" then
+		if bTeamOnly then
+			for _,id in pairs(GetTeamPlayers(GetTeam())) 
+			do
+				if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
+					SelectHero(id, hero);
+					break;
+				end
+			end	
+		elseif not bTeamOnly and GetTeamForPlayer(PlayerID) ~= GetTeam() then
+			for _,id in pairs(GetTeamPlayers(GetTeam())) 
+			do
+				if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
+					SelectHero(id, hero);
+					break;
+				end
+			end			
+		end
+	else
+		print("Hero name not found! Please refer to hero_selection.lua of this script for list of heroes's name");
+	end
+end
+----------------------------------------------------------------------------------------------------------------------------------------
+
 function Think()
+
 	if GetGameMode() == GAMEMODE_AP then
+		if GetGameState() == GAME_STATE_HERO_SELECTION then
+			InstallChatCallback(function (attr) SelectHeroChatCallback(attr.player_id, attr.string, attr.team_only); end);
+		end
 		AllPickLogic();
 	elseif GetGameMode() == GAMEMODE_CM then
 		CaptainModeLogic();
@@ -198,39 +296,322 @@ function Think()
 		AllRandomLogic();
 	elseif GetGameMode() == GAMEMODE_MO then
 		MidOnlyLogic();	
+	elseif GetGameMode() == GAMEMODE_1V1MID then
+		OneVsOneLogic();	
 	else 
 		print("GAME MODE NOT SUPPORTED")
 	end
 end
 
-function GetSelectedHumanHero(team)
-	for i,id in pairs(GetTeamPlayers(team)) 
+local oboselect = false;
+------------------------------------------1 VS 1 GAME MODE-------------------------------------------
+function OneVsOneLogic()
+	
+	if IsHumanPlayerExist() then
+		oboselect = true;
+	end
+	
+	for _,i in pairs(GetTeamPlayers(GetTeam())) 
 	do 
-		if not IsPlayerBot(id) and GetSelectedHeroName(id) ~= ""
-		then 
-			return  GetSelectedHeroName(id);
-		end
-	end 
+		if not oboselect and IsPlayerBot(i) and IsPlayerInHeroSelectionControl(i) and GetSelectedHeroName(i) == "" 
+		then
+			if IsHumanPresentInGame() then
+				hero = GetSelectedHumanHero(GetOpposingTeam()); 
+			else
+				hero = GetRandomHero();
+			end
+			if hero ~= nil then
+				SelectHero(i, hero); 
+				oboselect = true;
+			end
+			return
+		elseif oboselect and IsPlayerBot(i) and IsPlayerInHeroSelectionControl(i) and GetSelectedHeroName(i) == "" 
+		then
+			SelectHero(i, 'npc_dota_hero_techies'); 
+			return
+		end		
+	end	
 end
+-------------------------------------------------------------------------------------------------------
 
-function IsHumanPresentInGame()
-	for i,id in pairs(GetTeamPlayers(GetTeam())) 
-	do 
-		if not IsPlayerBot(id) 
+
+------------------------------------------ALL PICK GAME MODE-------------------------------------------
+local PickTime = 10;
+local RandomTime = 0;
+--Picking logic for All Pick Game Mode
+function AllPickLogic()
+	 if not CanPick() then return end;
+	 
+	 local idx = 0;
+	 for _,i in pairs(GetTeamPlayers(GetTeam())) 
+	 do 
+		if IsPlayerBot(i) and IsPlayerInHeroSelectionControl(i) and GetSelectedHeroName(i) == "" 
 		then 
-			return true;
+			if testMode then
+				hero = GetRandomHero() 
+			else
+				hero = PickRightHero(idx) 
+			end
+			SelectHero(i, hero); 
+			PickTime = GameTime();
+			RandomTime = 0;
+			return;
 		end
+		idx = idx + 1;
 	end 
-	for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) 
-	do 
-		if not IsPlayerBot(id) 
-		then 
-			return true;
-		end
-	end 
+	idx = 0;
+end
+--Delay for picking between player in team
+function CanPick()
+	if not IsHumanPresentInGame() and RandomTime == 0 then RandomTime = RandomInt((30/5)/2,30/5); end
+	if GameTime() > 60 or IsHumansDonePicking() then return true end
+	if RandomTime ~= 0 and GameTime() >= PickTime + RandomTime then return true end
 	return false;
 end
+-------------------------------------------------------------------------------------------------------
 
+
+------------------------------------------CAPTAIN'S MODE GAME MODE-------------------------------------------
+--Picking logic for Captain's Mode Game Mode
+function CaptainModeLogic()
+	if (GetGameState() ~= GAME_STATE_HERO_SELECTION) then
+        return
+    end
+	if not CMTestMode then
+		if NeededTime == 29 then
+			NeededTime = RandomInt( Min, Max );
+		elseif NeededTime == 0 then
+			NeededTime = RandomInt( Min, Max );
+		end
+	elseif CMTestMode then
+		NeededTime = 29;
+	end	
+	if GetHeroPickState() == HEROPICK_STATE_CM_CAPTAINPICK then	
+		PickCaptain();
+	elseif GetHeroPickState() >= HEROPICK_STATE_CM_BAN1 and GetHeroPickState() <= HEROPICK_STATE_CM_BAN10 and GetCMPhaseTimeRemaining() <= NeededTime then
+		BansHero();
+		NeededTime = 0 
+	elseif GetHeroPickState() >= HEROPICK_STATE_CM_SELECT1 and GetHeroPickState() <= HEROPICK_STATE_CM_SELECT10 and GetCMPhaseTimeRemaining() <= NeededTime then
+		PicksHero();	
+		NeededTime = 0
+	elseif GetHeroPickState() == HEROPICK_STATE_CM_PICK then
+		SelectsHero();	
+	end	
+end
+--Pick the captain
+function PickCaptain()
+	if not IsHumanPlayerExist() or DotaTime() > -1 then
+		if GetCMCaptain() == -1 then
+			local CaptBot = GetFirstBot();
+			if CaptBot ~= nil then
+				print("CAPTAIN PID : "..CaptBot)
+				SetCMCaptain(CaptBot)
+			end
+		end
+	end
+end
+--Check if human player exist in team
+function IsHumanPlayerExist()
+	local Players = GetTeamPlayers(GetTeam())
+    for _,id in pairs(Players) do
+        if not IsPlayerBot(id) then
+			return true;
+        end
+    end
+	return false;
+end
+--Get the first bot to be the captain
+function GetFirstBot()
+	local BotId = nil;
+	local Players = GetTeamPlayers(GetTeam())
+    for _,id in pairs(Players) do
+        if IsPlayerBot(id) then
+			BotId = id;
+			return BotId;
+        end
+    end
+	return BotId;
+end
+--Ban hero function
+function BansHero()
+	if not IsPlayerBot(GetCMCaptain()) or not IsPlayerInHeroSelectionControl(GetCMCaptain()) then
+		return
+	end	
+	local BannedHero = RandomHero();
+	print(BannedHero.." is banned")
+	CMBanHero(BannedHero);
+	BanCycle = BanCycle + 1;
+end
+--Pick hero function
+function PicksHero()
+	if not IsPlayerBot(GetCMCaptain()) or not IsPlayerInHeroSelectionControl(GetCMCaptain()) then
+		return
+	end	
+	local PickedHero = RandomHero();
+	if PickCycle == 1 then
+		while not role.CanBeOfflaner(PickedHero) do
+			PickedHero = RandomHero();
+		end
+		PairsHeroNameNRole[PickedHero] = "offlaner";
+	elseif	PickCycle == 2 then
+		while not role.CanBeSupport(PickedHero) do
+			PickedHero = RandomHero();
+		end
+		PairsHeroNameNRole[PickedHero] = "support";
+	elseif	PickCycle == 3 then
+		while not role.CanBeMidlaner(PickedHero) do
+			PickedHero = RandomHero();
+		end
+		PairsHeroNameNRole[PickedHero] = "midlaner";
+	elseif	PickCycle == 4 then
+		while not role.CanBeSupport(PickedHero) do
+			PickedHero = RandomHero();
+		end
+		PairsHeroNameNRole[PickedHero] = "support";
+	elseif	PickCycle == 5 then
+		while not role.CanBeSafeLaneCarry(PickedHero) do
+			PickedHero = RandomHero();
+		end	
+		PairsHeroNameNRole[PickedHero] = "carry";
+	end
+	print(PickedHero.." is picked")
+	CMPickHero(PickedHero);
+	PickCycle = PickCycle + 1;
+end
+--Add to list human picked heroes
+function AddToList()
+	if not IsPlayerBot(GetCMCaptain()) then
+		for _,h in pairs(allBotHeroes)
+		do
+			if IsCMPickedHero(GetTeam(), h) and not alreadyInTable(h) then
+				table.insert(humanPick, h)
+			end
+		end
+	end
+end
+--Check if selected hero already picked by human
+function alreadyInTable(hero_name)
+	for _,h in pairs(humanPick)
+	do
+		if hero_name == h then
+			return true
+		end
+	end
+	return false
+end
+--Check if the randomed hero doesn't available for captain's mode
+function IsUnavailableHero(name)
+	for _,uh in pairs(UnavailableHeroes)
+	do
+		if name == uh then
+			return true;
+		end	
+	end
+	return false;
+end
+--Check if a hero hasn't implemented yet
+function IsUnImplementedHeroes()
+	for _,unh in pairs(UnImplementedHeroes)
+	do
+		if name == unh then
+			return true;
+		end	
+	end
+	return false;
+end
+--Random hero which is non picked, non banned, or non human picked heroes if the human is the captain 
+function RandomHero()
+	local hero = allBotHeroes[RandomInt(1, #allBotHeroes)];
+	while ( IsUnavailableHero(hero) or IsCMPickedHero(GetTeam(), hero) or IsCMPickedHero(GetOpposingTeam(), hero) or IsCMBannedHero(hero) ) 
+	do
+        hero = allBotHeroes[RandomInt(1, #allBotHeroes)];
+    end
+	return hero;
+end
+--Check if the human already pick the hero in captain's mode
+function WasHumansDonePicking()
+	local Players = GetTeamPlayers(GetTeam())
+    for _,id in pairs(Players) 
+	do
+        if not IsPlayerBot(id) then
+			if GetSelectedHeroName(id) == nil or GetSelectedHeroName(id) == "" then
+				return false;
+			end	
+        end
+    end
+	return true;
+end
+--Select the rest of the heroes that the human players don't pick in captain's mode
+function SelectsHero()
+	if not AllHeroesSelected and ( WasHumansDonePicking() or GetCMPhaseTimeRemaining() < 1 ) then
+		local Players = GetTeamPlayers(GetTeam())
+		local RestBotPlayers = {};
+		GetTeamSelectedHeroes();
+		
+		for _,id in pairs(Players) 
+		do
+			local hero_name =  GetSelectedHeroName(id);
+			if hero_name ~= nil and hero_name ~= "" then
+				UpdateSelectedHeroes(hero_name)
+				print(hero_name.." Removed")
+			else
+				table.insert(RestBotPlayers, id)
+			end	
+		end
+		
+		for i = 1, #RestBotPlayers
+		do
+			SelectHero(RestBotPlayers[i], ListPickedHeroes[i])
+		end
+		
+		AllHeroesSelected = true;
+	end
+end
+--Get the team picked heroes
+function GetTeamSelectedHeroes()
+	for _,sName in pairs(allBotHeroes)
+	do
+		if IsCMPickedHero(GetTeam(), sName) then
+			table.insert(ListPickedHeroes, sName);
+		end
+	end
+	for _,sName in pairs(UnImplementedHeroes)
+	do
+		if IsCMPickedHero(GetTeam(), sName) then
+			table.insert(ListPickedHeroes, sName);
+		end	
+	end
+end
+--Update team picked heroes after human players select their desired hero
+function UpdateSelectedHeroes(selected)
+	for i=1, #ListPickedHeroes
+	do
+		if ListPickedHeroes[i] == selected then
+			table.remove(ListPickedHeroes, i);
+		end
+	end
+end
+-------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------ALL RANDOM GAME MODE-------------------------------------------
+--Picking logic for All Random Game Mode
+function AllRandomLogic()
+	for i,id in pairs(GetTeamPlayers(GetTeam())) 
+	 do 
+		if  GetHeroPickState() == HEROPICK_STATE_AR_SELECT and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+		then 
+			hero = GetRandomHero(); 
+			SelectHero(id, hero); 
+			return;
+		end
+	end
+end
+-------------------------------------------------------------------------------------------------------------
+
+
+------------------------------------------MID ONLY SAME HERO GAME MODE-----------------------------------------------
+--Picking logic for Mid Only Same Hero Game Mode
 local RandomedHero = nil;
 function MidOnlyLogic()
 	if IsHumanPresentInGame() then
@@ -289,7 +670,35 @@ function MidOnlyLogic()
 		end
 	end	
 end
-
+--Get Human Selected Hero
+function GetSelectedHumanHero(team)
+	for i,id in pairs(GetTeamPlayers(team)) 
+	do 
+		if not IsPlayerBot(id) and GetSelectedHeroName(id) ~= ""
+		then 
+			return  GetSelectedHeroName(id);
+		end
+	end 
+end
+--Check if human present in the game 
+function IsHumanPresentInGame()
+	for i,id in pairs(GetTeamPlayers(GetTeam())) 
+	do 
+		if not IsPlayerBot(id) 
+		then 
+			return true;
+		end
+	end 
+	for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) 
+	do 
+		if not IsPlayerBot(id) 
+		then 
+			return true;
+		end
+	end 
+	return false;
+end
+--Get opposing team selected hero
 function GetOpposingTeamSelectedHero()
 	for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) 
 	do 
@@ -299,7 +708,7 @@ function GetOpposingTeamSelectedHero()
 		end
 	end
 end
-
+--Set hero that will be use in mid only same hero game
 function SetRandomHero()
 	if RandomedHero == nil then
 		RandomedHero = GetRandomHero();
@@ -307,7 +716,7 @@ function SetRandomHero()
 		return RandomedHero;
 	end
 end
-
+--Check if the opposing team done picking 
 function IsOpposingTeamDonePicking()
 	for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) 
 	do 
@@ -318,317 +727,12 @@ function IsOpposingTeamDonePicking()
 	end
 	return true;
 end
-
-function AllRandomLogic()
-
-	for i,id in pairs(GetTeamPlayers(GetTeam())) 
-	 do 
-		if  GetHeroPickState() == HEROPICK_STATE_AR_SELECT and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
-		then 
-			hero = GetRandomHero(); 
-			SelectHero(id, hero); 
-			return;
-		end
-	end
-	
-end
-
-function AddToList()
-	if not IsPlayerBot(GetCMCaptain()) then
-		for _,h in pairs(allBotHeroes)
-		do
-			if IsCMPickedHero(GetTeam(), h) and not alreadyInTable(h) then
-				table.insert(humanPick, h)
-			end
-		end
-	end
-end
-
-function alreadyInTable(hero_name)
-	for _,h in pairs(humanPick)
-	do
-		if hero_name == h then
-			return true
-		end
-	end
-	return false
-end
-
-function CaptainModeLogic()
-	if (GetGameState() ~= GAME_STATE_HERO_SELECTION) then
-        return
-    end
-	
-	if not CMTestMode then
-		if NeededTime == 29 then
-			NeededTime = RandomInt( Min, Max );
-		elseif NeededTime == 0 then
-			NeededTime = RandomInt( Min, Max );
-		end
-	elseif CMTestMode then
-		NeededTime = 29;
-	end	
-	
-	if GetHeroPickState() == HEROPICK_STATE_CM_CAPTAINPICK then	
-		PickCaptain();
-	elseif GetHeroPickState() >= HEROPICK_STATE_CM_BAN1 and GetHeroPickState() <= HEROPICK_STATE_CM_BAN10 and GetCMPhaseTimeRemaining() <= NeededTime then
-		BansHero();
-		NeededTime = 0 
-	elseif GetHeroPickState() >= HEROPICK_STATE_CM_SELECT1 and GetHeroPickState() <= HEROPICK_STATE_CM_SELECT10 and GetCMPhaseTimeRemaining() <= NeededTime then
-		PicksHero();	
-		NeededTime = 0
-	elseif GetHeroPickState() == HEROPICK_STATE_CM_PICK then
-		SelectsHero();	
-	end	
-end
-
-function PickCaptain()
-	if not IsHumanPlayerExist() or DotaTime() > -1 then
-		if GetCMCaptain() == -1 then
-			local CaptBot = GetFirstBot();
-			if CaptBot ~= nil then
-				print("CAPTID ="..CaptBot)
-				SetCMCaptain(CaptBot)
-			end
-		end
-	end
-end
-
-function IsHumanPlayerExist()
-	local Players = GetTeamPlayers(GetTeam())
-    for _,id in pairs(Players) do
-        if not IsPlayerBot(id) then
-			return true;
-        end
-    end
-	return false;
-end
-
-function GetFirstBot()
-	local BotId = nil;
-	local Players = GetTeamPlayers(GetTeam())
-    for _,id in pairs(Players) do
-        if IsPlayerBot(id) then
-			BotId = id;
-			return BotId;
-        end
-    end
-	return BotId;
-end
-
-function IsUnavailableHero(name)
-	for _,uh in pairs(UnavailableHeroes)
-	do
-		if name == uh then
-			return true;
-		end	
-	end
-	return false;
-end
-
-function IsUnImplementedHeroes()
-	for _,unh in pairs(UnImplementedHeroes)
-	do
-		if name == unh then
-			return true;
-		end	
-	end
-	return false;
-end
-
-function RandomHero()
-	local hero = allBotHeroes[RandomInt(1, #allBotHeroes)];
-	while ( IsUnavailableHero(hero) or IsCMPickedHero(GetTeam(), hero) or IsCMPickedHero(GetOpposingTeam(), hero) or IsCMBannedHero(hero) ) 
-	do
-        hero = allBotHeroes[RandomInt(1, #allBotHeroes)];
-    end
-	return hero;
-end
-
-function BansHero()
-	if not IsPlayerBot(GetCMCaptain()) or not IsPlayerInHeroSelectionControl(GetCMCaptain()) then
-		return
-	end	
-	local BannedHero = RandomHero();
-	print(BannedHero.." is banned")
-	CMBanHero(BannedHero);
-	BanCycle = BanCycle + 1;
-end
-
-function PicksHero()
-
-	if not IsPlayerBot(GetCMCaptain()) or not IsPlayerInHeroSelectionControl(GetCMCaptain()) then
-		return
-	end	
-	
-	local PickedHero = RandomHero();
-	
-	if PickCycle == 1 then
-		while not role.CanBeOfflaner(PickedHero) do
-			PickedHero = RandomHero();
-		end
-		PairsHeroNameNRole[PickedHero] = "offlaner";
-	elseif	PickCycle == 2 then
-		while not role.CanBeSupport(PickedHero) do
-			PickedHero = RandomHero();
-		end
-		PairsHeroNameNRole[PickedHero] = "support";
-	elseif	PickCycle == 3 then
-		while not role.CanBeMidlaner(PickedHero) do
-			PickedHero = RandomHero();
-		end
-		PairsHeroNameNRole[PickedHero] = "midlaner";
-	elseif	PickCycle == 4 then
-		while not role.CanBeSupport(PickedHero) do
-			PickedHero = RandomHero();
-		end
-		PairsHeroNameNRole[PickedHero] = "support";
-	elseif	PickCycle == 5 then
-		while not role.CanBeSafeLaneCarry(PickedHero) do
-			PickedHero = RandomHero();
-		end	
-		PairsHeroNameNRole[PickedHero] = "carry";
-	end
-
-	print(PickedHero.." is picked")
-	CMPickHero(PickedHero);
-	PickCycle = PickCycle + 1;
-end
-
-function WasHumansDonePicking()
-	local Players = GetTeamPlayers(GetTeam())
-    for _,id in pairs(Players) 
-	do
-        if not IsPlayerBot(id) then
-			if GetSelectedHeroName(id) == nil or GetSelectedHeroName(id) == "" then
-				return false;
-			end	
-        end
-    end
-	return true;
-end
-
-function SelectsHero()
-	if not AllHeroesSelected and ( WasHumansDonePicking() or GetCMPhaseTimeRemaining() < 1 ) then
-		local Players = GetTeamPlayers(GetTeam())
-		local RestBotPlayers = {};
-		GetTeamSelectedHeroes();
-		
-		for _,id in pairs(Players) 
-		do
-			local hero_name =  GetSelectedHeroName(id);
-			if hero_name ~= nil and hero_name ~= "" then
-				UpdateSelectedHeroes(hero_name)
-				print(hero_name.." Removed")
-			else
-				table.insert(RestBotPlayers, id)
-			end	
-		end
-		
-		for i = 1, #RestBotPlayers
-		do
-			SelectHero(RestBotPlayers[i], ListPickedHeroes[i])
-		end
-		
-		AllHeroesSelected = true;
-	end
-end
-
-function FillLaneAssignmentTable()
-	local supportAlreadyAssigned = false;
-	local TeamMember = GetTeamPlayers(GetTeam());
-	for i = 1, #TeamMember
-	do
-		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
-			local unit_name =  GetTeamMember(i):GetUnitName(); 
-			if PairsHeroNameNRole[unit_name] == "support" and not supportAlreadyAssigned then
-				HeroLanes[i] = LANE_TOP;
-				supportAlreadyAssigned = true;
-			elseif PairsHeroNameNRole[unit_name] == "support" and supportAlreadyAssigned then
-				HeroLanes[i] = LANE_BOT;
-			elseif PairsHeroNameNRole[unit_name] == "midlaner" then
-				HeroLanes[i] = LANE_MID;
-			elseif PairsHeroNameNRole[unit_name] == "offlaner" then
-				if GetTeam() == TEAM_RADIANT then
-					HeroLanes[i] = LANE_TOP;
-				else
-					HeroLanes[i] = LANE_BOT;
-				end
-			elseif PairsHeroNameNRole[unit_name] == "carry" then
-				if GetTeam() == TEAM_RADIANT then
-					HeroLanes[i] = LANE_BOT;
-				else
-					HeroLanes[i] = LANE_TOP;
-				end	
-			end
-		end
-	end	
-end
-
-function GetTeamSelectedHeroes()
-	for _,sName in pairs(allBotHeroes)
-	do
-		if IsCMPickedHero(GetTeam(), sName) then
-			table.insert(ListPickedHeroes, sName);
-		end
-	end
-	for _,sName in pairs(UnImplementedHeroes)
-	do
-		if IsCMPickedHero(GetTeam(), sName) then
-			table.insert(ListPickedHeroes, sName);
-		end	
-	end
-end
-
-function UpdateSelectedHeroes(selected)
-	for i=1, #ListPickedHeroes
-	do
-		if ListPickedHeroes[i] == selected then
-			table.remove(ListPickedHeroes, i);
-		end
-	end
-end
-
-local PickTime = 10;
-local RandomTime = 0;
-function AllPickLogic()
-	 if not CanPick() then return end;
-	 
-	 local idx = 0;
-	 for _,i in pairs(GetTeamPlayers(GetTeam())) 
-	 do 
-		if IsPlayerBot(i) and IsPlayerInHeroSelectionControl(i) and GetSelectedHeroName(i) == "" 
-		then 
-			if testMode then
-				hero = GetRandomHero() 
-			else
-				hero = PickRightHero(idx) 
-			end
-			SelectHero(i, hero); 
-			PickTime = GameTime();
-			RandomTime = 0;
-			return;
-		end
-		idx = idx + 1;
-	end 
-	idx = 0;
-end
+---------------------------------------------------------------------------------------------------------------
 
 
-function CanPick()
-	
-	if RandomTime == 0 then RandomTime = RandomInt((70/5)/2,70/5); end
-	
-	if GameTime() > 70 or IsHumansDonePicking() then return true end
-	
-	if RandomTime ~= 0 and GameTime() >= PickTime + RandomTime then return true end
-	
-	return false;
-	
-end
-
+----------------------------------------------------HERO SELECTIO UTILITY FUNCTION------------------------------
+--Pick hero based on role
 function PickRightHero(slot)
-	
 	local initHero = GetRandomHero();
 	local Team = GetTeam();
 	if slot == 0 then
@@ -656,10 +760,9 @@ function PickRightHero(slot)
 			initHero = GetRandomHero();
 		end
 	end
-	
 	return initHero;
 end
-
+--Check if human done picking
 function IsHumansDonePicking() 
 	-- check radiant 
 	for _,i in pairs(GetTeamPlayers(GetTeam())) 
@@ -678,12 +781,11 @@ function IsHumansDonePicking()
 	-- else humans have picked 
 	return true; 
 end
-
+--Pick hero function
 function PickHero(slot)
   local hero = GetRandomHero();
   SelectHero(slot, hero);
 end
-
 -- haven't found a better way to get already-picked heroes than just looping over all the players
 function GetPicks()
 	local selectedHeroes = {};
@@ -703,7 +805,6 @@ function GetPicks()
 	end 
     return selectedHeroes;
 end
-
 -- first, check the list of required heroes and pick from those
 -- then try the whole bot pool
 function GetRandomHero()
@@ -732,92 +833,51 @@ function GetRandomHero()
     return hero;
 end
 
+local chatLanes = {};
+---------------------------------------------------------LANE ASSIGMENT WITH CHAT FEATURE-----------------------------------------------
+function SelectLaneChatCallback(PlayerID, ChatText, bTeamOnly)
+	chatLanes = {};
+	local count = 1;
+	for str in string.gmatch(ChatText, "%S+") do
+		if str == "top" then
+			chatLanes[count] = LANE_TOP;	
+		elseif str == "mid" then
+			chatLanes[count] = LANE_MID;
+		elseif str == "bot" then
+			chatLanes[count] = LANE_BOT;
+		end
+		count = count + 1;
+	end
+	if #chatLanes ~= 5 then 
+		print("Wrong Command! Lane count is less or more than 5. Typo? Please type 5 lane (top, mid, or bot) with space separating each other.")
+	end
+end
+
+---------------------------------------------------------LANE ASSIGNMENT-----------------------------------------------------------------
 function UpdateLaneAssignments()    
 	if GetGameMode() == GAMEMODE_AP then
 		--print("AP Lane Assignment")
-		return APLaneAssignment()
+		if GetGameState() == GAME_STATE_STRATEGY_TIME or GetGameState() == GAME_STATE_PRE_GAME then
+			InstallChatCallback(function (attr) SelectLaneChatCallback(attr.player_id, attr.string, attr.team_only); end);
+		end
+		if #chatLanes == 5 then
+			return chatLanes;
+		else
+			return APLaneAssignment();
+		end	
 	elseif GetGameMode() == GAMEMODE_CM then
 		--print("CM Lane Assignment")
 		return CMLaneAssignment()	
 	elseif GetGameMode() == GAMEMODE_AR then
 		return APLaneAssignment()	
 	elseif GetGameMode() == GAMEMODE_MO then
-		return MOLaneAssignment()		
+		return MOLaneAssignment()	
+	elseif GetGameMode() == GAMEMODE_1V1MID then
+		return OneVsOneLaneAssignment()			
 	end
    
 end
-
-function FillLAHumanCaptain()
-	local TeamMember = GetTeamPlayers(GetTeam());
-	for i = 1, #TeamMember
-	do
-		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
-			local unit_name =  GetTeamMember(i):GetUnitName(); 
-			local key = GetFromHumanPick(unit_name);
-			if key ~= nil then
-				if key == 1 then
-					if GetTeam() == TEAM_DIRE then
-						HeroLanes[i] = LANE_BOT;
-					else
-						HeroLanes[i] = LANE_TOP;
-					end
-				elseif key == 2 then
-					if GetTeam() == TEAM_DIRE then
-						HeroLanes[i] = LANE_BOT;
-					else
-						HeroLanes[i] = LANE_TOP;
-					end	
-				elseif key == 3 then
-					HeroLanes[i] = LANE_MID;
-				elseif key == 4 then
-					if GetTeam() == TEAM_DIRE then
-						HeroLanes[i] = LANE_TOP;
-					else
-						HeroLanes[i] = LANE_BOT;
-					end
-				elseif key == 5 then
-					if GetTeam() == TEAM_DIRE then
-						HeroLanes[i] = LANE_TOP;
-					else
-						HeroLanes[i] = LANE_BOT;
-					end	
-				end
-			end
-		end
-	end	
-end
-
-function GetFromHumanPick(hero_name)
-	local i = nil;
-	for key,h in pairs(humanPick)
-	do
-		if hero_name == h then
-			i = key;
-		end	
-	end
-	return i;
-end
-
-function MOLaneAssignment()
-	local lanes = {
-        [1] = LANE_MID,
-        [2] = LANE_MID,
-        [3] = LANE_MID,
-        [4] = LANE_MID,
-        [5] = LANE_MID,
-        };
-	return lanes;	
-end
-
-function CMLaneAssignment()
-	if IsPlayerBot(GetCMCaptain()) then
-		FillLaneAssignmentTable();
-	else
-		FillLAHumanCaptain()
-	end
-	return HeroLanes;
-end
-
+---------------------------------------------------------ALL PICK LANE ASSIGNMENT------------------------------------------------------------
 function APLaneAssignment()
 
 	 local lanecount = {
@@ -911,3 +971,125 @@ function GetLane( nTeam ,hHero )
         end
         return LANE_NONE
 end
+-------------------------------------------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------CAPTAIN'S MODE LANE ASSIGNMENT------------------------------------------------
+function CMLaneAssignment()
+	if IsPlayerBot(GetCMCaptain()) then
+		FillLaneAssignmentTable();
+	else
+		FillLAHumanCaptain()
+	end
+	return HeroLanes;
+end
+--Lane Assignment if the captain is not human
+function FillLaneAssignmentTable()
+	local supportAlreadyAssigned = false;
+	local TeamMember = GetTeamPlayers(GetTeam());
+	for i = 1, #TeamMember
+	do
+		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
+			local unit_name =  GetTeamMember(i):GetUnitName(); 
+			if PairsHeroNameNRole[unit_name] == "support" and not supportAlreadyAssigned then
+				HeroLanes[i] = LANE_TOP;
+				supportAlreadyAssigned = true;
+			elseif PairsHeroNameNRole[unit_name] == "support" and supportAlreadyAssigned then
+				HeroLanes[i] = LANE_BOT;
+			elseif PairsHeroNameNRole[unit_name] == "midlaner" then
+				HeroLanes[i] = LANE_MID;
+			elseif PairsHeroNameNRole[unit_name] == "offlaner" then
+				if GetTeam() == TEAM_RADIANT then
+					HeroLanes[i] = LANE_TOP;
+				else
+					HeroLanes[i] = LANE_BOT;
+				end
+			elseif PairsHeroNameNRole[unit_name] == "carry" then
+				if GetTeam() == TEAM_RADIANT then
+					HeroLanes[i] = LANE_BOT;
+				else
+					HeroLanes[i] = LANE_TOP;
+				end	
+			end
+		end
+	end	
+end
+--Fill the lane assignment if the captain is human
+function FillLAHumanCaptain()
+	local TeamMember = GetTeamPlayers(GetTeam());
+	for i = 1, #TeamMember
+	do
+		if GetTeamMember(i) ~= nil and GetTeamMember(i):IsHero() then
+			local unit_name =  GetTeamMember(i):GetUnitName(); 
+			local key = GetFromHumanPick(unit_name);
+			if key ~= nil then
+				if key == 1 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_BOT;
+					else
+						HeroLanes[i] = LANE_TOP;
+					end
+				elseif key == 2 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_BOT;
+					else
+						HeroLanes[i] = LANE_TOP;
+					end	
+				elseif key == 3 then
+					HeroLanes[i] = LANE_MID;
+				elseif key == 4 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_TOP;
+					else
+						HeroLanes[i] = LANE_BOT;
+					end
+				elseif key == 5 then
+					if GetTeam() == TEAM_DIRE then
+						HeroLanes[i] = LANE_TOP;
+					else
+						HeroLanes[i] = LANE_BOT;
+					end	
+				end
+			end
+		end
+	end	
+end
+--Get human picked heroes if the captain is human player
+function GetFromHumanPick(hero_name)
+	local i = nil;
+	for key,h in pairs(humanPick)
+	do
+		if hero_name == h then
+			i = key;
+		end	
+	end
+	return i;
+end
+---------------------------------------------------------------------------------------------------------------------------------------
+
+
+---------------------------------------------------------MID ONLY LANE ASSIGNMENT------------------------------------------------------
+function MOLaneAssignment()
+	local lanes = {
+        [1] = LANE_MID,
+        [2] = LANE_MID,
+        [3] = LANE_MID,
+        [4] = LANE_MID,
+        [5] = LANE_MID,
+        };
+	return lanes;	
+end
+---------------------------------------------------------------------------------------------------------------------------------------
+
+---------------------------------------------------------1 VS 1 LANE ASSIGNMENT------------------------------------------------------
+function OneVsOneLaneAssignment()
+	local lanes = {
+        [1] = LANE_MID,
+        [2] = LANE_TOP,
+        [3] = LANE_TOP,
+        [4] = LANE_TOP,
+        [5] = LANE_TOP,
+        };
+	return lanes;	
+end
+---------------------------------------------------------------------------------------------------------------------------------------
