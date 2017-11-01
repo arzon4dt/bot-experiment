@@ -152,7 +152,7 @@ function ConsiderHook()
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 	do
-		if ( npcEnemy:IsChanneling() ) 
+		if ( npcEnemy:IsChanneling() and  not mutil.IsEnemyCreepBetweenMeAndTarget(npcBot, npcEnemy, npcEnemy:GetLocation(), nRadius) ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation();
 		end
@@ -178,7 +178,7 @@ function ConsiderHook()
 			if moveCon < 1 then
 				pLoc = npcTarget:GetLocation();
 			end
-			if not utils.AreEnemyCreepsBetweenMeAndLoc(pLoc, nRadius)  then
+			if not mutil.IsEnemyCreepBetweenMeAndTarget(npcBot, npcTarget, pLoc, nRadius)  then
 				return BOT_ACTION_DESIRE_MODERATE, pLoc;
 			end
 		end

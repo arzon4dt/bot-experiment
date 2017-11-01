@@ -215,7 +215,6 @@ function ConsiderStaticStorm()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
@@ -279,7 +278,13 @@ function ConsiderStaticStorm()
 			end
 		end
 	end
---
+	
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange+200, 2.0);
+	
+	if skThere then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 

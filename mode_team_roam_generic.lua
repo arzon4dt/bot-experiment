@@ -8,6 +8,8 @@ local distance = 1000;
 local targetShrine = nil;
 local alreadyFoundCreep = false;
 local pLane;
+local targetTree = nil;
+local targetLoc = nil;
 
 function GetProperLane(pId)
 	local lane = -1;
@@ -32,7 +34,35 @@ function GetProperLane(pId)
 	
 end
 
+local itemToPurchase = {
+        "item_radiance",
+        "item_shivas_guard",
+        "item_guardian_greaves",
+        "item_lotus_orb",
+        "item_blade_mail",
+        "item_mekansm",
+        "item_arcane_boots",
+        "item_magic_wand",
+	"item_poor_mans_shield"
+};
+
+
 function GetDesire()
+
+	--[[if #itemToPurchase > 0 and bot:GetUnitName() == 'npc_dota_hero_witch_doctor' then
+		print(bot:GetUnitName()..":"..tostring(#itemToPurchase ))
+		for k,v in pairs(itemToPurchase) do
+			print(tostring(k)..v)
+		end
+		itemToPurchase [#itemToPurchase] = nil
+	end]]--
+
+	--[[local dropped = GetDroppedItemList();
+	for _,drop in pairs(dropped) do
+		for key,value in pairs(drop) do
+			print(tostring(key)..":"..tostring(value))
+		end
+	end]]--
 	
 	if GetGameMode() == GAMEMODE_1V1MID and bot:GetAssignedLane() ~= LANE_MID then
 		return BOT_MODE_DESIRE_ABSOLUTE;
@@ -143,6 +173,45 @@ function GetDesire()
 			if #camps == 0 then camps = GetNeutralSpawners(); end
 			return BOT_MODE_DESIRE_MODERATE+0.05;	
 		end	
+	elseif bot:GetUnitName() == "npc_dota_hero_tiny" and bot:HasModifier("modifier_tiny_craggy_exterior") == false then
+		if cAbility == nil then cAbility = bot:GetAbilityByName('tiny_craggy_exterior') end;
+		if cAbility:IsFullyCastable() and bot:GetHealth() / bot:GetMaxHealth() > 0.25 and bot:DistanceFromFountain() > 1300 then
+			local trees = bot:GetNearbyTrees(400);
+			if #trees > 0 then
+				targetTree = trees[1];
+				return BOT_MODE_DESIRE_VERYHIGH;
+			end
+		end	
+	elseif bot:GetUnitName() == "npc_dota_hero_viper" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName('viper_nethertoxin') end;
+		if cAbility:IsFullyCastable() then
+			local nRadius = cAbility:GetSpecialValueInt("radius");
+			local nCastRange = cAbility:GetCastRange()+200;
+			local npcTarget = bot:GetTarget()
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange)
+			then
+				targetLoc = npcTarget:GetLocation();
+				return BOT_MODE_DESIRE_ABSOLUTE;
+			end
+		end		
+	elseif bot:GetUnitName() == "npc_dota_hero_skeleton_king" and bot:HasModifier("modifier_skeleton_king_mortal_strike") then
+		if cAbility == nil then cAbility = bot:GetAbilityByName('skeleton_king_mortal_strike') end;
+		if cAbility:IsFullyCastable() then
+			local stack = 0;
+			local modIdx = bot:GetModifierByName("modifier_skeleton_king_mortal_strike");
+			if modIdx > -1 then
+				stack = bot:GetModifierStackCount(modIdx);
+			end
+			local nStack = cAbility:GetSpecialValueInt("max_skeleton_charges");
+			if ( stack == nStack ) 
+			then
+				local npcTarget = bot:GetTarget()
+				if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, 320)
+				then
+					return BOT_MODE_DESIRE_ABSOLUTE;
+				end
+			end
+		end			
 	end
 	
 	if alreadyFoundCreep then
@@ -165,6 +234,8 @@ end
 function OnEnd()
 	camps = {};
 	targetShrine = nil;
+	targetTree = nil;
+	targetLoc = nil;
 end
 
 function Think()
@@ -296,6 +367,15 @@ function Think()
 				return
 			end
 		end	
+	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
+		bot:Action_UseAbilityOnTree(cAbility, targetTree);
+		return;
+	elseif bot:GetUnitName() == "npc_dota_hero_viper" then
+		bot:Action_UseAbilityOnLocation(cAbility, targetLoc);
+		return;	
+	elseif bot:GetUnitName() == "npc_dota_hero_skeleton_king" then
+		bot:Action_UseAbility(cAbility);
+		return;		
 	end
 end
 
@@ -355,7 +435,8 @@ end
 function GetClosestShrine()
 	local closest = nil;
 	local minDist = 100000;
-	for i=0,4 do
+	local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	for i=3,4 do	
 		local shrine = GetShrine(GetTeam(), i);
 		if shrine ~= nil and shrine:IsAlive() and ( GetShrineCooldown(shrine) == 0 or IsShrineHealing(shrine) ) then 
 			local dist =  GetUnitToUnitDistance(bot, shrine);

@@ -9,6 +9,7 @@ local utils = require(GetScriptDirectory() ..  "/util")
 local inspect = require(GetScriptDirectory() ..  "/inspect")
 local enemyStatus = require(GetScriptDirectory() .. "/enemy_status" )
 local teamStatus = require(GetScriptDirectory() .."/team_status" )
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -32,51 +33,10 @@ local castBlinkInitDesire = 0;
 local castForceEnemyDesire = 0;
 function AbilityUsageThink()
 	local npcBot = GetBot();
-	
-	
+		
 	-- Check if we're already using an ability
 	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:IsInvulnerable() ) then return end
---[[
-	local unit = GetUnitList(UNIT_LIST_ALLIES )
-	local tableCogs = {};
-	
-	for _,u in pairs (unit)
-	do
-		if u:GetUnitName() == "npc_dota_rattletrap_cog"
-		then
-			table.insert(tableCogs, u);
-		end
-	end
-	
-	if tableCogs ~= nil and #tableCogs == 8 
-	then
-		local mindist = 1000;
-		local cogsTarget = nil;
-		local i = 0;
-		
-		for _,c in pairs (tableCogs)
-		do
-			local locate = GetUnitToUnitDistance(c, npcBot)
-			print(i.."="..locate)
-			if locate < mindist 
-			then
-				mindist = locate;
-				cogsTarget = c;
-			end
-			i = i + 1
-		end
-		print("-------------------------")
-		if cogsTarget ~= nil 
-		then
-            npcBot:SetActionQueueing( true )
-			npcBot:Action_AttackUnit( cogsTarget, false );
-			return;
-		else
-			npcBot:Action_ClearActions( true );
-			return
-		end
-	end
-	]]--
+
 	abilityBA = npcBot:GetAbilityByName( "rattletrap_battery_assault" );
 	abilityCogs = npcBot:GetAbilityByName( "rattletrap_power_cogs" );
 	abilityHook = npcBot:GetAbilityByName( "rattletrap_hookshot" );
@@ -278,19 +238,18 @@ function ConsiderHook()
 	local nCastRange = abilityHook:GetCastRange();
 	local nCastPoint = abilityHook:GetCastPoint();
 
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
-		 npcBot:GetActiveMode() == BOT_MODE_GANK or
-		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
-		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) < nCastRange ) 
+		if  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
 			local distance = GetUnitToUnitDistance(npcTarget, npcBot)
+			local moveCon = npcTarget:GetMovementDirectionStability();
 			local pLoc = npcTarget:GetExtrapolatedLocation( nCastPoint + ( distance / speed ) );
-			if not utils.AreCreepsBetweenMeAndLoc(pLoc, nRadius)  then
-				print("Path Clear")
+			if moveCon < 1 then
+				pLoc = npcTarget:GetLocation();
+			end
+			if not mutil.IsAllyHeroBetweenMeAndTarget(npcBot, npcTarget, pLoc, nRadius) and not mutil.IsCreepBetweenMeAndTarget(npcBot, npcTarget, pLoc, nRadius) then
 				return BOT_ACTION_DESIRE_MODERATE, pLoc;
 			end
 		end

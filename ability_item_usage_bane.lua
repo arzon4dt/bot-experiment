@@ -180,7 +180,7 @@ function ConsiderW()
 		end
 	end
 
-	if mutil.IsInTeamFight(npcBot, 1200)
+	if mutil.IsInTeamFight(npcBot, 1200) and npcBot:GetMaxHealth() - npcBot:GetHealth() > nDamage 
 	then
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
@@ -192,7 +192,7 @@ function ConsiderW()
 	end
 	
 	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) and npcBot:GetMaxHealth() - npcBot:GetHealth() > nDamage
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget)and mutil.IsInRange(npcTarget, npcBot, nCastRange + 200)

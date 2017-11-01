@@ -11,6 +11,7 @@ X["items"] = {
 	"item_travel_boots",
 	"item_blink",
 	"item_aether_lens",
+	"item_trident",
 	"item_dagon_5",
 	"item_sheepstick"
 };			

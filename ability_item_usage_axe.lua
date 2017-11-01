@@ -120,7 +120,7 @@ function ConsiderQ()
 			return BOT_ACTION_DESIRE_MODERATE, "hero";
 		end
 	end
-
+	
 	return BOT_ACTION_DESIRE_NONE, "";
 
 end

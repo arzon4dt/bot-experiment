@@ -3,7 +3,7 @@ X = {}
 local IBUtil = require(GetScriptDirectory() .. "/ItemBuildUtility");
 local npcBot = GetBot();
 local talents = IBUtil.FillTalenTable(npcBot);
-local skills  = IBUtil.FillSkillTable(npcBot, IBUtil.GetSlotPattern(1));
+local skills  = IBUtil.FillSkillTable(npcBot, IBUtil.GetSlotPattern(4));
 
 X["items"] = { 
 	"item_poor_mans_shield",
@@ -11,7 +11,7 @@ X["items"] = {
 	"item_phase_boots",
 	"item_blink",
 	"item_echo_sabre",
-	"item_ultimate_scepter",
+	"item_combo_breaker",
 	"item_assault",
 	"item_butterfly"
 };			

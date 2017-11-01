@@ -55,7 +55,6 @@ local earlyBoots = {
 	 "item_magic_wand",
 	 "item_bottle",  
 	 "item_ring_of_aquila", 
-	 "item_urn_of_shadows",
 	 "item_dust",
 	 "item_ward_observer",
 	 "item_tpscroll"
@@ -112,16 +111,13 @@ function ItemPurchaseThink()
 		if GetCourier(0) == nil then
 			PurchaseCourier();
 		end
-		UpgradeCourier();
 		PurchaseWard();
 	elseif supportExist ~= nil and not supportExist then
 		PurchaseCourier();
-		UpgradeCourier();
 	end	
 	
 	PurchaseRainDrop();
 	SellEarlyGameItem();
-	UpgradeItem();
 	
 	if #(npcBot.tableItemsToBuy) == 0 then
 		PurchaseBOT();
@@ -185,12 +181,34 @@ function IsMeepoClone()
 	return false;
 end
 
+local testMode = true;
+
 function GeneralPurchase()
+	
+	if GetGameMode() == GAMEMODE_1V1MID and ( testMode or npcBot:GetAssignedLane() ~= LANE_MID ) then
+		return;
+	end
+
 	local sNextItem = npcBot.tableItemsToBuy[1];
 	npcBot:SetNextItemPurchaseValue( GetItemCost( sNextItem ) );
 	local CanPurchaseFromSecret = IsItemPurchasedFromSecretShop(sNextItem);
 	local CanPurchaseFromSide   = IsItemPurchasedFromSideShop(sNextItem);
-	if ( npcBot:GetGold() >= GetItemCost( sNextItem ) ) then
+	local itemCost = GetItemCost( sNextItem );
+	local t3AlreadyDamaged = false;
+	
+	for i=2, 8, 3 do
+		local tower = GetTower(GetTeam(), i);
+		if tower == nil or tower:GetHealth()/tower:GetMaxHealth() < 0.5 then
+			t3AlreadyDamaged = true;
+			break;
+		end
+	end
+	
+	if npcBot:GetBuybackCooldown() <= 10 and t3AlreadyDamaged then
+		itemCost = itemCost + npcBot:GetBuybackCost() + ( 100 + npcBot:GetNetWorth()/40 );
+		--print(npcBot:GetUnitName().." : "..sNextItem.." cost "..itemCost);
+	end
+	if ( npcBot:GetGold() >= itemCost ) then
 		
 		local courier = GetCourier(0);
 		if npcBot.SecretShop and courier ~= nil and GetCourierState(courier) == COURIER_STATE_IDLE and courier:DistanceFromSecretShop() == 0 then
@@ -236,21 +254,6 @@ function GeneralPurchase()
 	else
 		npcBot.SecretShop = false;
 		npcBot.SideShop = false;
-	end
-end
-
-function UpgradeItem()
-	--Upgrade Diffusal 
-	if HasItem(npcBot, 'item_diffusal_blade') then
-		
-		local diffusal1 = npcBot:GetItemInSlot(npcBot:FindItemSlot('item_diffusal_blade'));
-		if diffusal1:GetCurrentCharges() == 0 and not AlreadyAddedInTable('item_recipe_diffusal_blade') 
-		   and npcBot:GetCourierValue() == 0 and not HasItem(npcBot, 'item_recipe_diffusal_blade')  
-		then
-			--npcBot:ActionImmediate_Chat(npcBot:GetUnitName().." Added diffusal blade receipe to ugrade it", true)
-			table.insert(npcBot.tableItemsToBuy, 1, "item_recipe_diffusal_blade");
-			return
-		end
 	end
 end
 
@@ -497,7 +500,7 @@ function IsInvisEnemyExist()
 		local globalEnemies = GetUnitList(UNIT_LIST_ENEMY_HEROES)
 		for _,enemy in pairs(globalEnemies)
 		do
-			if enemy ~= nil and not enemy:IsNull() then
+			if enemy ~= nil and not enemy:IsNull() and enemy:CanBeSeen() then
 				local SASlot = enemy:FindItemSlot("item_shadow_amulet");
 				local GCSlot = enemy:FindItemSlot("item_glimmer_cape");
 				local ISSlot = enemy:FindItemSlot("item_invis_sword");
@@ -523,17 +526,6 @@ function PurchaseRainDrop()
 	then
 		npcBot:ActionImmediate_PurchaseItem("item_infused_raindrop"); 
 		buyRD = true;
-	end
-end
-
-function UpgradeCourier()
-	if GetNumCouriers() == 0 then
-		return 
-	end
-	local npcCourier = GetCourier(0);
-	if( GetItemStockCount( "item_flying_courier" ) > 0 and not IsFlyingCourier(npcCourier) and npcBot:GetGold() >= GetItemCost( "item_flying_courier" )  ) then
-		npcBot:ActionImmediate_Chat("I'm Upgrading Courier Guys.", true);
-		npcBot:ActionImmediate_PurchaseItem("item_flying_courier");
 	end
 end
 
@@ -697,11 +689,24 @@ if DotaTime() < 0 then
 	if role.IsSupport(npcBot:GetUnitName()) then
 		table.insert(npcBot.tableItemsToBuy , "item_clarity");
 	end
+	if  role.IsMelee(npcBot:GetAttackRange()) then
+		if role.IsCarry(npcBot:GetUnitName()) then
+			table.insert(npcBot.tableItemsToBuy , "item_stout_shield");
+			table.insert(temp , "item_stout_shield");
+			table.insert(npcBot.tableItemsToBuy , "item_quelling_blade");
+			table.insert(temp , "item_quelling_blade");
+		else
+			table.insert(npcBot.tableItemsToBuy , "item_stout_shield");
+			table.insert(temp , "item_stout_shield");
+		end
+	end
 end
 for _,it in pairs(purchase["items"])
 do	
-	InsertToPurchaseTable(it)
-	table.insert(temp, it)
+	if it ~= "item_poor_mans_shield" then
+		InsertToPurchaseTable(it)
+		table.insert(temp, it)
+	end
 end
 	
 --[[for _,i in pairs(npcBot.tableItemsToBuy )

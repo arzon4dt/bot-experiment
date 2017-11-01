@@ -10,7 +10,7 @@ X["items"] = {
 	"item_power_treads_int",
 	"item_orchid",
 	"item_bloodstone",
-	"item_linken_sphere",
+	"item_trident",
 	"item_bloodthorn",
 	"item_shivas_guard",
 	"item_sheepstick"

@@ -532,6 +532,18 @@ X["hero_roles"] = {
 		['pusher'] = 1
 	},
 
+	["npc_dota_dark_willow"] = {
+		['carry'] = 0,
+		['disabler'] = 3,
+		['durable'] = 0,
+		['escape'] = 0,
+		['initiator'] = 2,
+		['jungler'] = 0,
+		['nuker'] = 3,
+		['support'] = 2,
+		['pusher'] = 0
+	},
+	
 	["npc_dota_hero_drow_ranger"] = {
 		['carry'] = 2,
 		['disabler'] = 1,
@@ -1168,6 +1180,18 @@ X["hero_roles"] = {
 		['pusher'] = 0
 	},
 
+	["npc_dota_hero_pangolier"] = {
+		['carry'] = 2,
+		['disabler'] = 2,
+		['durable'] = 1,
+		['escape'] = 1,
+		['initiator'] = 3,
+		['jungler'] = 0,
+		['nuker'] = 0,
+		['support'] = 0,
+		['pusher'] = 0
+	},
+	
 	["npc_dota_hero_puck"] = {
 		['carry'] = 0,
 		['disabler'] = 3,

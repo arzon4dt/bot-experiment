@@ -34,7 +34,7 @@ function AbilityUsageThink()
 	if mutil.CanNotUseAbility(npcBot) then return end
 
 	if abilityWA == nil then abilityWA = npcBot:GetAbilityByName( "beastmaster_wild_axes" ) end
-	if abilityWB == nil then abilityWB = npcBot:GetAbilityByName( "beastmaster_call_of_the_wild_boar" ) end
+	if abilityWB == nil then abilityWB = npcBot:GetAbilityByName( "beastmaster_call_of_the_wild" ) end
 	if abilityPR == nil then abilityPR = npcBot:GetAbilityByName( "beastmaster_primal_roar" ) end
 
 	-- Consider using each ability
@@ -137,7 +137,13 @@ function ConsiderWildAxes()
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot )/800) + nCastPoint );
 		end
 	end
---
+	
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange, 2.0);
+	
+	if skThere then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 

@@ -109,8 +109,8 @@ function ConsiderDeathCoil()
 	then
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
-			local enemies = npcTarget:GetNearbyHeroes(1200, false, BOT_MODE_NONE);
-			if #enemies == 1 then 
+			local enemies = npcTarget:GetNearbyHeroes(1300, false, BOT_MODE_NONE);
+			if #enemies <= 1 then 
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget;
 			end
 		end
@@ -136,7 +136,7 @@ function ConsiderAphoticShield()
 	end
 	
 	-- If we're in a teamfight, use it on the scariest enemy
-	if mutil.IsInTeamFight(npcBot, 1200)
+	if mutil.IsInTeamFight(npcBot, 1300)
 	then
 		local lowHpAlly = nil;
 		local nLowestHealth = 10000;

@@ -31,6 +31,7 @@ local abilityPN = nil;
 local npcBot = nil;
 
 local splitEarthLoc = nil;
+local skUse = false;
 
 function AbilityUsageThink()
 
@@ -43,7 +44,7 @@ function AbilityUsageThink()
 		
 	local radius = abilityOO:GetSpecialValueInt( "radius" );
 
-	if abilityOO:IsInAbilityPhase() and not IsThereHeroWithinRadius(splitEarthLoc, radius) then
+	if abilityOO:IsInAbilityPhase() and not IsThereHeroWithinRadius(splitEarthLoc, radius) and not skUse then
 		npcBot:Action_ClearActions(true);
 		return
 	end 	
@@ -117,7 +118,13 @@ function ConsiderOverwhelmingOdds()
 	local nAttackRange = npcBot:GetAttackRange();
 	local nCastPoint = abilityOO:GetCastPoint( ) + abilityOO:GetSpecialValueFloat( "delay" );
 	local nDamage = abilityOO:GetAbilityDamage();
-
+	
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange+200, 2.0);
+	
+	if skThere then
+		skUse = true;
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
@@ -129,6 +136,7 @@ function ConsiderOverwhelmingOdds()
 		do
 			if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) 
 			then
+				skUse = false;
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
 			end
 		end
@@ -139,6 +147,7 @@ function ConsiderOverwhelmingOdds()
 		local npcTarget = npcBot:GetAttackTarget();
 		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
 		then
+			skUse = false;
 			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
 		end
 	end
@@ -147,6 +156,7 @@ function ConsiderOverwhelmingOdds()
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nAttackRange, nRadius, nCastPoint, 0 );
 		if ( locationAoE.count >= 2 ) then
+			skUse = false;
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
@@ -157,6 +167,7 @@ function ConsiderOverwhelmingOdds()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nAttackRange+200)
 		then
+			skUse = false;
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint );
 		end
 	end

@@ -1,4 +1,5 @@
 local role = require(GetScriptDirectory() .. "/RoleUtility");
+local bnUtil = require(GetScriptDirectory() .. "/BotNameUtility");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
@@ -7,7 +8,11 @@ local requiredHeroes = {
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
 	--'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_faceless_void';
+	'npc_dota_hero_viper',
+	'npc_dota_hero_skeleton_king',
+	'npc_dota_hero_tiny',
+	--'npc_dota_hero_pangolier',
+	--'npc_dota_hero_dark_willow',
 	--[['npc_dota_hero_visage';
 	'npc_dota_hero_lone_druid';
 	'npc_dota_hero_doom_bringer';
@@ -20,68 +25,8 @@ local UnImplementedHeroes = {
 };
 
 ----------------------------------------------------------GIVE THE BOT A PRO PLAYER NAME---------------------------------------------------------------------------------------------
-
-local selectedName = {};
-
-function IsExistInSelectedName(name) 
-	for _,str in pairs(selectedName) do
-		if str == name then
-			return true;
-		end
-	end
-	return false;
-end
-
-local team = "";
-local sponsorship = ""; 
-function GenerateBotName(listName)
-	while #selectedName < 5 do
-		local name = listName[RandomInt(1,#listName)];
-		if IsExistInSelectedName(name) then
-			name = listName[RandomInt(1,#listName)];	
-		else
-			table.insert(selectedName, name);
-		end			
-	end
-	
-	if team == "" then 
-		if GetTeam() == TEAM_RADIANT then
-			local teams = {"OG", "VP", "EG", "Liquid", "IG", "Newbee", "Secret", "HR", "Empire", "Na'Vi", "Standin" };
-			team = teams[RandomInt(1,#teams)];
-		else
-			local teams = { "IG.V", "LFY", "LGD", "TNC", "Fnatic", "XctN", "Infamous", "Cloud9", "DC", "Alliance" };
-			team = teams[RandomInt(1,#teams)];
-		end
-	end
-	
-	if sponsorship == "" then 
-		local sponsorships = { "GG.bet", "VPGAME", "LOOT.bet", "", "Esports.bet", "G2A", "Dota2.net" };
-		sponsorship = sponsorships[RandomInt(1,#sponsorships)];
-	end
-	
-	for i,str in pairs(selectedName) do
-		selectedName[i] = team.."."..str.."."..sponsorship;
-	end
-end
-
 function GetBotNames ()
-	if GetTeam() == TEAM_RADIANT then
-		local rName = { "Ame", "BoBoKa", "BurNIng", "dogf1ghts", "eLeVeN", "Faith", "Inflame", "InJuly", "Kaka", "Maybe", "Monet", "Moogy", "Op", "Paparazi灬", "Q", "Sakata", "Sccc", 
-		         "super", "Super", "Victoria", "Xxs", "Yao", "DuBu", "Febby", "Forev", "MP", "QO", "1437", "Arteezy", "Aui_2000", "EternaLEnVy", "BuLba", "mason", "MSS", 
-				 "UNiVeRsE", "FATA-", "KheZu", "KuroKy", "JerAx", "MATUMBAMAN", "Miracle-", "YapzOr", "Puppey", "DDC", "Swiftending", "2GD", "Luminous", "LD", "Blitz", "Bruno",
-				 "Purge", "SyndereN", "SirActionSlacks", "V1lat"
-		}
-		GenerateBotName(rName);
-		return selectedName;
-	else
-		local dName = { "Abed", "Bimbo", "CartMaN", "DJ", "Kim0", "Kuku", "Nando", "Raven", "RR", "Sam_H", "Tims", "9pasha", "Miposhka", "RAMZES666", "RodjER", "Solo", 
-				 "Accel", "Benjaz", "Kingteka", "Matthew", "Timado", "fn", "Ghostik", "Lil", "No[o]ne", "Resolut1on", "Ahfu", "Ahjit", "MidOne", "Ohaiyo", "pieliedie", "s4", 
-				 "zai", "ana", "kpii", "Cr1t-", "N0tail", "Fly", "33", "j4", "MiLAN", "MinD_ContRoL", "Keyser", "GH", "SumaiL", "Dendi", "Maut", "Merlini", "ODPixel", "Capitalist",
-				 "Sheever", "SUNSfan", "GoDz", "TobiWan", "WinteR" 
-				}
-		GenerateBotName(dName);
-		return selectedName;		
-	end
+	return bnUtil.GetDota2Team();
 end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -92,6 +37,8 @@ local quickMode = false;
 local testMode =  false;
 
 local allBotHeroes = {
+	'npc_dota_hero_pangolier',
+	'npc_dota_hero_dark_willow',
 	'npc_dota_hero_ember_spirit',
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',
@@ -230,7 +177,9 @@ local Min = -5;
 local Max = 25;
 local CMTestMode = false;
 local UnavailableHeroes = {
-	"npc_dota_hero_techies"
+	"npc_dota_hero_techies",
+	'npc_dota_hero_pangolier',
+	'npc_dota_hero_dark_willow'
 }
 local HeroLanes = {
 	[1] = LANE_MID,
@@ -283,7 +232,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------
 
 function Think()
-
+	
 	if GetGameMode() == GAMEMODE_AP then
 		if GetGameState() == GAME_STATE_HERO_SELECTION then
 			InstallChatCallback(function (attr) SelectHeroChatCallback(attr.player_id, attr.string, attr.team_only); end);
@@ -730,7 +679,7 @@ end
 ---------------------------------------------------------------------------------------------------------------
 
 
-----------------------------------------------------HERO SELECTIO UTILITY FUNCTION------------------------------
+----------------------------------------------------HERO SELECTION UTILITY FUNCTION------------------------------
 --Pick hero based on role
 function PickRightHero(slot)
 	local initHero = GetRandomHero();

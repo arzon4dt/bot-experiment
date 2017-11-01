@@ -46,15 +46,15 @@ function AbilityUsageThink()
 
 	if abilityUFB == nil then abilityUFB = npcBot:GetAbilityByName( "chen_penitence" ) end
 	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "chen_test_of_faith" ) end
-	if abilityAC == nil then abilityAC = npcBot:GetAbilityByName( "chen_test_of_faith_teleport" ) end
+	--if abilityAC == nil then abilityAC = npcBot:GetAbilityByName( "chen_test_of_faith_teleport" ) end
 	if abilityHP == nil then abilityHP = npcBot:GetAbilityByName( "chen_holy_persuasion" ) end
 	if abilityHoG == nil then abilityHoG = npcBot:GetAbilityByName( "chen_hand_of_god" ) end
 
 	-- Consider using each ability
 	castFBDesire, castFBTarget = ConsiderFireblast();
 	castUFBDesire, castUFBTarget = ConsiderUnrefinedFireblast();
-	castACDesire, castACTarget = ConsiderAphoticShield();
-	--castHPDesire, castHPTarget = ConsiderHolyPersuasion();
+	--castACDesire, castACTarget = ConsiderAphoticShield();
+	castHPDesire, castHPTarget = ConsiderHolyPersuasion();
 	castHoGDesire = ConsiderHandofGod();
 	
 	if ( castHoGDesire > 0 ) 
@@ -193,7 +193,6 @@ function ConsiderFireblast()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	
 	-- If a mode has set a target, and we can kill them, do it
 	local npcTarget = npcBot:GetTarget();
 	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_PURE) and
@@ -212,6 +211,33 @@ function ConsiderFireblast()
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 			end
+		end
+	end
+	
+	
+	-- If we're in a teamfight, use it on the scariest enemy
+	if mutil.IsInTeamFight(npcBot, 1200)
+	then
+		local lowHpAlly = nil;
+		local nLowestHealth = 10000;
+
+		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
+		for _,npcAlly in pairs( tableNearbyAllies )
+		do
+			if ( mutil.CanCastOnNonMagicImmune(npcAlly) )
+			then
+				local nAllyHP = npcAlly:GetHealth();
+				if  nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.25 and npcAlly:WasRecentlyDamagedByAnyHero(3.0)  
+				then
+					nLowestHealth = nAllyHP;
+					lowHpAlly = npcAlly;
+				end
+			end
+		end
+
+		if ( lowHpAlly ~= nil )
+		then
+			return BOT_ACTION_DESIRE_MODERATE, lowHpAlly;
 		end
 	end
 
@@ -236,40 +262,30 @@ function ConsiderHolyPersuasion()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
-	-- Get some of its values
 	local nCastRange = abilityHP:GetCastRange();
-	--------------------------------------
-	-- Mode based usage
-	--------------------------------------
-	local maxHP = 0;
-	local NCreep = nil;
-	local tableNearbyNeutrals = npcBot:GetNearbyNeutralCreeps( 1300 );
-	
-	if npcBot:HasScepter() and tableNearbyNeutrals ~= nil and #tableNearbyNeutrals >= 3 then
-		for _,neutral in pairs(tableNearbyNeutrals)
-		do
-			local NeutralHP = neutral:GetHealth();
-			if NeutralHP > maxHP 
+
+	-- If we're in a teamfight, use it on the scariest enemy
+	local lowHpAlly = nil;
+	local nLowestHealth = 10000;
+
+	local tableNearbyAllies = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE  );
+	for _,npcAlly in pairs( tableNearbyAllies )
+	do
+		if ( mutil.CanCastOnNonMagicImmune(npcAlly) and npcAlly:GetUnitName() ~= npcBot:GetUnitName() )
+		then
+			local nAllyHP = npcAlly:GetHealth();
+			if  nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.25 and npcAlly:WasRecentlyDamagedByAnyHero(3.0)  
 			then
-				NCreep = neutral;
-				maxHP = NeutralHP;
-			end
-		end
-	elseif not npcBot:HasScepter() and tableNearbyNeutrals ~= nil and #tableNearbyNeutrals >= 3 then	
-		for _,neutral in pairs(tableNearbyNeutrals)
-		do
-			local NeutralHP = neutral:GetHealth();
-			if NeutralHP > maxHP and not neutral:IsAncientCreep()
-			then
-				NCreep = neutral;
-				maxHP = NeutralHP;
+				nLowestHealth = nAllyHP;
+				lowHpAlly = npcAlly;
 			end
 		end
 	end
-	
-	if NCreep ~= nil then
-		return BOT_ACTION_DESIRE_LOW, NCreep;
-	end	
+
+	if ( lowHpAlly ~= nil )
+	then
+		return BOT_ACTION_DESIRE_MODERATE, lowHpAlly;
+	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 

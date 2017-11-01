@@ -122,7 +122,13 @@ function ConsiderVacuum()
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 		end
 	end
---
+	
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange+200, 2.0);
+	
+	if skThere then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 

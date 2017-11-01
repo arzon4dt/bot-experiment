@@ -10,10 +10,10 @@ X["items"] = {
 	"item_tranquil_boots",
 	"item_force_staff",
 	"item_glimmer_cape",
-	"item_cyclone",
 	"item_ultimate_scepter",
+	"item_cyclone",
 	"item_hurricane_pike",
-	"item_sheepstick",
+	"item_sheepstick"
 };			
 
 X["skills"] = IBUtil.GetBuildPattern(

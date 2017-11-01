@@ -9,11 +9,10 @@ X["items"] = {
 	"item_poor_mans_shield",
 	"item_magic_wand",
 	"item_arcane_boots",
-	"item_mekansm",
-	"item_cyclone",
-	"item_blink",
-	"item_guardian_greaves",
+	"item_pipe",
+	"item_combo_breaker",
 	"item_lotus_orb",
+	"item_radiance",
 	"item_shivas_guard"
 }	
 

@@ -12,10 +12,11 @@ X["items"] = {
 	"item_vanguard",
 	"item_blink",
 	"item_blade_mail",
+	"item_combo_breaker",
 	"item_black_king_bar",
-	"item_crimson_guard",
+	"item_crimson_guard"
 	--"item_lotus_orb"
-	"item_heart"
+	--"item_heart"
 };			
 
 X["skills"] = IBUtil.GetBuildPattern(

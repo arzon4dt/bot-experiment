@@ -203,8 +203,13 @@ function ConsiderChrono()
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation(nCastPoint);
 		end
 	end
+		
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange, 2.0);
 	
---
+	if skThere then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end	
+
 	return BOT_ACTION_DESIRE_NONE;
 end
 
@@ -268,7 +273,12 @@ function ConsiderChronoS()
 		end
 	end
 	
---
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange, 2.0);
+	
+	if skThere then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end	
+	
 	return BOT_ACTION_DESIRE_NONE;
 end
 

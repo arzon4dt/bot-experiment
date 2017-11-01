@@ -37,13 +37,32 @@ function GetDesire()
 	
 	local num_cogs = 0;
 	
+	--[[local ab = bot:GetCurrentActiveAbility();
+	if ab ~= nil and not ab:IsItem() then
+		print(bot:GetUnitName().." is casting "..ab:GetName())
+	end]]--
+	
 	if IsUnitAroundLocation(GetAncient(GetTeam()):GetLocation(), 3000) then
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
+	--print(bot:GetUnitName()..tostring(IsLocationPassable(bot:GetLocation())))
+	
 	if teamPlayers == nil then teamPlayers = GetTeamPlayers(GetTeam()) end
 	
 	local EnemyHeroes = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	
+	--[[local avoidZones = GetAvoidanceZones();
+	
+	for _,zone in pairs(avoidZones) do
+	    print("testt");
+		print(zone.ability:GetName());
+		if zone.ability:GetName() == 'sandking_sand_storm' and DotaTime() - tChat >= 10  then
+			--bot:ActionImmediate_Chat("SK u'r channeling", true);
+			bot:ActionImmediate_Ping(zone.location.x, zone.location.y, true);
+			tChat = DotaTime();
+		end
+	end]]--
 	
 	minute = math.floor(DotaTime() / 60)
 	sec = DotaTime() % 60
@@ -268,14 +287,24 @@ end
 
 function GetTargetShrine()
 	local shrines = {
+		 SHRINE_BASE_1,
+		 SHRINE_BASE_2,
+		 SHRINE_BASE_3,
 		 SHRINE_JUNGLE_1,
 		 SHRINE_JUNGLE_2 
 	}
 	for _,s in pairs(shrines) do
-		local shrine = GetShrine(GetOpposingTeam(), s);
-		if  shrine ~= nil and shrine:IsAlive() then
-			return shrine;
-		end	
+		if GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 2000 and s < 3 then
+			local shrine = GetShrine(GetOpposingTeam(), s);
+			if  shrine ~= nil and shrine:IsAlive() then
+				return shrine;
+			end	
+		elseif s >= 3 then
+			local shrine = GetShrine(GetOpposingTeam(), s);
+			if  shrine ~= nil and shrine:IsAlive() then
+				return shrine;
+			end	
+		end
 	end	
 	return nil;
 end

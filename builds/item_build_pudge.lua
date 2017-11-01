@@ -10,8 +10,8 @@ X["items"] = {
 	"item_tranquil_boots",
 	"item_urn_of_shadows",
 	"item_pipe",
+	"item_spirit_vessel",
 	"item_blink",
-	"item_cyclone",
 	"item_lotus_orb",
 	"item_heart"
 };			

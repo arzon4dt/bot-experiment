@@ -12,7 +12,7 @@ local runeStatus = -1;
 local ProxDist = 1500;
 local teamPlayers = nil;
 local PingTimeGap = 10;
-
+local bottle = nil;
 
 local ListRune = {
 	RUNE_BOUNTY_1,
@@ -23,24 +23,14 @@ local ListRune = {
 	RUNE_POWERUP_2
 }
 
+
 function GetDesire()
-	
-	--[[if bot:GetActiveMode() == BOT_MODE_ITEM  then
-		bot:ActionImmediate_Chat("I'm doing mode item", true);
+
+	--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "rune") then
+		bot:ActionImmediate_Chat("Catch this in mode_rune_generic", false);
+		bot.lastPlayerChat = nil;
 	end]]--
-	
-	--[[if bot:GetUnitName() == "npc_dota_hero_puck" then
-		for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) do
-			local info = GetHeroLastSeenInfo(id);
-			if info ~= nil then
-				print("Hero:"..GetSelectedHeroName(id))
-				for key,value in pairs(info) do
-					print(tostring(key)..":"..tostring(value.time_since_seen))
-				end
-			end
-		end
-	end]]--
-	
+
 	if GetGameMode() == GAMEMODE_1V1MID then
 		return BOT_MODE_DESIRE_NONE;
 	end
@@ -87,11 +77,14 @@ function GetDesire()
 end
 
 function OnStart()
-	
+	local bottle_slot = bot:FindItemSlot('item_bottle');
+	if bot:GetItemSlotType(bottle_slot) == ITEM_SLOT_TYPE_MAIN then
+		bottle = bot:GetItemInSlot(bottle_slot);
+	end	
 end
 
 function OnEnd()
-	
+	bottle = nil;
 end
 
 function Think()
@@ -99,24 +92,32 @@ function Think()
 	if DotaTime() < 0 then 
 		if GetTeam() == TEAM_RADIANT then
 			if bot:GetAssignedLane() == LANE_BOT then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
 				return
 			end
 		elseif GetTeam() == TEAM_DIRE then
 			if bot:GetAssignedLane() == LANE_TOP then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
 				return
 			end
 		end
 	end	
 	
 	if runeStatus == RUNE_STATUS_AVAILABLE then
+		if bottle ~= nil and closestDist < 1200 then 
+			local bottle_charge = bottle:GetCurrentCharges() 
+			if bottle:IsFullyCastable() and bottle_charge > 0 and ( bot:GetHealth() < bot:GetMaxHealth() or bot:GetMana() < bot:GetMaxMana() ) then
+				bot:Action_UseAbility( bottle );
+				return;
+			end
+		end
+		
 		if closestDist > 200 then
 			bot:Action_MoveToLocation(GetRuneSpawnLocation(closestRune));
 			return
@@ -160,9 +161,9 @@ end
 
 function IsTeamMustSaveRune(rune)
 	if GetTeam() == TEAM_DIRE then
-		return rune == RUNE_BOUNTY_3 or rune == RUNE_BOUNTY_4 or rune == RUNE_POWERUP_1 or rune == RUNE_POWERUP_2
+		return rune == RUNE_BOUNTY_2 or rune == RUNE_BOUNTY_4 or rune == RUNE_POWERUP_1 or rune == RUNE_POWERUP_2
 	else
-		return rune == RUNE_BOUNTY_1 or rune == RUNE_BOUNTY_2 or rune == RUNE_POWERUP_1 or rune == RUNE_POWERUP_2
+		return rune == RUNE_BOUNTY_1 or rune == RUNE_BOUNTY_3 or rune == RUNE_POWERUP_1 or rune == RUNE_POWERUP_2
 	end
 end
 
@@ -254,6 +255,11 @@ function IsSuitableToPick()
 	local mode = bot:GetActiveMode();
 	local Enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
 	if ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE )
+		or mode == BOT_MODE_ATTACK
+		or mode == BOT_MODE_DEFEND_ALLY
+		or mode == BOT_MODE_DEFEND_TOWER_TOP
+		or mode == BOT_MODE_DEFEND_TOWER_MID
+		or mode == BOT_MODE_DEFEND_TOWER_BOT
 		or ( #Enemies >= 1 and IsIBecameTheTarget(Enemies) )
 		or bot:WasRecentlyDamagedByAnyHero(5.0)
 	then

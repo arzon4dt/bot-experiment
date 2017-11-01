@@ -18,6 +18,7 @@ function CourierUsageThink()
 end
 
 local castFBDesire = 0;
+local castFB2Desire = 0;
 local castTWDesire = 0;
 local castTDDesire = 0;
 local castRCDesire = 0;
@@ -30,6 +31,7 @@ local itemEB = nil;
 local alreadyCastEB = false;
 
 local abilityFB = nil;
+local abilityFB2 = nil;
 local abilityTW = nil;
 local abilityMRA = nil;
 local abilityMRS = nil;
@@ -43,7 +45,8 @@ function AbilityUsageThink()
 	-- Check if we're already using an ability
 	if mutil.CanNotUseAbility(npcBot) then return end
 	
-	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "morphling_adaptive_strike" ) end
+	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "morphling_adaptive_strike_agi" ) end
+	if abilityFB2 == nil then abilityFB2 = npcBot:GetAbilityByName( "morphling_adaptive_strike_str" ) end
 	if abilityTW == nil then abilityTW = npcBot:GetAbilityByName( "morphling_waveform" ) end
 	if abilityMRA == nil then abilityMRA = npcBot:GetAbilityByName( "morphling_morph_agi" ) end
 	if abilityMRS == nil then abilityMRS = npcBot:GetAbilityByName( "morphling_morph_str" ) end
@@ -54,9 +57,10 @@ function AbilityUsageThink()
 	-- Consider using each ability
 	castTWDesire, castTWLocation = ConsiderTimeWalk();
 	castFBDesire, castFBTarget = ConsiderFireblast();
+	castFB2Desire, castFB2Target = ConsiderFireblast2();
 	castMRADesire = ConsiderMorphAgility();
 	castMRSDesire = ConsiderMorphStrength();
-	castRCDesire, castRCTarget = ConsiderReplicate();
+	--castRCDesire, castRCTarget = ConsiderReplicate();
 	castGhostDesire = ConsiderGhostScepter();
 	castEBDesire, castEBTarget = ConsiderEtherealBlade();
 	
@@ -78,6 +82,12 @@ function AbilityUsageThink()
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
 		alreadyCastEB = false;
+		return;
+	end
+	
+	if ( castFB2Desire > 0 ) 
+	then
+		npcBot:Action_UseAbilityOnEntity( abilityFB2, castFB2Target );
 		return;
 	end
 
@@ -130,23 +140,14 @@ function ConsiderFireblast()
 	local nCastRange = abilityFB:GetCastRange();
 	local nMinAGIX = abilityFB:GetSpecialValueFloat("damage_min");
 	local nMaxAGIX =  abilityFB:GetSpecialValueFloat("damage_max");
-	local nMinStun = abilityFB:GetSpecialValueFloat("stun_min");
-	local nMaxStun = abilityFB:GetSpecialValueFloat("stun_max");
 	local nAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY); 
 	local nSTR = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
 	local nDamage = 0; 
-	local nStun = 0; 
 	
 	if nAGI > nSTR and ( nAGI - nSTR ) / nSTR >= 0.5 then
 		nDamage = nMaxAGIX * nAGI;
 	else
 		nDamage = nMinAGIX * nAGI;
-	end
-	
-	if nSTR > nAGI and ( nSTR - nAGI ) / nAGI >= 0.5 then
-		nStun = nMaxStun;
-	else
-		nStun = nMinStun;
 	end
 	
 	if alreadyCastEB then
@@ -163,14 +164,6 @@ function ConsiderFireblast()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-	do
-		if ( npcEnemy:IsChanneling() ) 
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
-		end
-	end
 	
 	-- If a mode has set a target, and we can kill them, do it
 	local npcTarget = npcBot:GetTarget();
@@ -179,14 +172,64 @@ function ConsiderFireblast()
 	then
 		return BOT_ACTION_DESIRE_HIGH, npcTarget;
 	end
+
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if ( npcTarget ~= nil  and npcTarget:IsHero() ) 
+		then
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) 
+			   and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL )
+			then
+				return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			end
+		end
+	end
 	
+	return BOT_ACTION_DESIRE_NONE, 0;
+
+end	
+
+function ConsiderFireblast2()
+
+	-- Make sure it's castable
+	if ( not abilityFB2:IsFullyCastable() ) then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+	-- Get some of its values
+	local nCastRange = abilityFB2:GetCastRange();
+	local nMinStun = abilityFB2:GetSpecialValueFloat("stun_min");
+	local nMaxStun = abilityFB2:GetSpecialValueFloat("stun_max");
+	local nAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY); 
+	local nSTR = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
+	local nStun = 0; 
+	
+	if nSTR > nAGI and ( nSTR - nAGI ) / nAGI >= 0.5 then
+		nStun = nMaxStun;
+	else
+		nStun = nMinStun;
+	end
+	--------------------------------------
+	-- Mode based usage
+	--------------------------------------
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+	do
+		if ( npcEnemy:IsChanneling() ) 
+		then
+			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
+		end
+	end
+
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) and nStun > nMinStun ) 
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) 
+			    and nStun > nMinStun and mutil.IsDisabled(true, npcTarget) == false ) 
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 			end
@@ -200,7 +243,7 @@ function ConsiderFireblast()
 		if ( npcTarget ~= nil  and npcTarget:IsHero() ) 
 		then
 			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) 
-			   and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and ( mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL )  or nStun > nMinStun )
+			   and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and nStun > nMinStun and mutil.IsDisabled(true, npcTarget) == false 
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcTarget;
 			end
@@ -210,6 +253,7 @@ function ConsiderFireblast()
 	return BOT_ACTION_DESIRE_NONE, 0;
 
 end	
+
 
 function ConsiderTimeWalk()
 

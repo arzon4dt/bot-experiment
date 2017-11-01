@@ -18,25 +18,33 @@ bot.ward = false;
 bot.steal = false;
 
 local route = {
-	Vector(-50, 2464),
-	Vector(-1300, 4680),
-	Vector(-2820, 4041)
+	Vector(-108.000000, 2271.000000, 0.000000),
+	Vector(-1276.000000, 3644.000000, 0.000000),
+	Vector(-3148.000000, 3720.000000, 0.000000)
 }
 
 local route2 = {
-	Vector(4300, -1500),
-	Vector(3300, -5300),
-	Vector(1280, -4100)
+	Vector(3597.000000, 351.000000, 0.000000),
+	Vector(2186.000000, -3656.000000, 0.000000),
+	Vector(3689.000000, -3625.000000, 0.000000)
 }
+
+local vNonStuck = Vector(-2610.000000, 538.000000, 0.000000);
 
 local chat = false;
 
 function GetDesire()
 
-	--[[local pg = wardUtils.GetHumanPing();
-	if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.5 then
+	local pg = wardUtils.GetHumanPing();
+	if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
 		print(tostring(pg.location));
+	end
+
+	--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "ward") then
+		bot:ActionImmediate_Chat("Catch this in mode_ward_generic", false);
+		bot.lastPlayerChat = nil;
 	end]]--
+	
 
 	if bot:IsChanneling() or bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or not IsSuitableToWard() 
 	   or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE 
@@ -45,13 +53,13 @@ function GetDesire()
 	end
 	
 	if DotaTime() < 0 then
-		local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
+		local enemies = bot:GetNearbyHeroes(500, true, BOT_MODE_NONE)
 		if not IsSafelaneCarry() and bot:GetAssignedLane() ~= LANE_MID 
 		   and ( (GetTeam() == TEAM_RADIANT and bot:GetAssignedLane() == LANE_TOP) 
 		      or (GetTeam() == TEAM_DIRE and bot:GetAssignedLane() == LANE_BOT) 
 			  or  role.IsSupport(bot:GetUnitName()) 
-			  or bot:GetUnitName() == "npc_dota_hero_elder_titan" 
-			  or  bot:GetUnitName() == 'npc_dota_hero_wisp'
+			  or ( bot:GetUnitName() == "npc_dota_hero_elder_titan" and DotaTime() > -59 ) 
+			  or ( bot:GetUnitName() == 'npc_dota_hero_wisp' and DotaTime() > -59 )
 			  ) 
 		  and #enemies == 0 
 		then
@@ -64,17 +72,34 @@ function GetDesire()
 	
 	itemWard = wardUtils.GetItemWard(bot);
 	
-	if itemWard ~= nil and DotaTime() > wardCastTime + 1.0 then
+	if itemWard ~= nil  then
+		
 		pinged, wt = wardUtils.IsPingedByHumanPlayer(bot);
+		--wt = GetUnitHandleByID(bot.lastPlayerChat.text);
 		if pinged then	
 			return RemapValClamped(GetUnitToUnitDistance(bot, wt), 1000, 0, BOT_MODE_DESIRE_HIGH, BOT_MODE_DESIRE_VERYHIGH);
 		end
+		--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "ward") then
+			if GetTeamForPlayer(bot.lastPlayerChat.pid) == bot:GetTeam() then
+				pinged = false;
+				bot:ActionImmediate_Chat("OK I'll give you ward", false);
+				bot.lastPlayerChat = nil;
+			elseif GetTeamForPlayer(bot.lastPlayerChat.pid) ~= bot:GetTeam() then
+				bot:ActionImmediate_Chat("You're using All Chat dude!", true);
+				bot.lastPlayerChat = nil;
+			end
+		else
+			bot.lastPlayerChat = nil;	
+		end]]--
+		
 		AvailableSpots = wardUtils.GetAvailableSpot(bot);
 		targetLoc, targetDist = wardUtils.GetClosestSpot(bot, AvailableSpots);
-		if targetLoc ~= nil then
+		if targetLoc ~= nil and DotaTime() > wardCastTime + 1.0 then
 			bot.ward = true;
 			return RemapValClamped(targetDist, 6000, 0, BOT_MODE_DESIRE_MODERATE, BOT_MODE_DESIRE_HIGH);
 		end
+	else
+		bot.lastPlayerChat = nil;
 	end
 	return BOT_MODE_DESIRE_NONE;
 end
@@ -126,12 +151,22 @@ function Think()
 				wardCastTime = DotaTime();	
 				return
 			else
-				bot:Action_MoveToLocation(targetLoc+RandomVector(400));
-				return
+				if targetLoc.x == Vector(-2948.000000, 769.000000, 0.000000) then
+					bot:Action_MoveToLocation(vNonStuck+RandomVector(300));
+					return
+				else	
+					bot:Action_MoveToLocation(targetLoc+RandomVector(300));
+					return
+				end
 			end
 		else
-			bot:Action_MoveToLocation(targetLoc);
-			return
+			if targetLoc == Vector(-2948.000000, 769.000000, 0.000000) then
+				bot:Action_MoveToLocation(vNonStuck);
+				return
+			else	
+				bot:Action_MoveToLocation(targetLoc);
+				return
+			end
 		end
 	end
 	

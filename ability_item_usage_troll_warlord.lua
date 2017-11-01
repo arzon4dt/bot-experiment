@@ -80,7 +80,10 @@ function ConsiderDarkPact()
 	end
 
 	--WARStatus true = melee form, otherwise = range form
-	local inMelee = abilityPC2:IsHidden();
+	local inMelee = false;
+	if npcBot:GetAttackRange() < 320 then
+		inMelee = true;
+	end
 
 	-- Get some of its values
 	local nCastRange = 500;
@@ -158,7 +161,7 @@ end
 function ConsiderPounce()
 
 	-- Make sure it's castable
-	if ( not abilityPC:IsFullyCastable() or abilityPC:IsHidden() ) then 
+	if ( not abilityPC:IsFullyCastable() or npcBot:GetAttackRange() > 320 ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
@@ -208,7 +211,7 @@ end
 function ConsiderPounce2()
 
 	-- Make sure it's castable
-	if ( not abilityPC2:IsFullyCastable() or abilityPC2:IsHidden() ) then 
+	if ( not abilityPC2:IsFullyCastable() or npcBot:GetAttackRange() < 320 ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 

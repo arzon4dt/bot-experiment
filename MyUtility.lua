@@ -28,8 +28,8 @@ local modifier = {
 
 function U.InitiateAbilities(hUnit, tSlots)
 	local abilities = {};
-	for _,i in pairs(tSlots) do
-		table.insert(abilities, hUnit:GetAbilityInSlot(i));
+	for i = 1, #tSlots do
+		abilities[i] = hUnit:GetAbilityInSlot(tSlots[i]);
 	end
 	return abilities;
 end
@@ -234,6 +234,118 @@ function U.GetAlliesNearLoc(vLoc, nRadius)
 	end
 	return allies;
 end
+
+function U.IsEnemyCreepBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius)
+	local vStart = hSource:GetLocation();
+	local vEnd = vLoc;
+	local creeps = hSource:GetNearbyLaneCreeps(1600, true);
+	for i,creep in pairs(creeps) do
+		local tResult = PointToLineDistance(vStart, vEnd, creep:GetLocation());
+		if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+			return true;
+		end
+	end
+	creeps = hTarget:GetNearbyLaneCreeps(1600, false);
+	for i,creep in pairs(creeps) do
+		local tResult = PointToLineDistance(vStart, vEnd, creep:GetLocation());
+		if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+			return true;
+		end
+	end
+	return false;
+end
+
+function U.IsAllyCreepBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius)
+	local vStart = hSource:GetLocation();
+	local vEnd = vLoc;
+	local creeps = hSource:GetNearbyLaneCreeps(1600, false);
+	for i,creep in pairs(creeps) do
+		local tResult = PointToLineDistance(vStart, vEnd, creep:GetLocation());
+		if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+			return true;
+		end
+	end
+	creeps = hTarget:GetNearbyLaneCreeps(1600, true);
+	for i,creep in pairs(creeps) do
+		local tResult = PointToLineDistance(vStart, vEnd, creep:GetLocation());
+		if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+			return true;
+		end
+	end
+	return false;
+end
+
+function U.IsCreepBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius)
+	if not U.IsAllyCreepBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius) then
+		return U.IsEnemyCreepBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius);
+	end
+	return true;
+end
+
+function U.IsEnemyHeroBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius)
+	local vStart = hSource:GetLocation();
+	local vEnd = vLoc;
+	local heroes = hSource:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	for i,hero in pairs(heroes) do
+		if hero ~= hTarget  then
+			local tResult = PointToLineDistance(vStart, vEnd, hero:GetLocation());
+			if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+				return true;
+			end
+		end
+	end
+	heroes = hTarget:GetNearbyHeroes(1600, false, BOT_MODE_NONE);
+	for i,hero in pairs(heroes) do
+		if hero ~= hTarget  then
+			local tResult = PointToLineDistance(vStart, vEnd, hero:GetLocation());
+			if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+				return true;
+			end
+		end
+	end
+	return false;
+end
+
+function U.IsAllyHeroBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius)
+	local vStart = hSource:GetLocation();
+	local vEnd = vLoc;
+	local heroes = hSource:GetNearbyHeroes(1600, false, BOT_MODE_NONE);
+	for i,hero in pairs(heroes) do
+		if hero ~= hSource then
+			local tResult = PointToLineDistance(vStart, vEnd, hero:GetLocation());
+			if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+				return true;
+			end
+		end
+	end
+	heroes = hTarget:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	for i,hero in pairs(heroes) do
+		if hero ~= hSource then
+			local tResult = PointToLineDistance(vStart, vEnd, hero:GetLocation());
+			if tResult ~= nil and tResult.within and tResult.distance <= nRadius + 50 then
+				return true;
+			end
+		end
+	end
+	return false;
+end
+
+function U.IsHeroBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius)
+	if not U.IsAllyHeroBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius) then
+		return U.IsEnemyHeroBetweenMeAndTarget(hSource, hTarget, vLoc, nRadius);
+	end
+	return true;
+end
+
+function U.IsSandKingThere(bot, nCastRange, fTime)
+	local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	for _,enemy in pairs(enemies) do
+		if enemy:GetUnitName() == "npc_dota_hero_sand_king" and enemy:HasModifier('modifier_sandking_sand_storm_invis') then
+			return true,  enemy:GetLocation();
+		end
+	end
+	return false, nil;
+end
 --============== ^^^^^^^^^^ NEW FUNCTION ABOVE ^^^^^^^^^ ================--
 
 function U.IsRetreating(npcBot)
@@ -310,8 +422,7 @@ function U.IsRoshan(npcTarget)
 end
 
 function U.IsDisabled(enemy, npcTarget)
-	if enemy 
-	then
+	if enemy then
 		return npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) or npcTarget:IsNightmared() or U.IsTaunted(npcTarget); 
 	else
 		return npcTarget:IsRooted( ) or npcTarget:IsStunned( ) or npcTarget:IsHexed( ) or npcTarget:IsNightmared() or npcTarget:IsSilenced( ) or U.IsTaunted(npcTarget);
@@ -334,8 +445,10 @@ function U.GetUpgradedSpeed(bot)
 end
 
 function U.IsTaunted(npcTarget)
-	return npcTarget:HasModifier("modifier_axe_berserkers_call") or npcTarget:HasModifier("modifier_legion_commander_duel") 
-	    or npcTarget:HasModifier("modifier_winter_wyvern_winters_curse");
+	return npcTarget:HasModifier("modifier_axe_berserkers_call") 
+	    or npcTarget:HasModifier("modifier_legion_commander_duel") 
+	    or npcTarget:HasModifier("modifier_winter_wyvern_winters_curse") 
+		or npcTarget:HasModifier(" modifier_winter_wyvern_winters_curse_aura");
 end
 
 function U.IsInRange(npcTarget, npcBot, nCastRange)

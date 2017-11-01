@@ -263,6 +263,12 @@ function ConsiderQ()
 		end
 	end
 	
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nStoneCR, 2.0);
+	
+	if skThere and nStone >= 1 then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc, true, false;
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, 0, false, false;
 
 end

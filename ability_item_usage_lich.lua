@@ -78,6 +78,13 @@ function ConsiderQ()
 		end
 	end
 	
+	if bot:GetActiveMode() == BOT_MODE_LANING and mutils.CanSpamSpell(bot, manaCost)then
+		local target = mutils.GetVulnerableWeakestUnit(true, true, nCastRange, bot);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, target;
+		end 
+	end
+	
 	if mutils.IsInTeamFight(bot, 1300)
 	then
 		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, nCastPoint, 0 );

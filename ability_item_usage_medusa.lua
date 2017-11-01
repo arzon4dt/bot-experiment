@@ -44,10 +44,10 @@ function AbilityUsageThink()
 	castFCDesire  = ConsiderFlakCannon();
 
 	
-	if abilitySS:IsTrained() and not abilitySS:GetToggleState() then
+	--[[if abilitySS:IsTrained() and not abilitySS:GetToggleState() then
 		npcBot:Action_UseAbility ( abilitySS );
 		return;
-	end
+	end]]--
 	
 	if abilityMS:IsTrained() and not abilityMS:GetToggleState() then
 		npcBot:Action_UseAbility ( abilityMS );

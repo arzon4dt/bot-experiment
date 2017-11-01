@@ -40,7 +40,9 @@ function X.GetSlotPattern(nPattern)
 	elseif  nPattern == 7 then
 		return {0,3,4,5};	
 	elseif  nPattern == 8 then
-		return {0,2,3,6};			
+		return {0,2,3,6};	
+	elseif  nPattern == 9 then
+		return {0,1,3,8};		
 	end
 end
 

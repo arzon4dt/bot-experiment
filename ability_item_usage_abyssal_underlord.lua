@@ -81,7 +81,6 @@ function ConsiderFireStorm()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
 	-- If a mode has set a target, and we can kill them, do it
 	local npcTarget = npcBot:GetTarget();
 	if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) )
@@ -156,7 +155,12 @@ function ConsiderPitOfMalice()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange+200, 2.0);
+	
+	if skThere then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then

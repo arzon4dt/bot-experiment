@@ -12,7 +12,7 @@ X["items"] = {
 	"item_medallion_of_courage",
 	"item_blink",
 	"item_solar_crest",
-	"item_cyclone",
+	"item_combo_breaker",
 	"item_lotus_orb",
 	"item_shivas_guard"
 };			

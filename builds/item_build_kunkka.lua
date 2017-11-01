@@ -9,8 +9,8 @@ X["items"] = {
 	"item_magic_wand",
 	"item_phase_boots",
 	"item_shadow_blade",
+	"item_meteor_hammer",
 	"item_greater_crit",
-	"item_blink",
 	"item_silver_edge",
 	"item_black_king_bar",
 	"item_monkey_king_bar"
