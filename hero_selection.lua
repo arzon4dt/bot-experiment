@@ -8,9 +8,7 @@ local requiredHeroes = {
 	'npc_dota_hero_earth_spirit',
 	'npc_dota_hero_phoenix',]]--
 	--'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_viper',
-	'npc_dota_hero_skeleton_king',
-	'npc_dota_hero_tiny',
+	'npc_dota_hero_earthshaker',
 	--'npc_dota_hero_pangolier',
 	--'npc_dota_hero_dark_willow',
 	--[['npc_dota_hero_visage';
@@ -179,7 +177,8 @@ local CMTestMode = false;
 local UnavailableHeroes = {
 	"npc_dota_hero_techies",
 	'npc_dota_hero_pangolier',
-	'npc_dota_hero_dark_willow'
+	'npc_dota_hero_dark_willow',
+	'npc_dota_hero_morphling'
 }
 local HeroLanes = {
 	[1] = LANE_MID,
@@ -230,10 +229,9 @@ function SelectHeroChatCallback(PlayerID, ChatText, bTeamOnly)
 	end
 end
 ----------------------------------------------------------------------------------------------------------------------------------------
-
+local GAMEMODE_TM = 23;
 function Think()
-	
-	if GetGameMode() == GAMEMODE_AP then
+	if GetGameMode() == GAMEMODE_AP or GetGameMode() == GAMEMODE_TM then
 		if GetGameState() == GAME_STATE_HERO_SELECTION then
 			InstallChatCallback(function (attr) SelectHeroChatCallback(attr.player_id, attr.string, attr.team_only); end);
 		end
@@ -246,7 +244,7 @@ function Think()
 	elseif GetGameMode() == GAMEMODE_MO then
 		MidOnlyLogic();	
 	elseif GetGameMode() == GAMEMODE_1V1MID then
-		OneVsOneLogic();	
+		OneVsOneLogic();		
 	else 
 		print("GAME MODE NOT SUPPORTED")
 	end
@@ -289,7 +287,8 @@ local PickTime = 10;
 local RandomTime = 0;
 --Picking logic for All Pick Game Mode
 function AllPickLogic()
-	 if not CanPick() then return end;
+
+	if not CanPick() then return end;
 	 
 	 local idx = 0;
 	 for _,i in pairs(GetTeamPlayers(GetTeam())) 
@@ -322,6 +321,7 @@ end
 
 ------------------------------------------CAPTAIN'S MODE GAME MODE-------------------------------------------
 --Picking logic for Captain's Mode Game Mode
+local lastState = -1;
 function CaptainModeLogic()
 	if (GetGameState() ~= GAME_STATE_HERO_SELECTION) then
         return
@@ -337,7 +337,7 @@ function CaptainModeLogic()
 	end	
 	if GetHeroPickState() == HEROPICK_STATE_CM_CAPTAINPICK then	
 		PickCaptain();
-	elseif GetHeroPickState() >= HEROPICK_STATE_CM_BAN1 and GetHeroPickState() <= HEROPICK_STATE_CM_BAN10 and GetCMPhaseTimeRemaining() <= NeededTime then
+	elseif GetHeroPickState() >= HEROPICK_STATE_CM_BAN1 and GetHeroPickState() <= 18 and GetCMPhaseTimeRemaining() <= NeededTime then
 		BansHero();
 		NeededTime = 0 
 	elseif GetHeroPickState() >= HEROPICK_STATE_CM_SELECT1 and GetHeroPickState() <= HEROPICK_STATE_CM_SELECT10 and GetCMPhaseTimeRemaining() <= NeededTime then
@@ -804,7 +804,7 @@ end
 
 ---------------------------------------------------------LANE ASSIGNMENT-----------------------------------------------------------------
 function UpdateLaneAssignments()    
-	if GetGameMode() == GAMEMODE_AP then
+	if GetGameMode() == GAMEMODE_AP or GetGameMode() == GAMEMODE_TM then
 		--print("AP Lane Assignment")
 		if GetGameState() == GAME_STATE_STRATEGY_TIME or GetGameState() == GAME_STATE_PRE_GAME then
 			InstallChatCallback(function (attr) SelectLaneChatCallback(attr.player_id, attr.string, attr.team_only); end);

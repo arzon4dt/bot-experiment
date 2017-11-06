@@ -11,10 +11,11 @@ X["items"] = {
 	"item_ring_of_aquila",
 	"item_power_treads_agi",
 	"item_dragon_lance",
-	"item_manta",
+	"item_maelstrom",
 	"item_black_king_bar",
-	"item_ultimate_scepter",
 	"item_hurricane_pike",
+	"item_manta",
+	"item_mjollnir",
 	"item_butterfly"
 };			
 

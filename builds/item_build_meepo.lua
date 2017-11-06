@@ -10,7 +10,6 @@ brown boots / power treads at any time he will think he
 is a clone and skill/item decisions will possilby break! ]]
 
 X["items"] = { 
-	"item_poor_mans_shield",
 	"item_power_treads",
 	"item_blink",
 	"item_ultimate_scepter",

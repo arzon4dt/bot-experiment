@@ -35,10 +35,10 @@ local chat = false;
 
 function GetDesire()
 
-	local pg = wardUtils.GetHumanPing();
+	--[[local pg = wardUtils.GetHumanPing();
 	if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
 		print(tostring(pg.location));
-	end
+	end]]--
 
 	--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "ward") then
 		bot:ActionImmediate_Chat("Catch this in mode_ward_generic", false);
@@ -146,7 +146,7 @@ function Think()
 	
 	if bot.ward then
 		if targetDist <= nWardCastRange then
-			if  DotaTime() - swapTime > 6.75 then
+			if  DotaTime() > swapTime + 7.0 then
 				bot:Action_UseAbilityOnLocation(itemWard, targetLoc);
 				wardCastTime = DotaTime();	
 				return

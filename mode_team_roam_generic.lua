@@ -1,4 +1,5 @@
 local mutil = require(GetScriptDirectory() ..  "/MyUtility")
+local items = require(GetScriptDirectory() .. "/ItemUtility" )
 local bot = GetBot();
 local cAbility = nil;
 local camps = {};
@@ -10,6 +11,15 @@ local alreadyFoundCreep = false;
 local pLane;
 local targetTree = nil;
 local targetLoc = nil;
+
+--[[if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
+	bot.data = {
+		['enemies'] = nil;
+		['allies'] = nil;
+		['e_creeps'] = nil;
+		['a_creeps'] = nil;
+	}
+end]]--
 
 function GetProperLane(pId)
 	local lane = -1;
@@ -34,28 +44,17 @@ function GetProperLane(pId)
 	
 end
 
-local itemToPurchase = {
-        "item_radiance",
-        "item_shivas_guard",
-        "item_guardian_greaves",
-        "item_lotus_orb",
-        "item_blade_mail",
-        "item_mekansm",
-        "item_arcane_boots",
-        "item_magic_wand",
-	"item_poor_mans_shield"
-};
-
-
+local lastBootSlotCheck = -90;
 function GetDesire()
 
-	--[[if #itemToPurchase > 0 and bot:GetUnitName() == 'npc_dota_hero_witch_doctor' then
-		print(bot:GetUnitName()..":"..tostring(#itemToPurchase ))
-		for k,v in pairs(itemToPurchase) do
-			print(tostring(k)..v)
-		end
-		itemToPurchase [#itemToPurchase] = nil
-	end]]--
+	--[[if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
+		bot.data = {
+			['enemies']  = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+			['allies']   = bot:GetNearbyHeroes(1600, false, BOT_MODE_NONE);
+			['e_creeps'] = bot:GetNearbyLaneCreeps(1600, true);
+			['a_creeps'] = bot:GetNearbyLaneCreeps(1600, false);
+		}
+	end]]-- 
 
 	--[[local dropped = GetDroppedItemList();
 	for _,drop in pairs(dropped) do
@@ -63,6 +62,35 @@ function GetDesire()
 			print(tostring(key)..":"..tostring(value))
 		end
 	end]]--
+	if bot:GetActiveMode() ~= BOT_MODE_WARD and DotaTime() > lastBootSlotCheck + 1.0 then
+		local itemSlot = -1;
+		for i=1,#items['earlyBoots'] do
+			local slot = bot:FindItemSlot(items['earlyBoots'][i]);
+			if slot >= 0 then
+				itemSlot = slot;
+				break;
+			end
+		end	
+		if itemSlot == -1 then
+			itemSlot = bot:FindItemSlot("item_boots")
+		end
+		if itemSlot ~= -1 and bot:GetItemSlotType(itemSlot) == ITEM_SLOT_TYPE_BACKPACK then
+			local lessValItem = items.GetMainInvLessValItemSlot(bot);
+			if lessValItem ~= -1 and bot:GetItemInSlot(lessValItem):GetName() ~= "item_tome_of_knowledge"	
+				and GetItemCost(bot:GetItemInSlot(lessValItem):GetName()) < GetItemCost(bot:GetItemInSlot(itemSlot):GetName()) 
+			then
+				bot:ActionImmediate_SwapItems( itemSlot, lessValItem );
+			end
+		end
+		local tom = bot:FindItemSlot('item_tome_of_knowledge');
+		if DotaTime() > 10*60 and tom ~= -1 and bot:GetItemSlotType(tom) == ITEM_SLOT_TYPE_BACKPACK then
+			local lessValItem = items.GetMainInvLessValItemSlot(bot);
+			if lessValItem ~= -1 then
+				bot:ActionImmediate_SwapItems( tom, lessValItem );
+			end
+		end
+		lastBootSlotCheck = DotaTime();
+	end
 	
 	if GetGameMode() == GAMEMODE_1V1MID and bot:GetAssignedLane() ~= LANE_MID then
 		return BOT_MODE_DESIRE_ABSOLUTE;
@@ -203,7 +231,7 @@ function GetDesire()
 				stack = bot:GetModifierStackCount(modIdx);
 			end
 			local nStack = cAbility:GetSpecialValueInt("max_skeleton_charges");
-			if ( stack == nStack ) 
+			if ( stack >= nStack ) 
 			then
 				local npcTarget = bot:GetTarget()
 				if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, 320)

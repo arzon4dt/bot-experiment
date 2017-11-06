@@ -1,5 +1,29 @@
 ItemModule = {}
 
+ItemModule['earlyGameItem'] = {
+	 "item_tango_single",
+	 "item_clarity",
+	 "item_faerie_fire",
+	 "item_tango",  
+	 "item_flask", 
+	 "item_infused_raindrop",
+	 "item_quelling_blade", 
+	 "item_stout_shield", 
+	 "item_magic_wand",
+	 "item_bottle",  
+	 "item_ring_of_aquila", 
+	 "item_dust",
+	 "item_ward_observer",
+	 "item_tpscroll"
+}
+
+ItemModule['earlyBoots'] = {  
+	"item_phase_boots", 
+	"item_power_treads", 
+	"item_tranquil_boots", 
+	"item_arcane_boots"  
+}
+
 ItemModule["basic_items"] = {    
 	"item_aegis";
 	"item_courier";
@@ -271,5 +295,105 @@ ItemModule["item_nullifier"] = { "item_helm_of_iron_will"; "item_relic" }
 ItemModule["item_trident"] = { "item_robe"; "item_staff_of_wizardry"; "item_recipe_trident" }
 
 
+--Normalize some item names 
+function ItemModule.NormItemName(item_name)
+	if item_name == "item_power_treads_agi" or  item_name == "item_power_treads_str" or  item_name == "item_power_treads_int" then
+		return 'item_power_treads';
+	elseif item_name == 'item_shadow_blade' then
+		return 'item_invis_sword';
+	elseif item_name == 'item_diffusal_blade_1' then
+		return 'item_diffusal_blade';	
+	end
+	return item_name;
+end
+
+--Check if hero have the current itemToBuy in main inventory
+function ItemModule.IsItemInHero(item_name)
+	local bot = GetBot();
+	item_name = ItemModule.NormItemName(item_name);
+	local slot = bot:FindItemSlot(item_name);
+	local slotType = bot:GetItemSlotType(slot);
+	return slotType == ITEM_SLOT_TYPE_MAIN or slotType == ITEM_SLOT_TYPE_BACKPACK;
+end
+
+--Get basic item recursively from ItemUtility data
+function ItemModule.GetBasicItems( ... )
+    local basicItemTable = {}
+    for i,v in pairs(...) do
+        if ItemModule[v] ~= nil and ItemModule.IsItemInHero(v) == false then
+            for _,w in pairs(ItemModule.GetBasicItems(ItemModule[v])) do
+				basicItemTable[#basicItemTable+1] = w;
+            end
+        elseif ItemModule[v] == nil and ItemModule.IsItemInHero(v) == false then
+			basicItemTable[#basicItemTable+1] = v;
+        end
+    end
+    return basicItemTable
+end
+
+function ItemModule.GetEmptyInventoryAmount(bot)
+	local amount = 0;
+	for i=0,8 do	
+		local item = bot:GetItemInSlot(i);
+		if item == nil then
+			amount = amount + 1;
+		end
+	end
+	return amount;
+end
+
+function ItemModule.RemoveItem(tTable, item_name)
+	local temp = {};
+	for i=1, #tTable do
+		if tTable[i] ~= item_name then
+			temp[#temp+1] = tTable[i];
+		end
+	end
+	return temp;
+end
+
+function ItemModule.GetItemCharges(bot, item_name)
+	local charges = 0;
+	for i = 0, 15 do
+		local item = bot:GetItemInSlot(i);
+		if item ~= nil and item:GetName() == item_name then
+			charges = charges + item:GetCurrentCharges();
+		end
+	end
+	return charges;
+end
+
+function ItemModule.HasItem(bot, item_name)
+	return bot:FindItemSlot(item_name) >= 0;
+end
+
+function ItemModule.UpdateBuyBootStatus(bot)
+	local bootsSlot = bot:FindItemSlot('item_boots');
+	if bootsSlot == - 1 then
+		for i=1,#ItemModule['earlyBoots'] do
+		    bootsSlot = bot:FindItemSlot(ItemModule['earlyBoots'][i]);
+			if bootsSlot >= 0 then
+				break;
+			end
+		end
+	end
+	return bootsSlot >= 0;
+end
+
+function ItemModule.GetMainInvLessValItemSlot(bot)
+	local minPrice = 10000;
+	local minSlot = -1;
+	for i=0,5,1 do
+		local item = bot:GetItemInSlot(i);
+		if  item ~= nil and item:GetName() ~= "item_aegis" then
+			local cost = GetItemCost(item:GetName()); 
+			if  cost < minPrice then
+				minPrice = cost;
+				minSlot = i;
+			end
+		end
+	end
+	return minSlot;
+end
 
 return ItemModule

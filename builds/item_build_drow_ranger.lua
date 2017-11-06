@@ -14,9 +14,9 @@ X["items"] = {
 	"item_dragon_lance",
 	"item_manta",
 	"item_black_king_bar",
+	"item_hurricane_pike",
 	"item_silver_edge",
-	"item_butterfly",
-	"item_hurricane_pike"
+	"item_butterfly"
 };			
 
 X["skills"] = IBUtil.GetBuildPattern(

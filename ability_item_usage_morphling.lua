@@ -229,7 +229,7 @@ function ConsiderFireblast2()
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) 
-			    and nStun > nMinStun and mutil.IsDisabled(true, npcTarget) == false ) 
+			    and nStun > nMinStun and mutil.IsDisabled(true, npcEnemy) == false ) 
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 			end

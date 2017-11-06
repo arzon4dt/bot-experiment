@@ -294,7 +294,7 @@ function ConsiderFlare()
 	end
 
 	local npcTarget = npcBot:GetTarget();
-	if ( npcTarget ~= nil  )
+	if ( npcTarget ~= nil and npcTarget:IsHero() and npcTarget:CanBeSeen() )
 	then
 		if ( npcTarget:GetActualIncomingDamage( nDamage, DAMAGE_TYPE_MAGICAL  ) > npcTarget:GetHealth() )
 		then
@@ -309,13 +309,11 @@ function ConsiderFlare()
 		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
 		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
 	then
-		local npcTarget = npcBot:GetTarget();
-
-		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
+		if ( npcTarget ~= nil and npcTarget:IsHero() and npcTarget:CanBeSeen() ) 
 		then
 			local distance = GetUnitToUnitDistance(npcTarget, npcBot);
-			--return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint + ( distance / speed ) );
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( nCastPoint + ( distance / speed ) );
+			--return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 		end
 	end
 	-- harassing

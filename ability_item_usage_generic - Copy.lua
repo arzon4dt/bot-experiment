@@ -1,18 +1,15 @@
-local BotsInit = require( "game/botsinit" );
-local MyModule = BotsInit.CreateGeneric();
-
-local bot = GetBot();
-
-if  ( bot:GetUnitName() == 'npc_dota_hero_monkey_king' and DotaTime() < -60 and bot:GetLocation() ~= Vector(0.000000, 0.000000, 0.000000) )
-    or bot:IsInvulnerable() or bot:IsHero() == false or bot:IsIllusion()
-then
+if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot():GetUnitName(), "hero") or  GetBot():IsIllusion() then
 	return;
 end
 
+local BotsInit = require( "game/botsinit" );
+local MyModule = BotsInit.CreateGeneric();
+
 local build = "NOT IMPLEMENTED";
 
-if bot:IsHero() then
-	build = require(GetScriptDirectory() .. "/builds/item_build_" .. string.gsub(GetBot():GetUnitName(), "npc_dota_hero_", ""));
+--if not GetBot():IsNull() and not GetBot():IsIllusion() and string.find(GetBot():GetUnitName(), "hero") then	
+if string.find(GetBot():GetUnitName(), "hero") and build == "NOT IMPLEMENTED" then
+	build = require(GetScriptDirectory() .. "/builds/item_build_" .. string.gsub(GetBot():GetUnitName(), "npc_dota_hero_", ""))
 end
 
 if build == "NOT IMPLEMENTED" then 
@@ -24,95 +21,166 @@ local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 local utils = require(GetScriptDirectory() ..  "/util")
 local eUtils = require(GetScriptDirectory() ..  "/EnemyUtility")
 
+local BotAbilityPriority = build["skills"];
 local IdleTime = 0;
 local AllowedIddle = 15;
+local npcBot = GetBot();
 local TimeDeath = nil;
 local count = 1;
 local humanInTeam = nil;
 
---clone skill build to bot.abilities in reverse order 
---plus overcome the usage of the same memory address problem for bot.abilities in same heroes game which result in bot failed to level up correctly 
-bot.abilities = {};
-for i=1, math.ceil(#build['skills']/2) do
-	bot.abilities[i] = build['skills'][#build['skills']-i+1]; 
-	bot.abilities[#build['skills']-i+1] = build['skills'][i];
-end
+local testMode = true;
+local chatInstalled = false;
 
---prevent dota_bot_reload_script for breaking skill build
-local first_ability = bot:GetAbilityByName(bot.abilities[#bot.abilities]);
-if first_ability ~= nil and first_ability:GetLevel() > 0 then
-	for i=#bot.abilities, #bot.abilities-bot:GetLevel()+1, -1 do
-		bot.abilities[i] = nil;
-	end
-end
+npcBot.lastPlayerChat = nil
 
---Remove "-1" value
-local function RemoveMinusOne(tableSkill)
-	local temp = {};
-	for i=1, #bot.abilities do
-		if bot.abilities[i] ~= "-1" then
-			temp[#temp+1] = bot.abilities[i];
+function EventChatCallback(nPID, sText, bTeamOnly)
+	for i,id in pairs(GetTeamPlayers(GetTeam())) do
+		if IsPlayerBot(id) then
+			local member = GetTeamMember(i);
+			if member ~= nil and member.ChatEvent ~= nil then
+				member.ChatEvent(nPID, sText, bTeamOnly);
+			end
 		end
 	end
-	return temp;
 end
 
-bot.abilities = RemoveMinusOne(bot.abilities);
+local function TestChatCallBack(nPID, sText, bTeamOnly)
+	print("GetBot() value => "..tostring(GetBot()))
+	if npcBot.lastPlayerChat == nil then
+		npcBot.lastPlayerChat = {
+			['pid'] = nPID;
+			['text'] = sText;
+			['team_only'] = bTeamOnly;
+		}
+	else
+		npcBot:ActionImmediate_Chat("Relax mate, I haven't done the first command!", true);
+		print(npcBot:GetUnitName().." Chat : Relax mate, I haven't done the first command!, true")
+	end
+end
 
 function AbilityLevelUpThink()  
 
-	if GetGameState() ~= GAME_STATE_PRE_GAME and GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS 
-	then
+	if GetGameMode() == GAMEMODE_1V1MID and testMode then
+		return;
+	end
+	
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() then
 		return;
 	end
 
-	if DotaTime() < 15 then
-		bot.theRole = role.GetCurrentSuitableRole(bot, bot:GetUnitName());	
-	end	
+	--[[if GetGameState() == GAME_STATE_GAME_IN_PROGRESS and not chatInstalled then 
+		chatInstalled = true;
+		InstallChatCallback(function (attr) EventChatCallback(attr.player_id, attr.string, attr.team_only); end);
+	end]]--
 	
-	if bot:IsChanneling() then
-		bot:Action_ClearActions( false ) 
+	--npcBot.ChatEvent = TestChatCallBack
+	
+	--[[if npcBot.lastPlayerChat ~= nil then
+		print(npcBot:GetUnitName().." => {"..tostring(npcBot.lastPlayerChat.pid)..","..npcBot.lastPlayerChat.text..","..tostring(npcBot.lastPlayerChat.team_only).."}")
+		npcBot.lastPlayerChat = nil;
+	end]]--
+	
+	if DotaTime() < 15 then
+		npcBot.theRole = role.GetCurrentSuitableRole(npcBot, npcBot:GetUnitName());	
+	end
+	
+	--[[if DotaTime() > 20 and DotaTime() < 20.5 then
+		print(npcBot:GetUnitName().." have role :"..npcBot.theRole);
+	end]]--
+	
+	if npcBot:IsChanneling() then
+		npcBot:Action_ClearActions( false ) 
 		return
 	end
+	
+	--[[if mutil.IsSlowed(npcBot) then
+		print(npcBot:GetUnitName().." is slowed");
+	end]]--
 	
 	UnImplementedItemUsage()
 	UseGlyph()
 	
-	local botLoc = bot:GetLocation();
-	if bot:IsAlive() and bot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and not IsLocationPassable(botLoc) then
-		if bot.stuckLoc == nil then
-			bot.stuckLoc = botLoc
-			bot.stuckTime = DotaTime();
-		elseif bot.stuckLoc ~= botLoc then
-			bot.stuckLoc = botLoc
-			bot.stuckTime = DotaTime();
+	local botLoc = npcBot:GetLocation();
+	if npcBot:IsAlive() and npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and not IsLocationPassable(botLoc) then
+		if npcBot.stuckLoc == nil then
+			npcBot.stuckLoc = botLoc
+			npcBot.stuckTime = DotaTime();
+		elseif npcBot.stuckLoc ~= botLoc then
+			npcBot.stuckLoc = botLoc
+			npcBot.stuckTime = DotaTime();
 		end
 	else	
-		bot.stuckTime = nil;
-		bot.stuckLoc = nil;
+		npcBot.stuckTime = nil;
+		npcBot.stuckLoc = nil;
 	end
 	
-	if bot:GetAbilityPoints() > 0 then
-		local lastIdx = #bot.abilities;
-		local ability = bot:GetAbilityByName(bot.abilities[lastIdx]);
-		if ability ~= nil and ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() then
-			if bot:GetUnitName() == "npc_dota_hero_troll_warlord" and bot.abilities[lastIdx] == "troll_warlord_whirling_axes_ranged" and ability:IsHidden() then
-				bot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
-			elseif bot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" and bot.abilities[lastIdx] == "keeper_of_the_light_illuminate" and bot:HasScepter() then
-				local ability_alt = bot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
-				if ability_alt:IsHidden() then
-					return;
-				else
-					bot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
-				end			
-			elseif ability:IsHidden() then
-				return;	
-			else
-				bot:ActionImmediate_LevelAbility(bot.abilities[lastIdx]);
-			end	
-			bot.abilities[lastIdx] = nil;
+	if GetGameMode() == GAMEMODE_MO then
+	
+		if npcBot:GetLevel() > 25 or (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
+			return;
 		end
-	end
+		
+		if npcBot:GetAbilityPoints() > 0 then
+			if BotAbilityPriority[count] ~= "-1" then
+				local sNextAbility = npcBot:GetAbilityByName(BotAbilityPriority[count]);
+				if sNextAbility ~= nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel() then
+					if npcBot:GetUnitName() == "npc_dota_hero_troll_warlord" and BotAbilityPriority[count] == "troll_warlord_whirling_axes_ranged" and sNextAbility:IsHidden() 
+					then
+						npcBot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
+					elseif npcBot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" and BotAbilityPriority[count] == "keeper_of_the_light_illuminate" and npcBot:HasScepter() then
+						local ability = npcBot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
+						if not ability:IsHidden() then
+							npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
+						else
+							return;
+						end			
+					elseif sNextAbility:IsHidden() then
+						return;	
+					else
+						npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[count])
+					end
+					count = count + 1;
+				end
+			else
+				count = count + 1;
+			end
+		end
+		
+	else
+	
+		if npcBot:GetAbilityPoints() < 1 or #BotAbilityPriority == 0 or  (GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS) then
+			return;
+		end
+	
+		if BotAbilityPriority[1] ~= "-1" 
+		then
+			local sNextAbility = npcBot:GetAbilityByName(BotAbilityPriority[1])
+			if ( sNextAbility ~= nil and sNextAbility:CanAbilityBeUpgraded() and sNextAbility:GetLevel() < sNextAbility:GetMaxLevel() ) 
+			then
+				if npcBot:GetUnitName() == "npc_dota_hero_troll_warlord" and BotAbilityPriority[count] == "troll_warlord_whirling_axes_ranged" and sNextAbility:IsHidden() 
+				then
+					npcBot:ActionImmediate_LevelAbility("troll_warlord_whirling_axes_melee");
+				elseif npcBot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" and BotAbilityPriority[count] == "keeper_of_the_light_illuminate" and npcBot:HasScepter() 
+				then
+					local ability = npcBot:GetAbilityByName("keeper_of_the_light_spirit_form_illuminate");
+					if not ability:IsHidden() then
+						npcBot:ActionImmediate_LevelAbility("keeper_of_the_light_spirit_form_illuminate");
+					else
+						return;
+					end			
+				elseif sNextAbility:IsHidden() then
+					return;	
+				else
+					npcBot:ActionImmediate_LevelAbility(BotAbilityPriority[1])
+				end
+				table.remove( BotAbilityPriority, 1 )
+			end	
+		else
+			table.remove( BotAbilityPriority, 1 )
+		end	
+	
+	end	
 	
 end
 
@@ -146,15 +214,15 @@ function GetRemainingRespawnTime()
 	if TimeDeath == nil then
 		return 0;
 	else
-		return bot:GetRespawnTime() - ( DotaTime() - TimeDeath );
+		return npcBot:GetRespawnTime() - ( DotaTime() - TimeDeath );
 	end
 end
 
 function IsMeepoClone()
-	if bot:GetUnitName() == "npc_dota_hero_meepo" and bot:GetLevel() > 1 
+	if npcBot:GetUnitName() == "npc_dota_hero_meepo" and npcBot:GetLevel() > 1 
 	then
 		for i=0, 5 do
-			local item = bot:GetItemInSlot(i);
+			local item = npcBot:GetItemInSlot(i);
 			if item ~= nil and not ( string.find(item:GetName(),"boots") or string.find(item:GetName(),"treads") )  
 			then
 				return false;
@@ -167,23 +235,23 @@ end
 
 function BuybackUsageThink() 
 	
-	if bot:IsInvulnerable() or not bot:IsHero() or bot:IsIllusion() or IsMeepoClone() then
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() or IsMeepoClone() then
 		return;
 	end
 	
-	if bot:IsAlive() and TimeDeath ~= nil then
+	if npcBot:IsAlive() and TimeDeath ~= nil then
 		TimeDeath = nil;
 	end
 	
-	if not bot:HasBuyback() then
+	if not npcBot:HasBuyback() then
 		return;
 	end
 
-	if not bot:IsAlive() then
+	if not npcBot:IsAlive() then
 		if TimeDeath == nil then
 			TimeDeath = DotaTime();
 		end
-		--print(bot:GetUnitName()..":"..tostring(bot:GetRespawnTime()).."><"..tostring(RespawnTime))
+		--print(npcBot:GetUnitName()..":"..tostring(npcBot:GetRespawnTime()).."><"..tostring(RespawnTime))
 	end
 	
 	local RespawnTime = GetRemainingRespawnTime();
@@ -198,7 +266,7 @@ function BuybackUsageThink()
 	then
 		local nEnemies = GetNumEnemyNearby(ancient);
 		if  nEnemies > 0 and nEnemies >= GetNumOfAliveHeroes(GetTeam()) then		
-			bot:ActionImmediate_Buyback();
+			npcBot:ActionImmediate_Buyback();
 			return;
 		end	
 	end
@@ -206,7 +274,7 @@ function BuybackUsageThink()
 end
 
 --[[function ItemUsageThink()
-	--print(bot:GetUnitName().."item usage")
+	--print(npcBot:GetUnitName().."item usage")
 	if GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
 		return;
 	end
@@ -237,12 +305,12 @@ end
 
 local courierTime = -90;
 local cState = -1;
-bot.SShopUser = false;
+npcBot.SShopUser = false;
 local returnTime = -90;
 local apiAvailable = false;
 function CourierUsageThink()
 
-	if GetGameMode() == 23 or bot:IsInvulnerable() or not bot:IsHero() or bot:IsIllusion() or bot:HasModifier("modifier_arc_warden_tempest_double") or GetNumCouriers() == 0 then
+	if npcBot:IsInvulnerable() or not npcBot:IsHero() or npcBot:IsIllusion() or npcBot:HasModifier("modifier_arc_warden_tempest_double") or GetNumCouriers() == 0 then
 		return;
 	end
 	
@@ -261,12 +329,12 @@ function CourierUsageThink()
 		if IsTargetedByUnit(npcCourier) then
 			if burst:IsFullyCastable() and apiAvailable == true 
 			then
-				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_BURST );
+				npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_BURST );
 				return
 			elseif DotaTime() > returnTime + 7.0
 			       --and not burst:IsFullyCastable() and not npcCourier:HasModifier('modifier_courier_shield') 
 			then
-				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+				npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
 				returnTime = DotaTime();
 				return
 			end
@@ -274,7 +342,7 @@ function CourierUsageThink()
 	else	
 		if IsTargetedByUnit(npcCourier) then
 			if DotaTime() - returnTime > 7.0 then
-				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+				npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
 				returnTime = DotaTime();
 				return
 			end
@@ -290,11 +358,11 @@ function CourierUsageThink()
 		npcCourier.latestUser = nil;
 	end
 	
-	if bot.SShopUser and ( not bot:IsAlive() or bot:GetActiveMode() == BOT_MODE_SECRET_SHOP or not bot.SecretShop  ) then
-		--bot:ActionImmediate_Chat( "Releasing the courier to anticipate secret shop stuck", true );
+	if npcBot.SShopUser and ( not npcBot:IsAlive() or npcBot:GetActiveMode() == BOT_MODE_SECRET_SHOP or not npcBot.SecretShop  ) then
+		--npcBot:ActionImmediate_Chat( "Releasing the courier to anticipate secret shop stuck", true );
 		npcCourier.latestUser = "temp";
-		bot.SShopUser = false;
-		bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+		npcBot.SShopUser = false;
+		npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
 		return
 	end
 	
@@ -306,7 +374,7 @@ function CourierUsageThink()
 		
 		--RETURN COURIER TO BASE WHEN IDLE 
 		if cState == COURIER_STATE_IDLE then
-			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+			npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
 			return
 		end
 		
@@ -330,32 +398,31 @@ function CourierUsageThink()
 		end
 		
 		--MAKE COURIER GOES TO SECRET SHOP
-		if  bot:IsAlive() and bot.SecretShop and npcCourier:DistanceFromFountain() < 7000 and DotaTime() > courierTime + 1.0 then
-			--bot:ActionImmediate_Chat( "Using Courier for secret shop.", true );
-			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_SECRET_SHOP )
-			npcCourier.latestUser = bot;
-			bot.SShopUser = true;
-			UpdateSShopUserStatus(bot);
+		if  npcBot:IsAlive() and npcBot.SecretShop and npcCourier:DistanceFromFountain() < 7000 and DotaTime() > courierTime + 1.0 then
+			--npcBot:ActionImmediate_Chat( "Using Courier for secret shop.", true );
+			npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_SECRET_SHOP )
+			npcCourier.latestUser = npcBot;
+			npcBot.SShopUser = true;
+			UpdateSShopUserStatus(npcBot);
 			courierTime = DotaTime();
 			return
 		end
 		
 		--TRANSFER ITEM IN COURIER
-		if bot:IsAlive() and bot:GetCourierValue( ) > 0 and IsTheClosestToCourier(bot, npcCourier)
-		   and ( npcCourier:DistanceFromFountain() < 7000 or GetUnitToUnitDistance(bot, npcCourier) < 1300 ) and DotaTime() > courierTime + 1.0
+		if npcBot:IsAlive() and IsTheClosestToCourier(npcBot, npcCourier) and npcCourier:DistanceFromFountain() < 7000 and DotaTime() > courierTime + 1.0
 		then
-			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TRANSFER_ITEMS )
-			npcCourier.latestUser = bot;
+			npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TRANSFER_ITEMS )
+			npcCourier.latestUser = npcBot;
 			courierTime = DotaTime();
 			return
 		end
 		
 		--RETURN STASH ITEM WHEN DEATH
-		if  not bot:IsAlive() and cState == COURIER_STATE_DELIVERING_ITEMS  
-			and bot:GetCourierValue( ) > 0 and DotaTime() > courierTime + 1.0
+		if  not npcBot:IsAlive() and cState == COURIER_STATE_DELIVERING_ITEMS  
+			and npcBot:GetCourierValue( ) > 0 and DotaTime() > courierTime + 1.0
 		then
-			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
-			npcCourier.latestUser = bot;
+			npcBot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
+			npcCourier.latestUser = npcBot;
 			courierTime = DotaTime();
 			return
 		end
@@ -379,7 +446,7 @@ function IsHumanHaveItemInCourier()
 	return false;
 end
 
-function IsTheClosestToCourier(bot, npcCourier)
+function IsTheClosestToCourier(npcBot, npcCourier)
 	local numPlayer =  GetTeamPlayers(GetTeam());
 	local closest = nil;
 	local closestD = 100000;
@@ -395,7 +462,7 @@ function IsTheClosestToCourier(bot, npcCourier)
 			end
 		end
 	end
-	return closest ~= nil and closest == bot
+	return closest ~= nil and closest == npcBot
 end
 
 function GetCourierEmptySlot(courier)
@@ -510,11 +577,11 @@ function GetItemCount(unit, item_name)
 end
 
 function CanSwitchPTStat(pt)
-	if bot:GetPrimaryAttribute() == ATTRIBUTE_STRENGTH and pt:GetPowerTreadsStat() ~= ATTRIBUTE_STRENGTH then
+	if npcBot:GetPrimaryAttribute() == ATTRIBUTE_STRENGTH and pt:GetPowerTreadsStat() ~= ATTRIBUTE_STRENGTH then
 		return true;
-	elseif bot:GetPrimaryAttribute() == ATTRIBUTE_AGILITY  and pt:GetPowerTreadsStat() ~= ATTRIBUTE_INTELLECT then
+	elseif npcBot:GetPrimaryAttribute() == ATTRIBUTE_AGILITY  and pt:GetPowerTreadsStat() ~= ATTRIBUTE_INTELLECT then
 		return true;
-	elseif bot:GetPrimaryAttribute() == ATTRIBUTE_INTELLECT and pt:GetPowerTreadsStat() ~= ATTRIBUTE_AGILITY then
+	elseif npcBot:GetPrimaryAttribute() == ATTRIBUTE_INTELLECT and pt:GetPowerTreadsStat() ~= ATTRIBUTE_AGILITY then
 		return true;
 	end 
 	return false;
@@ -523,26 +590,26 @@ end
 local giveTime = -90;
 function UnImplementedItemUsage()
 
-	if bot:IsChanneling() or bot:IsUsingAbility() or bot:IsInvisible() or bot:IsMuted( ) then
+	if npcBot:IsChanneling() or npcBot:IsUsingAbility() or npcBot:IsInvisible() or npcBot:IsMuted( ) then
 		return;
 	end
 	
-	local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
-	local npcTarget = bot:GetTarget();
-	local mode = bot:GetActiveMode();
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
+	local npcTarget = npcBot:GetTarget();
+	local mode = npcBot:GetActiveMode();
 	
 	local pt = IsItemAvailable("item_power_treads");
 	if pt~=nil and pt:IsFullyCastable() then
-		if mode == BOT_MODE_RETREAT and pt:GetPowerTreadsStat() ~= ATTRIBUTE_STRENGTH and bot:WasRecentlyDamagedByAnyHero(5.0) then
-			bot:Action_UseAbility(pt);
+		if mode == BOT_MODE_RETREAT and pt:GetPowerTreadsStat() ~= ATTRIBUTE_STRENGTH and npcBot:WasRecentlyDamagedByAnyHero(5.0) then
+			npcBot:Action_UseAbility(pt);
 			return
 		elseif mode == BOT_MODE_ATTACK and CanSwitchPTStat(pt) then
-			bot:Action_UseAbility(pt);
+			npcBot:Action_UseAbility(pt);
 			return
 		else
-			local enemies = bot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
+			local enemies = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
 			if #enemies == 0 and  mode ~= BOT_MODE_RETREAT and CanSwitchPTStat(pt)  then
-				bot:Action_UseAbility(pt);
+				npcBot:Action_UseAbility(pt);
 				return
 			end
 		end
@@ -551,10 +618,10 @@ function UnImplementedItemUsage()
 	local bas = IsItemAvailable("item_ring_of_basilius");
 	if bas~=nil and bas:IsFullyCastable() then
 		if mode == BOT_MODE_LANING and not bas:GetToggleState() then
-			bot:Action_UseAbility(bas);
+			npcBot:Action_UseAbility(bas);
 			return
 		elseif mode ~= BOT_MODE_LANING and bas:GetToggleState() then
-			bot:Action_UseAbility(bas);
+			npcBot:Action_UseAbility(bas);
 			return
 		end
 	end
@@ -562,10 +629,10 @@ function UnImplementedItemUsage()
 	local aq = IsItemAvailable("item_ring_of_aquila");
 	if aq~=nil and aq:IsFullyCastable() then
 		if mode == BOT_MODE_LANING and not aq:GetToggleState() then
-			bot:Action_UseAbility(aq);
+			npcBot:Action_UseAbility(aq);
 			return
 		elseif mode ~= BOT_MODE_LANING and aq:GetToggleState() then
-			bot:Action_UseAbility(aq);
+			npcBot:Action_UseAbility(aq);
 			return
 		end
 	end
@@ -573,27 +640,27 @@ function UnImplementedItemUsage()
 	local itg=IsItemAvailable("item_tango");
 	if itg~=nil and itg:IsFullyCastable() then
 		local tCharge = itg:GetCurrentCharges()
-		if DotaTime() > -80 and DotaTime() < 0 and bot:DistanceFromFountain() == 0 and role.CanBeSupport(bot:GetUnitName())
-		   and bot:GetAssignedLane() ~= LANE_MID and tCharge > 2 and DotaTime() > giveTime + 2.0 then
+		if DotaTime() > -80 and DotaTime() < 0 and npcBot:DistanceFromFountain() == 0 and role.CanBeSupport(npcBot:GetUnitName())
+		   and npcBot:GetAssignedLane() ~= LANE_MID and tCharge > 2 and DotaTime() > giveTime + 2.0 then
 			local target = GiveToMidLaner()
 			if target ~= nil then
-				bot:ActionImmediate_Chat(string.gsub(bot:GetUnitName(),"npc_dota_hero_","")..
+				npcBot:ActionImmediate_Chat(string.gsub(npcBot:GetUnitName(),"npc_dota_hero_","")..
 						" giving tango to "..
 						string.gsub(target:GetUnitName(),"npc_dota_hero_","")
 						, false);
-				bot:Action_UseAbilityOnEntity(itg, target);
+				npcBot:Action_UseAbilityOnEntity(itg, target);
 				giveTime = DotaTime();
 				return;
 			end
-		elseif bot:GetActiveMode() == BOT_MODE_LANING and role.CanBeSupport(bot:GetUnitName()) and tCharge > 1 and DotaTime() > giveTime + 2.0 then
-			local allies = bot:GetNearbyHeroes(1200, false, BOT_MODE_NONE)
+		elseif npcBot:GetActiveMode() == BOT_MODE_LANING and role.CanBeSupport(npcBot:GetUnitName()) and tCharge > 1 and DotaTime() > giveTime + 2.0 then
+			local allies = npcBot:GetNearbyHeroes(1200, false, BOT_MODE_NONE)
 			for _,ally in pairs(allies)
 			do
 				local tangoSlot = ally:FindItemSlot('item_tango');
-				if ally:GetUnitName() ~= bot:GetUnitName() and not ally:IsIllusion() 
+				if ally:GetUnitName() ~= npcBot:GetUnitName() and not ally:IsIllusion() 
 				   and tangoSlot == -1 and GetItemCount(ally, "item_tango_single") == 0 
 				then
-					bot:Action_UseAbilityOnEntity(itg, ally);
+					npcBot:Action_UseAbilityOnEntity(itg, ally);
 					giveTime = DotaTime();
 					return
 				end
@@ -603,47 +670,47 @@ function UnImplementedItemUsage()
 	
 	local bdg=IsItemAvailable("item_blink");
 	if bdg~=nil and bdg:IsFullyCastable() then
-		if mutil.IsStuck(bot)
+		if mutil.IsStuck(npcBot)
 		then
-			bot:ActionImmediate_Chat("I'm using blink while stuck.", true);
-			bot:Action_UseAbilityOnLocation(bdg, bot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), 1100 ));
+			npcBot:ActionImmediate_Chat("I'm using blink while stuck.", true);
+			npcBot:Action_UseAbilityOnLocation(bdg, npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), 1100 ));
 			return;
 		end
 	end
 	
 	local fst=IsItemAvailable("item_force_staff");
 	if fst~=nil and fst:IsFullyCastable() then
-		if mutil.IsStuck(bot)
+		if mutil.IsStuck(npcBot)
 		then
-			bot:ActionImmediate_Chat("I'm using force staff while stuck.", true);
-			bot:Action_UseAbilityOnEntity(fst, bot);
+			npcBot:ActionImmediate_Chat("I'm using force staff while stuck.", true);
+			npcBot:Action_UseAbilityOnEntity(fst, npcBot);
 			return;
 		end
 	end
 	
 	local tpt=IsItemAvailable("item_tpscroll");
 	if tpt~=nil and tpt:IsFullyCastable() then
-		if mutil.IsStuck(bot)
+		if mutil.IsStuck(npcBot)
 		then
-			bot:ActionImmediate_Chat("I'm using tp while stuck.", true);
-			bot:Action_UseAbilityOnLocation(tpt, GetAncient(GetTeam()):GetLocation());
+			npcBot:ActionImmediate_Chat("I'm using tp while stuck.", true);
+			npcBot:Action_UseAbilityOnLocation(tpt, GetAncient(GetTeam()):GetLocation());
 			return;
 		end
 	end
 	
 	local its=IsItemAvailable("item_tango_single");
-	if its~=nil and its:IsFullyCastable() and bot:DistanceFromFountain() > 1300 then
+	if its~=nil and its:IsFullyCastable() and npcBot:DistanceFromFountain() > 1300 then
 		if DotaTime() > 10*60 
 		then
-			local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
-			local trees = bot:GetNearbyTrees(1300);
+			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
+			local trees = npcBot:GetNearbyTrees(1300);
 			
-			if trees[1] ~= nil and #tableNearbyEnemyHeroes == 0 and GetHeightLevel(bot:GetLocation()) == GetHeightLevel(GetTreeLocation(trees[1])) then
-				if bot:GetUnitName() == 'npc_dota_hero_lion' then
-					print("Bot"..tostring( GetHeightLevel(bot:GetLocation())))
+			if trees[1] ~= nil and #tableNearbyEnemyHeroes == 0 and GetHeightLevel(npcBot:GetLocation()) == GetHeightLevel(GetTreeLocation(trees[1])) then
+				if npcBot:GetUnitName() == 'npc_dota_hero_lion' then
+					print("Bot"..tostring( GetHeightLevel(npcBot:GetLocation())))
 					print("Tree"..tostring( GetHeightLevel(GetTreeLocation(trees[1]))))
 				end
-				bot:Action_UseAbilityOnTree(its, trees[1]);
+				npcBot:Action_UseAbilityOnTree(its, trees[1]);
 				return;
 			end
 		end
@@ -651,9 +718,9 @@ function UnImplementedItemUsage()
 	
 	local irt=IsItemAvailable("item_iron_talon");
 	if irt~=nil and irt:IsFullyCastable() then
-		if bot:GetActiveMode() == BOT_MODE_FARM 
+		if npcBot:GetActiveMode() == BOT_MODE_FARM 
 		then
-			local neutrals = bot:GetNearbyNeutralCreeps(500);
+			local neutrals = npcBot:GetNearbyNeutralCreeps(500);
 			local maxHP = 0;
 			local target = nil;
 			for _,c in pairs(neutrals) do
@@ -664,7 +731,7 @@ function UnImplementedItemUsage()
 				end
 			end
 			if target ~= nil then
-				bot:Action_UseAbilityOnEntity(irt, target);
+				npcBot:Action_UseAbilityOnEntity(irt, target);
 				return;
 			end
 		end
@@ -672,36 +739,36 @@ function UnImplementedItemUsage()
 	
 	local msh=IsItemAvailable("item_moon_shard");
 	if msh~=nil and msh:IsFullyCastable() then
-		if not bot:HasModifier("modifier_item_moon_shard_consumed")
+		if not npcBot:HasModifier("modifier_item_moon_shard_consumed")
 		then
-			bot:Action_UseAbilityOnEntity(msh, bot);
+			npcBot:Action_UseAbilityOnEntity(msh, npcBot);
 			return;
 		end
 	end
 	
 	local mg=IsItemAvailable("item_enchanted_mango");
 	if mg~=nil and mg:IsFullyCastable() then
-		if ( bot:GetMana()/bot:GetMaxMana() < 0.25 and mode == BOT_MODE_ATTACK ) or bot:GetMana()/bot:GetMaxMana() < 0.15
+		if npcBot:GetMaxMana() - npcBot:GetMana() > 150 
 		then
-			bot:Action_UseAbility(mg);
+			npcBot:Action_UseAbility(mg);
 			return;
 		end
 	end
 	
 	local tok=IsItemAvailable("item_tome_of_knowledge");
 	if tok~=nil and tok:IsFullyCastable() then
-		bot:Action_UseAbility(tok);
+		npcBot:Action_UseAbility(tok);
 		return;
 	end
 	
 	local ff=IsItemAvailable("item_faerie_fire");
 	if ff~=nil and ff:IsFullyCastable() then
 		if ( mode == BOT_MODE_RETREAT and 
-			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
-			bot:DistanceFromFountain() > 0 and
-			( bot:GetHealth() / bot:GetMaxHealth() ) < 0.15 ) or DotaTime() > 10*60
+			npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
+			npcBot:DistanceFromFountain() > 0 and
+			( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.15 ) or DotaTime() > 10*60
 		then
-			bot:Action_UseAbility(ff);
+			npcBot:Action_UseAbility(ff);
 			return;
 		end
 	end
@@ -709,10 +776,10 @@ function UnImplementedItemUsage()
 	local bst=IsItemAvailable("item_bloodstone");
 	if bst ~= nil and bst:IsFullyCastable() then
 		if  mode == BOT_MODE_RETREAT and 
-			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
-			( bot:GetHealth() / bot:GetMaxHealth() ) < 0.10 - ( bot:GetLevel() / 500 )
+			npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
+			( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.10 - ( npcBot:GetLevel() / 500 )
 		then
-			bot:Action_UseAbilityOnLocation(bst, bot:GetLocation());
+			npcBot:Action_UseAbilityOnLocation(bst, npcBot:GetLocation());
 			return;
 		end
 	end
@@ -727,7 +794,7 @@ function UnImplementedItemUsage()
 			 mode == BOT_MODE_GANK or
 			 mode == BOT_MODE_DEFEND_ALLY )
 		then
-			bot:Action_UseAbility(pb);
+			npcBot:Action_UseAbility(pb);
 			return;
 		end	
 	end
@@ -741,10 +808,10 @@ function UnImplementedItemUsage()
 			 mode == BOT_MODE_GANK or
 			 mode == BOT_MODE_DEFEND_ALLY )
 		then
-			local npcTarget = bot:GetTarget();
-			if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastOnTarget(npcTarget) and not npcTarget:IsSilenced() and GetUnitToUnitDistance(npcTarget, bot) < 900 )
+			local npcTarget = npcBot:GetTarget();
+			if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastOnTarget(npcTarget) and not npcTarget:IsSilenced() and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
 			then
-			    bot:Action_UseAbilityOnEntity(bt,npcTarget);
+			    npcBot:Action_UseAbilityOnEntity(bt,npcTarget);
 				return
 			end
 		end
@@ -762,22 +829,22 @@ function UnImplementedItemUsage()
 			if ( npcTarget ~= nil and npcTarget:IsHero() 
 			   and not npcTarget:HasModifier('modifier_item_solar_crest_armor_reduction') 
 			   and not npcTarget:IsMagicImmune()
-			   and GetUnitToUnitDistance(npcTarget, bot) < 900 )
+			   and GetUnitToUnitDistance(npcTarget, npcBot) < 900 )
 			then
-			    bot:Action_UseAbilityOnEntity(sc, npcTarget);
+			    npcBot:Action_UseAbilityOnEntity(sc, npcTarget);
 				return
 			end
 		end
 	end
 	
 	if sc~=nil and sc:IsFullyCastable() then
-		local Allies=bot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
+		local Allies=npcBot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
 		for _,Ally in pairs(Allies) do
-			if Ally:GetUnitName() ~= bot:GetUnitName() and not Ally:HasModifier('modifier_item_solar_crest_armor_reduction') and
+			if Ally:GetUnitName() ~= npcBot:GetUnitName() and not Ally:HasModifier('modifier_item_solar_crest_armor_reduction') and
 			   ( ( Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and CanCastOnTarget(Ally) ) or 
 				 ( IsDisabled(Ally) and CanCastOnTarget(Ally) ) )
 			then
-				bot:Action_UseAbilityOnEntity(sc,Ally);
+				npcBot:Action_UseAbilityOnEntity(sc,Ally);
 				return;
 			end
 		end
@@ -785,29 +852,29 @@ function UnImplementedItemUsage()
 	
 	local se=IsItemAvailable("item_silver_edge");
     if se ~= nil and se:IsFullyCastable() then
-		if mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
+		if mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
 			tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0
 		then
-			bot:Action_UseAbility(se);
+			npcBot:Action_UseAbility(se);
 			return;
 	    end
 		if ( mode == BOT_MODE_ROAM or
 			 mode == BOT_MODE_TEAM_ROAM or
 			 mode == BOT_MODE_GANK )
 		then
-			if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, bot) > 1000 and  GetUnitToUnitDistance(npcTarget, bot) < 2500 )
+			if ( npcTarget ~= nil and npcTarget:IsHero() and GetUnitToUnitDistance(npcTarget, npcBot) > 1000 and  GetUnitToUnitDistance(npcTarget, npcBot) < 2500 )
 			then
-			    bot:Action_UseAbility(se);
+			    npcBot:Action_UseAbility(se);
 				return;
 			end
 		end
 	end
 	
 	local hood=IsItemAvailable("item_hood_of_defiance");
-    if hood~=nil and hood:IsFullyCastable() and bot:GetHealth()/bot:GetMaxHealth()<0.8 and not bot:HasModifier('modifier_item_pipe_barrier')
+    if hood~=nil and hood:IsFullyCastable() and npcBot:GetHealth()/npcBot:GetMaxHealth()<0.8 and not npcBot:HasModifier('modifier_item_pipe_barrier')
 	then
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 then
-			bot:Action_UseAbility(hood);
+			npcBot:Action_UseAbility(hood);
 			return;
 		end
 	end
@@ -815,25 +882,25 @@ function UnImplementedItemUsage()
 	local lotus=IsItemAvailable("item_lotus_orb");
 	if lotus~=nil and lotus:IsFullyCastable() 
 	then
-		if  not bot:HasModifier('modifier_item_lotus_orb_active') 
-			and not bot:IsMagicImmune()
-			and ( bot:IsSilenced() or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and bot:GetHealth()/bot:GetMaxHealth() < 0.35 + (0.05*#tableNearbyEnemyHeroes) ) )
+		if  not npcBot:HasModifier('modifier_item_lotus_orb_active') 
+			and not npcBot:IsMagicImmune()
+			and ( npcBot:IsSilenced() or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.35 + (0.05*#tableNearbyEnemyHeroes) ) )
 	    then
-			bot:Action_UseAbilityOnEntity(lotus,bot);
+			npcBot:Action_UseAbilityOnEntity(lotus,npcBot);
 			return;
 		end
 	end
 	
 	if lotus~=nil and lotus:IsFullyCastable() 
 	then
-		local Allies=bot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
+		local Allies=npcBot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
 		for _,Ally in pairs(Allies) do
 			if  not Ally:HasModifier('modifier_item_lotus_orb_active') 
 				and not Ally:IsMagicImmune()
 			    and (( Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 )  or 
 				IsDisabled(Ally))
 			then
-				bot:Action_UseAbilityOnEntity(lotus,Ally);
+				npcBot:Action_UseAbilityOnEntity(lotus,Ally);
 				return;
 			end
 		end
@@ -842,19 +909,19 @@ function UnImplementedItemUsage()
 	local hurricanpike = IsItemAvailable("item_hurricane_pike");
 	if hurricanpike~=nil and hurricanpike:IsFullyCastable() 
 	then
-		if ( mode == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
+		if ( mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		then
 			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 			do
-				if ( GetUnitToUnitDistance( npcEnemy, bot ) < 400 and CanCastOnTarget(npcEnemy) )
+				if ( GetUnitToUnitDistance( npcEnemy, npcBot ) < 400 and CanCastOnTarget(npcEnemy) )
 				then
-					bot:Action_UseAbilityOnEntity(hurricanpike,npcEnemy);
+					npcBot:Action_UseAbilityOnEntity(hurricanpike,npcEnemy);
 					return
 				end
 			end
-			if bot:IsFacingLocation(GetAncient(GetTeam()):GetLocation(),10) and bot:DistanceFromFountain() > 0 
+			if npcBot:IsFacingLocation(GetAncient(GetTeam()):GetLocation(),10) and npcBot:DistanceFromFountain() > 0 
 			then
-				bot:Action_UseAbilityOnEntity(hurricanpike,bot);
+				npcBot:Action_UseAbilityOnEntity(hurricanpike,npcBot);
 				return;
 			end
 		end
@@ -862,23 +929,23 @@ function UnImplementedItemUsage()
 	
 	local glimer=IsItemAvailable("item_glimmer_cape");
 	if glimer~=nil and glimer:IsFullyCastable() then
-		if  not bot:HasModifier('modifier_item_glimmer_cape') 
-			and not bot:IsMagicImmune()
-			and ( bot:IsSilenced() or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and bot:GetHealth()/bot:GetMaxHealth() < 0.35 + (0.05*#tableNearbyEnemyHeroes) ) )
+		if  not npcBot:HasModifier('modifier_item_glimmer_cape') 
+			and not npcBot:IsMagicImmune()
+			and ( npcBot:IsSilenced() or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.35 + (0.05*#tableNearbyEnemyHeroes) ) )
 	    then	
-			bot:Action_UseAbilityOnEntity(glimer,bot);
+			npcBot:Action_UseAbilityOnEntity(glimer,npcBot);
 			return;
 		end
 	end
 	
 	if glimer~=nil and glimer:IsFullyCastable() then
-		local Allies=bot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
+		local Allies=npcBot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
 		for _,Ally in pairs(Allies) do
 			if not Ally:HasModifier('modifier_item_glimmer_cape') 
 			   and not Ally:IsMagicImmune()
 			   and (( Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) or IsDisabled(Ally))
 			then
-				bot:Action_UseAbilityOnEntity(glimer,Ally);
+				npcBot:Action_UseAbilityOnEntity(glimer,Ally);
 				return;
 			end
 		end
@@ -889,7 +956,7 @@ function UnImplementedItemUsage()
 	then
 		local maxHP = 0;
 		local NCreep = nil;
-		local tableNearbyCreeps = bot:GetNearbyCreeps( 1000, true );
+		local tableNearbyCreeps = npcBot:GetNearbyCreeps( 1000, true );
 		if #tableNearbyCreeps >= 2 
 		then
 			for _,creeps in pairs(tableNearbyCreeps)
@@ -903,18 +970,18 @@ function UnImplementedItemUsage()
 			end
 		end
 		if NCreep ~= nil then
-			bot:Action_UseAbilityOnEntity(hod,NCreep);
+			npcBot:Action_UseAbilityOnEntity(hod,NCreep);
 			return
 		end	
 	end
 	
 	local guardian=IsItemAvailable("item_guardian_greaves");
 	if guardian~=nil and guardian:IsFullyCastable() then
-		local Allies=bot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
+		local Allies=npcBot:GetNearbyHeroes(1000,false,BOT_MODE_NONE);
 		for _,Ally in pairs(Allies) do
 			if  Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes~=nil and #tableNearbyEnemyHeroes > 0 
 			then
-				bot:Action_UseAbility(guardian);
+				npcBot:Action_UseAbility(guardian);
 				return;
 			end
 		end
@@ -922,11 +989,11 @@ function UnImplementedItemUsage()
 	
 	local satanic=IsItemAvailable("item_satanic");
 	if satanic~=nil and satanic:IsFullyCastable() then
-		if  bot:GetHealth()/bot:GetMaxHealth() < 0.50 and 
+		if  npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.50 and 
 			tableNearbyEnemyHeroes~=nil and #tableNearbyEnemyHeroes > 0 and 
-			bot:GetActiveMode() == BOT_MODE_ATTACK
+			npcBot:GetActiveMode() == BOT_MODE_ATTACK
 		then
-			bot:Action_UseAbility(satanic);
+			npcBot:Action_UseAbility(satanic);
 			return;
 		end
 	end
@@ -934,33 +1001,33 @@ function UnImplementedItemUsage()
 	local cyclone=IsItemAvailable("item_cyclone");
 	if cyclone~=nil and cyclone:IsFullyCastable() then
 		if npcTarget ~= nil and ( npcTarget:HasModifier('modifier_teleporting') or npcTarget:HasModifier('modifier_abaddon_borrowed_time') ) 
-		   and CanCastOnTarget(npcTarget) and GetUnitToUnitDistance(bot, npcTarget) < 775
+		   and CanCastOnTarget(npcTarget) and GetUnitToUnitDistance(npcBot, npcTarget) < 775
 		then
-			bot:Action_UseAbilityOnEntity(cyclone, npcTarget);
+			npcBot:Action_UseAbilityOnEntity(cyclone, npcTarget);
 			return;
 		end
 	end
 	
 	local metham=IsItemAvailable("item_meteor_hammer");
 	if metham~=nil and metham:IsFullyCastable() then
-		if mutil.IsPushing(bot) then
-			local towers = bot:GetNearbyTowers(800, true);
+		if mutil.IsPushing(npcBot) then
+			local towers = npcBot:GetNearbyTowers(800, true);
 			if #towers > 0 and towers[1] ~= nil and  towers[1]:IsInvulnerable() == false then 
-				bot:Action_UseAbilityOnLocation(metham, towers[1]:GetLocation());
+				npcBot:Action_UseAbilityOnLocation(metham, towers[1]:GetLocation());
 				return;
 			end
-		elseif  mutil.IsInTeamFight(bot, 1200) then
-			local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), 600, 300, 0, 0 );
+		elseif  mutil.IsInTeamFight(npcBot, 1200) then
+			local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), 600, 300, 0, 0 );
 			if ( locationAoE.count >= 2 ) 
 			then
-				bot:Action_UseAbilityOnLocation(metham, locationAoE.targetloc);
+				npcBot:Action_UseAbilityOnLocation(metham, locationAoE.targetloc);
 				return;
 			end
-		elseif mutil.IsGoingOnSomeone(bot) then
-			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, 800) 
+		elseif mutil.IsGoingOnSomeone(npcBot) then
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 800) 
 			   and mutil.IsDisabled(true, npcTarget) == true	
 			then
-				bot:Action_UseAbilityOnLocation(metham, npcTarget:GetLocation());
+				npcBot:Action_UseAbilityOnLocation(metham, npcTarget:GetLocation());
 				return;
 			end
 		end
@@ -969,21 +1036,21 @@ function UnImplementedItemUsage()
 	local sv=IsItemAvailable("item_spirit_vessel");
 	if sv~=nil and sv:IsFullyCastable() and sv:GetCurrentCharges() > 0
 	then
-		if mutil.IsGoingOnSomeone(bot)
+		if mutil.IsGoingOnSomeone(npcBot)
 		then
-			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, 900) 
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 900) 
 			   and npcTarget:HasModifier("modifier_item_spirit_vessel_damage") == false and npcTarget:GetHealth()/npcTarget:GetMaxHealth() < 0.65
 			then
-			    bot:Action_UseAbilityOnEntity(sv, npcTarget);
+			    npcBot:Action_UseAbilityOnEntity(sv, npcTarget);
 				return;
 			end
 		else
-			local Allies=bot:GetNearbyHeroes(1150,false,BOT_MODE_NONE);
+			local Allies=npcBot:GetNearbyHeroes(1150,false,BOT_MODE_NONE);
 			for _,Ally in pairs(Allies) do
 				if Ally:HasModifier('modifier_item_spirit_vessel_heal') == false and mutil.CanCastOnNonMagicImmune(Ally) and
 				   Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and #tableNearbyEnemyHeroes == 0 and Ally:WasRecentlyDamagedByAnyHero(2.5) == false   
 				then
-					bot:Action_UseAbilityOnEntity(sv,Ally);
+					npcBot:Action_UseAbilityOnEntity(sv,Ally);
 					return;
 				end
 			end
@@ -993,12 +1060,12 @@ function UnImplementedItemUsage()
 	local null=IsItemAvailable("item_nullifier");
 	if null~=nil and null:IsFullyCastable() 
 	then
-		if mutil.IsGoingOnSomeone(bot)
+		if mutil.IsGoingOnSomeone(npcBot)
 		then	
-			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, 800) 
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 800) 
 			   and npcTarget:HasModifier("modifier_item_nullifier_mute") == false 
 			then
-			    bot:Action_UseAbilityOnEntity(null, npcTarget);
+			    npcBot:Action_UseAbilityOnEntity(null, npcTarget);
 				return;
 			end
 		end
@@ -1007,16 +1074,12 @@ function UnImplementedItemUsage()
 end
 
 function IsItemAvailable(item_name)
-    --[[for i = 0, 5 do
-        local item = bot:GetItemInSlot(i);
+    for i = 0, 5 do
+        local item = npcBot:GetItemInSlot(i);
 		if item~=nil and item:GetName() == item_name then
 			return item;
 		end
-    end]]--
-	local slot = bot:FindItemSlot(item_name);
-	if bot:GetItemSlotType(slot) == ITEM_SLOT_TYPE_MAIN then
-		return bot:GetItemInSlot(slot);
-	end
+    end
     return nil;
 end
 
@@ -1053,7 +1116,7 @@ function UseGlyph()
 		local tower = GetTower(GetTeam(), t);
 		if  tower ~= nil and tower:GetHealth() > 0 and tower:GetHealth()/tower:GetMaxHealth() < 0.15 and tower:GetAttackTarget() ~=  nil
 		then
-			bot:ActionImmediate_Glyph( )
+			npcBot:ActionImmediate_Glyph( )
 			return
 		end
 	end
@@ -1070,7 +1133,7 @@ function UseGlyph()
 		local barrack = GetBarracks(GetTeam(), b);
 		if barrack ~= nil and barrack:GetHealth() > 0 and barrack:GetHealth()/barrack:GetMaxHealth() < 0.5 and IsTargetedByEnemy(barrack)
 		then
-			bot:ActionImmediate_Glyph( )
+			npcBot:ActionImmediate_Glyph( )
 			return
 		end
 	end
@@ -1078,10 +1141,29 @@ function UseGlyph()
 	local Ancient = GetAncient(GetTeam())
 	if Ancient ~= nil and Ancient:GetHealth() > 0 and Ancient:GetHealth()/Ancient:GetMaxHealth() < 0.5 and IsTargetedByEnemy(Ancient)
 	then
-		bot:ActionImmediate_Glyph( )
+		npcBot:ActionImmediate_Glyph( )
 		return
 	end
 
+end
+
+--[[this chunk prevents dota_bot_reload_scripts from breaking your 
+    item/skill builds.  Note the script doesn't account for 
+    consumables. ]]
+
+-- check skill build vs current level
+local npcBot = GetBot()
+local ability_name = BotAbilityPriority[1];
+local ability = GetBot():GetAbilityByName(ability_name);
+--print(ability:GetLevel())
+if(ability ~= nil and ability:GetLevel() > 0) then
+    --print (#BotAbilityPriority .. " > " .. "25 - " .. npcBot:GetLevel())
+    if #BotAbilityPriority > (25 - npcBot:GetLevel()) then
+        --print(#BotAbilityPriority - (25 - npcBot:GetLevel()))
+        for i=1, (#BotAbilityPriority - (25 - npcBot:GetLevel())) do
+            table.remove(BotAbilityPriority, 1)
+        end
+    end
 end
 
 return MyModule;

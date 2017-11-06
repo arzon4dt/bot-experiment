@@ -1593,4 +1593,75 @@ function X.CountValue(hero, role)
 	return highest;
 end
 
+X['invisEnemyExist'] = false;
+local globalEnemyCheck = false;
+local lastCheck = -90;
+
+function X.UpdateInvisEnemyStatus(bot)
+	if globalEnemyCheck == false then
+		local players = GetTeamPlayers(GetOpposingTeam());
+		for i=1,#players do
+			if X["invisHeroes"][GetSelectedHeroName(players[i])] == 1 
+			then
+				X['invisEnemyExist'] = true;
+				break;
+			end
+		end
+		globalEnemyCheck = true;	
+	elseif globalEnemyCheck == true and DotaTime() > 10*60 and DotaTime() > lastCheck + 3.0 then
+		local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+		if #enemies > 0 then
+			for i=1,#enemies
+			do
+				if enemies[i] ~= nil and enemies[i]:IsNull() == false and enemies[i]:CanBeSeen() == true then
+					local SASlot = enemies[i]:FindItemSlot("item_shadow_amulet");
+					local GCSlot = enemies[i]:FindItemSlot("item_glimmer_cape");
+					local ISSlot = enemies[i]:FindItemSlot("item_invis_sword");
+					local SESlot = enemies[i]:FindItemSlot("item_silver_edge");
+					if  SASlot >= 0 or GCSlot >= 0 or ISSlot >= 0 or SESlot >= 0 
+					then
+						X['invisEnemyExist'] = true;
+						break;
+					end	
+				end
+			end
+		end
+		lastCheck = DotaTime();
+	end	
+end
+
+function X.IsTheLowestLevel(bot)
+	local lowestLevel = 26;
+	local lowestID = -1;
+	local players = GetTeamPlayers(GetTeam());
+	for i=1,#players do
+		if GetHeroLevel(players[i]) < lowestLevel then
+			lowestLevel = GetHeroLevel(players[i]);
+			lowestID = players[i];
+		end
+	end
+	return bot:GetPlayerID() == lowestID;
+end
+
+X['supportExist'] = nil;
+function X.UpdateSupportStatus(bot)
+	if bot.theRole == "support" then
+		X['supportExist'] = true;
+	end
+	local TeamMember = GetTeamPlayers(GetTeam())
+	for i = 1, #TeamMember do	
+		local ally = GetTeamMember(i);
+		if ally == nil or ally:IsAlive() == false or ally.theRole == nil then
+			X['supportExist'] = nil;
+		end
+	end
+	for i = 1, #TeamMember do
+		local ally = GetTeamMember(i);
+		if ally ~= nil and ally:IsHero() and ally.theRole == "support"  then
+			X['supportExist'] = true;
+		end
+	end
+	return false;
+end
+
 return X
