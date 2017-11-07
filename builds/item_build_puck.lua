@@ -10,10 +10,11 @@ X["items"] = {
 	"item_power_treads_int",
 	"item_veil_of_discord",
 	"item_blink",
-	"item_dagon_1",
+	--"item_dagon",
 	"item_cyclone",
-	"item_sheepstick",
-	"item_dagon_5"
+	"item_ultimate_scepter",
+	"item_sheepstick"
+	--"item_dagon_5"
 };			
 
 X["skills"] = IBUtil.GetBuildPattern(

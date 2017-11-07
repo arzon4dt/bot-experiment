@@ -134,9 +134,9 @@ ItemModule["item_lesser_crit"] = { "item_broadsword"; "item_blades_of_attack"; "
 
 ItemModule["item_greater_crit"] = { "item_lesser_crit"; "item_demon_edge"; "item_recipe_greater_crit" }
 
-ItemModule["item_dagon_1"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon" }
+ItemModule["item_dagon"] = { "item_null_talisman"; "item_staff_of_wizardry"; "item_recipe_dagon" }
 
-ItemModule["item_dagon_2"] = { "item_dagon_1"; "item_recipe_dagon" }
+ItemModule["item_dagon_2"] = { "item_dagon"; "item_recipe_dagon" }
 
 ItemModule["item_dagon_3"] = { "item_dagon_2"; "item_recipe_dagon" }
 
@@ -184,7 +184,7 @@ ItemModule["item_hurricane_pike"] = { "item_dragon_lance"; "item_force_staff"; "
 
 ItemModule["item_iron_talon"] = { "item_quelling_blade"; "item_ring_of_protection"; "item_recipe_iron_talon" }
 
-ItemModule["item_linken_sphere"] = { "item_pers"; "item_ultimate_orb"; "item_recipe_sphere" }
+ItemModule["item_sphere"] = { "item_pers"; "item_ultimate_orb"; "item_recipe_sphere" }
 
 ItemModule["item_lotus_orb"] = { "item_pers"; "item_platemail"; "item_energy_booster" }
 
@@ -206,9 +206,9 @@ ItemModule["item_monkey_king_bar"] = { "item_hyperstone"; "item_javelin"; "item_
 
 ItemModule["item_moon_shard"] = { "item_hyperstone"; "item_hyperstone"}
 
-ItemModule["item_necronomicon_1"] = { "item_sobi_mask"; "item_sobi_mask"; "item_belt_of_strength"; "item_recipe_necronomicon" }
+ItemModule["item_necronomicon"] = { "item_sobi_mask"; "item_sobi_mask"; "item_belt_of_strength"; "item_recipe_necronomicon" }
 
-ItemModule["item_necronomicon_2"] = { "item_necronomicon_1"; "item_recipe_necronomicon" }
+ItemModule["item_necronomicon_2"] = { "item_necronomicon"; "item_recipe_necronomicon" }
 
 ItemModule["item_necronomicon_3"] = { "item_necronomicon_2"; "item_recipe_necronomicon" }
 	    

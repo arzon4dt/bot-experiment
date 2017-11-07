@@ -12,7 +12,7 @@ X["items"] = {
 	"item_trident",
 	"item_orchid",
 	"item_shivas_guard",
-	"item_linken_sphere",
+	"item_sphere",
 	--"item_ultimate_scepter",
 	"item_bloodthorn"
 };			

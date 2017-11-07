@@ -10,7 +10,7 @@ X["items"] = {
 	"item_magic_wand",
 	"item_power_treads_agi",
 	"item_ring_of_aquila",
-	"item_linken_sphere",
+	"item_sphere",
 	"item_ethereal_blade",
 	"item_manta",
 	"item_butterfly",

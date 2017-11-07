@@ -5,10 +5,10 @@ local hero_roles = role["hero_roles"];
 local requiredHeroes = {
 	--[['npc_dota_hero_terrorblade',
 	'npc_dota_hero_rubick';]]--
-	'npc_dota_hero_dark_willow',
-	'npc_dota_hero_lich',
-	'npc_dota_hero_ogre_magi',
-	'npc_dota_hero_pangolier',
+	'npc_dota_hero_morphling',
+	'npc_dota_hero_queenofpain',
+	'npc_dota_hero_windrunner',
+	'npc_dota_hero_beastmaster',
 };
 
 local UnImplementedHeroes = {

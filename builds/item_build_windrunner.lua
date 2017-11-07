@@ -11,7 +11,7 @@ X["items"] = {
 	"item_force_staff",
 	"item_orchid",
 	"item_ultimate_scepter",
-	"item_linken_sphere",
+	"item_sphere",
 	"item_bloodthorn",
 	"item_hurricane_pike",
 	"item_monkey_king_bar"
