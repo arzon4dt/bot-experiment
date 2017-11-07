@@ -11,7 +11,7 @@ X["items"] = {
 	"item_ring_of_aquila",
 	"item_sange_and_yasha",
 	"item_black_king_bar",
-	"item_eye_of_skadi",
+	"item_skadi",
 	"item_butterfly",
 	"item_monkey_king_bar"
 };			

@@ -45,8 +45,8 @@ function AbilityUsageThink()
 	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "rubick_telekinesis" ) end
 	if abilityTL == nil then abilityTL = npcBot:GetAbilityByName( "rubick_telekinesis_land" ) end
 	if abilityIG == nil then abilityIG = npcBot:GetAbilityByName( "rubick_fade_bolt" ) end
-	ability4 = npcBot:GetAbilityInSlot(4) 
-	ability5 = npcBot:GetAbilityInSlot(5)
+	ability4 = npcBot:GetAbilityInSlot(3) 
+	ability5 = npcBot:GetAbilityInSlot(4)
 	
 	-- Consider using each ability
 	castFBDesire, castFBTarget = ConsiderFireblast();

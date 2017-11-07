@@ -327,7 +327,6 @@ function ItemPurchaseThink()
 	if GetItemStockCount( "item_tome_of_knowledge" ) > 0 and bot:GetGold() >= GetItemCost( "item_tome_of_knowledge" ) and 
 	   items.GetEmptyInventoryAmount(bot) >= 4 and role.IsTheLowestLevel(bot)
 	then
-		bot:ActionImmediate_Chat(unitName.." buy tom", true);
 		bot:ActionImmediate_PurchaseItem("item_tome_of_knowledge"); 
 	end	
 	  

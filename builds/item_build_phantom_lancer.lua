@@ -9,9 +9,9 @@ X["items"] = {
 	"item_magic_wand",
 	"item_power_treads_agi",
 	"item_ring_of_aquila",
-	"item_diffusal_blade_1",
+	"item_diffusal_blade",
 	"item_manta",
-	"item_eye_of_skadi",
+	"item_skadi",
 	"item_ultimate_scepter",
 	"item_heart"
 };			

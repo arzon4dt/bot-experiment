@@ -225,7 +225,8 @@ function ConsiderPounce()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 600) and npcBot:IsFacingUnit(npcTarget, 10)
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 500) == false and mutil.IsInRange(npcTarget, npcBot, 1000) == true 
+		   and npcBot:IsFacingUnit(npcTarget, 5)
 		then
 			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 			if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes <= 2 )

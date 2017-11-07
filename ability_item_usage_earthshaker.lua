@@ -81,7 +81,7 @@ local function ConsiderR()
 end
 
 function AbilityUsageThinks()
-	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,3}) end
+	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,5}) end
 	if mutils.CantUseAbility(bot) then return end
 	castQDesire, QLoc  = ConsiderQ();
 	castWDesire        = ConsiderW();

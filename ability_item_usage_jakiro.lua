@@ -29,7 +29,7 @@ local castRDesire = 0;
 
 function AbilityUsageThink()
 	
-	if #abilities == 0 then abilities = abUtils.InitiateAbilities(bot, {0,1,2,3}) end
+	if #abilities == 0 then abilities = abUtils.InitiateAbilities(bot, {0,1,2,5}) end
 	
 	if abUtils.CantUseAbility(bot) then return end
 	

@@ -26,23 +26,11 @@ end
 
 function X.GetSlotPattern(nPattern)
 	if nPattern == 1 then
-		return {0,1,2,3};
+		return {0,1,2,5};
 	elseif  nPattern == 2 then
-		return {0,1,3,4};
+		return {0,1,3,5};	
 	elseif  nPattern == 3 then
-		return {0,1,2,5};	
-	elseif  nPattern == 4 then
-		return {0,1,2,4};
-	elseif  nPattern == 5 then
-		return {0,1,2};	
-	elseif  nPattern == 6 then
-		return {0,1,4,7};		
-	elseif  nPattern == 7 then
-		return {0,3,4,5};	
-	elseif  nPattern == 8 then
-		return {0,2,3,6};	
-	elseif  nPattern == 9 then
-		return {0,1,3,8};		
+		return {0,3,4,5};		
 	end
 end
 

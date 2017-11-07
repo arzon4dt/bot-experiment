@@ -96,7 +96,7 @@ function GetDesire()
 		targetLoc, targetDist = wardUtils.GetClosestSpot(bot, AvailableSpots);
 		if targetLoc ~= nil and DotaTime() > wardCastTime + 1.0 then
 			bot.ward = true;
-			return RemapValClamped(targetDist, 6000, 0, BOT_MODE_DESIRE_MODERATE, BOT_MODE_DESIRE_HIGH);
+			return RemapValClamped(targetDist, 6000, 0, BOT_MODE_DESIRE_MODERATE, BOT_MODE_DESIRE_VERYHIGH);
 		end
 	else
 		bot.lastPlayerChat = nil;

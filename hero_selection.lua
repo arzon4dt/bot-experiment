@@ -4,18 +4,11 @@ local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
 	--[['npc_dota_hero_terrorblade',
-	'npc_dota_hero_ember_spirit',
-	'npc_dota_hero_earth_spirit',
-	'npc_dota_hero_phoenix',]]--
-	--'npc_dota_hero_spirit_breaker';
-	'npc_dota_hero_earthshaker',
-	--'npc_dota_hero_pangolier',
-	--'npc_dota_hero_dark_willow',
-	--[['npc_dota_hero_visage';
-	'npc_dota_hero_lone_druid';
-	'npc_dota_hero_doom_bringer';
-	'npc_dota_hero_chen';
 	'npc_dota_hero_rubick';]]--
+	'npc_dota_hero_dark_willow',
+	'npc_dota_hero_lich',
+	'npc_dota_hero_ogre_magi',
+	'npc_dota_hero_pangolier',
 };
 
 local UnImplementedHeroes = {
@@ -177,8 +170,7 @@ local CMTestMode = false;
 local UnavailableHeroes = {
 	"npc_dota_hero_techies",
 	'npc_dota_hero_pangolier',
-	'npc_dota_hero_dark_willow',
-	'npc_dota_hero_morphling'
+	'npc_dota_hero_dark_willow'
 }
 local HeroLanes = {
 	[1] = LANE_MID,

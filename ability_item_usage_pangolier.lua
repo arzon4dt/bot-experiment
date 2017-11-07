@@ -27,7 +27,7 @@ local castR2Desire = 0;
 
 function AbilityUsageThink()
 	
-	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,3,4,}) end
+	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,5,6}) end
 	
 	if mutils.CantUseAbility(bot) then return end
 	
@@ -42,6 +42,7 @@ function AbilityUsageThink()
 	end
 	
 	if castQDesire > 0 then
+		print(tostring(QLoc))
 		bot:Action_UseAbilityOnLocation(abilities[1], QLoc);		
 		return
 	end
@@ -59,7 +60,7 @@ function AbilityUsageThink()
 end
 
 function ConsiderQ()
-	if not mutils.CanBeCast(abilities[1]) or bot:HasModifier("modifier_pangolier_gyroshell") then
+	if not mutils.CanBeCast(abilities[1]) or bot:HasModifier("modifier_pangolier_gyroshell") or bot:HasModifier('modifier_pangolier_swashbuckle_stunned') then
 		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
@@ -84,17 +85,6 @@ function ConsiderQ()
 		end	
 	end
 	
-	if mutils.IsInTeamFight(bot, 1300)
-	then
-		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
-		if ( locationAoE.count >= 2 ) then
-			local target = mutils.GetVulnerableUnitNearLoc(true, true, nCastRange, nRadius/2, locationAoE.targetloc, bot);
-			if target ~= nil then
-				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
-			end
-		end
-	end
-	
 	if mutils.IsGoingOnSomeone(bot)
 	then
 		local npcTarget = bot:GetTarget();
@@ -103,11 +93,10 @@ function ConsiderQ()
 			local tableNearbyEnemies = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 			local tableNearbyAllies = npcTarget:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 			if #tableNearbyEnemies <= #tableNearbyAllies then
-				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, bot) / 3000) + nCastPoint );
+				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 			end
 		end
 	end
-	
 	return BOT_ACTION_DESIRE_NONE, nil;
 end
 

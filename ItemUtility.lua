@@ -72,6 +72,7 @@ ItemModule["basic_items"] = {
 	"item_quarterstaff";
 	"item_quelling_blade";
 	"item_reaver";
+	"item_refresher_shard";
 	"item_ring_of_health";
 	"item_ring_of_protection";
 	"item_ring_of_regen";
@@ -95,7 +96,7 @@ ItemModule["basic_items"] = {
 	"item_wind_lace"    
 }
 
-ItemModule["item_abyssal_blade"] = { "item_skull_basher"; "item_vanguard"; "item_recipe_abyssal_blade" }
+ItemModule["item_abyssal_blade"] = { "item_basher"; "item_vanguard"; "item_recipe_abyssal_blade" }
 
 ItemModule["item_aether_lens"] = { "item_void_stone"; "item_energy_booster"; "item_recipe_aether_lens" }
 
@@ -145,13 +146,13 @@ ItemModule["item_dagon_5"] = { "item_dagon_4"; "item_recipe_dagon" }
 
 ItemModule["item_desolator"] = { "item_mithril_hammer"; "item_mithril_hammer"; "item_blight_stone" }
 
-ItemModule["item_diffusal_blade_1"] = { "item_blade_of_alacrity"; "item_blade_of_alacrity"; "item_robe"; "item_recipe_diffusal_blade" }
+ItemModule["item_diffusal_blade"] = { "item_blade_of_alacrity"; "item_blade_of_alacrity"; "item_robe"; "item_recipe_diffusal_blade" }
 
-ItemModule["item_diffusal_blade_2"] = { "item_diffusal_blade_1"; "item_recipe_diffusal_blade" }
+ItemModule["item_diffusal_blade_2"] = { "item_diffusal_blade"; "item_recipe_diffusal_blade" }
 
 ItemModule["item_dragon_lance"] = { "item_boots_of_elves"; "item_boots_of_elves"; "item_ogre_axe" }
 
-ItemModule["item_drums_of_endurance"] = { "item_bracer"; "item_wind_lace"; "item_sobi_mask"; "item_recipe_ancient_janggo" }
+ItemModule["item_ancient_janggo"] = { "item_bracer"; "item_wind_lace"; "item_sobi_mask"; "item_recipe_ancient_janggo" }
 
 ItemModule["item_echo_sabre"] = { "item_oblivion_staff"; "item_ogre_axe" }
 
@@ -159,7 +160,7 @@ ItemModule["item_ethereal_blade"] = { "item_ghost"; "item_eagle" }
 
 ItemModule["item_cyclone"] = { "item_wind_lace"; "item_void_stone"; "item_staff_of_wizardry"; "item_recipe_cyclone" }
 
-ItemModule["item_eye_of_skadi"] = { "item_point_booster"; "item_ultimate_orb"; "item_ultimate_orb" }
+ItemModule["item_skadi"] = { "item_point_booster"; "item_ultimate_orb"; "item_ultimate_orb" }
 
 ItemModule["item_force_staff"] = { "item_staff_of_wizardry"; "item_ring_of_health"; "item_recipe_force_staff" }
 
@@ -255,13 +256,13 @@ ItemModule["item_satanic"] = { "item_lifesteal"; "item_reaver"; "item_claymore" 
 
 ItemModule["item_sheepstick"] = { "item_mystic_staff"; "item_ultimate_orb"; "item_void_stone" }
 
-ItemModule["item_shadow_blade"] = { "item_shadow_amulet"; "item_claymore" }
+ItemModule["item_invis_sword"] = { "item_shadow_amulet"; "item_claymore" }
 
 ItemModule["item_shivas_guard"] = { "item_platemail"; "item_mystic_staff"; "item_recipe_shivas_guard" }
 
-ItemModule["item_silver_edge"] = { "item_shadow_blade"; "item_ultimate_orb"; "item_recipe_silver_edge" }
+ItemModule["item_silver_edge"] = { "item_invis_sword"; "item_ultimate_orb"; "item_recipe_silver_edge" }
 
-ItemModule["item_skull_basher"] = { "item_javelin"; "item_belt_of_strength"; "item_recipe_basher" }
+ItemModule["item_basher"] = { "item_javelin"; "item_belt_of_strength"; "item_recipe_basher" }
 
 ItemModule["item_solar_crest"] = { "item_medallion_of_courage"; "item_talisman_of_evasion" }
 
@@ -299,10 +300,12 @@ ItemModule["item_trident"] = { "item_robe"; "item_staff_of_wizardry"; "item_reci
 function ItemModule.NormItemName(item_name)
 	if item_name == "item_power_treads_agi" or  item_name == "item_power_treads_str" or  item_name == "item_power_treads_int" then
 		return 'item_power_treads';
-	elseif item_name == 'item_shadow_blade' then
+	--[[elseif item_name == 'item_shadow_blade' then
 		return 'item_invis_sword';
 	elseif item_name == 'item_diffusal_blade_1' then
 		return 'item_diffusal_blade';	
+	elseif item_name == 'item_eye_of_skadi' then
+		return 'item_skadi';]]--		
 	end
 	return item_name;
 end

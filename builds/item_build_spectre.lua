@@ -3,17 +3,17 @@ X = {}
 local IBUtil = require(GetScriptDirectory() .. "/ItemBuildUtility");
 local npcBot = GetBot();
 local talents = IBUtil.FillTalenTable(npcBot);
-local skills  = IBUtil.FillSkillTable(npcBot, IBUtil.GetSlotPattern(4));
+local skills  = IBUtil.FillSkillTable(npcBot, IBUtil.GetSlotPattern(1));
 
 X["items"] = { 
 	"item_magic_wand",
 	"item_phase_boots",
 	"item_vanguard",
-	"item_blade_mail",
+	"item_diffusal_blade",
 	"item_radiance",
 	"item_manta",
 	"item_abyssal_blade",
-	"item_butterfly",
+	--"item_butterfly",
 	"item_heart"
 };			
 
