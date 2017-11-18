@@ -312,7 +312,7 @@ end
 function ConsiderR()
 	
 	-- Make sure it's castable
-	if ( not abilityR:IsFullyCastable() or not abilityD:IsFullyCastable() ) then 
+	if ( not abilityR:IsFullyCastable() or not abilityD:IsFullyCastable() or npcBot:IsRooted() ) then 
 		return BOT_ACTION_DESIRE_NONE, {};
 	end
 	

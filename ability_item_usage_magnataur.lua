@@ -84,6 +84,7 @@ function ConsiderDecay()
 	local nCastRange = abilityDC:GetCastRange();
 	local nCastPoint = abilityDC:GetCastPoint( );
 	local nDamage = abilityDC:GetSpecialValueInt("shock_damage");
+	local nSpeed = abilityDC:GetSpecialValueInt("shock_speed");
 
 	--------------------------------------
 	-- Mode based usage
@@ -119,7 +120,7 @@ function ConsiderDecay()
 		local npcTarget = npcBot:GetTarget();
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange-200) ) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)/950)+nCastPoint);
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed)+nCastPoint);
 		end
 	end
 --
@@ -180,7 +181,7 @@ end
 function ConsiderTimeWalk()
 
 	-- Make sure it's castable
-	if ( not abilityTW:IsFullyCastable() ) 
+	if ( not abilityTW:IsFullyCastable() or npcBot:IsRooted() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
@@ -188,6 +189,7 @@ function ConsiderTimeWalk()
 	
 	-- Get some of its values
 	local nCastRange = abilityTW:GetSpecialValueInt("range");
+	local nSpeed = abilityTW:GetSpecialValueInt("skewer_speed");
 	local nCastPoint = abilityTW:GetCastPoint( );
 	
 	if mutil.IsStuck(npcBot)
@@ -215,7 +217,7 @@ function ConsiderTimeWalk()
 		local npcTarget = npcBot:GetTarget();
 		if  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange-200) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)+200/950)+nCastPoint);
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation((GetUnitToUnitDistance(npcTarget, npcBot)/nSpeed)+nCastPoint);
 		end
 	end
 	

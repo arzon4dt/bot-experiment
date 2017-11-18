@@ -270,7 +270,7 @@ end
 function ConsiderDecay()
 
 	-- Make sure it's castable
-	if ( not abilityDC:IsFullyCastable() ) 
+	if ( not abilityDC:IsFullyCastable() or npcBot:IsRooted() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

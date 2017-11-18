@@ -32,7 +32,7 @@ local mode = -1;
 function AbilityUsageThink()
 
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced()  ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
 	if abilityDC == nil then abilityDC = npcBot:GetAbilityByName( "terrorblade_reflection" ); end
 	if abilityFG == nil then abilityFG = npcBot:GetAbilityByName( "terrorblade_metamorphosis" ); end

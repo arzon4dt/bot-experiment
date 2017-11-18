@@ -312,11 +312,15 @@ end
 
 --Check if hero have the current itemToBuy in main inventory
 function ItemModule.IsItemInHero(item_name)
-	local bot = GetBot();
-	item_name = ItemModule.NormItemName(item_name);
-	local slot = bot:FindItemSlot(item_name);
-	local slotType = bot:GetItemSlotType(slot);
-	return slotType == ITEM_SLOT_TYPE_MAIN or slotType == ITEM_SLOT_TYPE_BACKPACK;
+	if item_name == 'item_infused_raindrop' then 
+		return false; 
+	else 
+		local bot = GetBot();
+		item_name = ItemModule.NormItemName(item_name);
+		local slot = bot:FindItemSlot(item_name);
+		local slotType = bot:GetItemSlotType(slot);
+		return slotType == ITEM_SLOT_TYPE_MAIN or slotType == ITEM_SLOT_TYPE_BACKPACK;	
+	end
 end
 
 --Get basic item recursively from ItemUtility data

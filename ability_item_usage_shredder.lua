@@ -365,7 +365,7 @@ end
 function ConsiderChakram()
 
 	-- Make sure it's castable
-	if ( not abilityCH:IsFullyCastable() ) 
+	if ( not abilityCH:IsFullyCastable() or abilityCH:IsHidden() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0, 0;
 	end
@@ -429,7 +429,7 @@ end
 function ConsiderChakram2()
 
 	-- Make sure it's castable
-	if ( not npcBot:HasScepter() or not abilityCH2:IsFullyCastable() ) 
+	if ( not npcBot:HasScepter() or not abilityCH2:IsFullyCastable() or abilityCH2:IsHidden() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

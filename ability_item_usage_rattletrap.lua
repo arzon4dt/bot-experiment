@@ -22,7 +22,6 @@ function CourierUsageThink()
 end
 
 local courierTime = 0
-
 ----------------------------------------------------------------------------------------------------
 
 local castbaDesire = 0;
@@ -35,7 +34,7 @@ function AbilityUsageThink()
 	local npcBot = GetBot();
 		
 	-- Check if we're already using an ability
-	if ( npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:IsInvulnerable() ) then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 
 	abilityBA = npcBot:GetAbilityByName( "rattletrap_battery_assault" );
 	abilityCogs = npcBot:GetAbilityByName( "rattletrap_power_cogs" );
@@ -323,7 +322,6 @@ function ConsiderFlare()
 	-- scouting
 
 	-- check rosh
-
 
 	return BOT_ACTION_DESIRE_NONE;
 

@@ -5,10 +5,9 @@ local hero_roles = role["hero_roles"];
 local requiredHeroes = {
 	--[['npc_dota_hero_terrorblade',
 	'npc_dota_hero_rubick';]]--
-	'npc_dota_hero_morphling',
-	'npc_dota_hero_queenofpain',
-	'npc_dota_hero_windrunner',
-	'npc_dota_hero_beastmaster',
+	'npc_dota_hero_tiny',
+	'npc_dota_hero_undying',
+	'npc_dota_hero_earthshaker',
 };
 
 local UnImplementedHeroes = {
@@ -223,7 +222,7 @@ end
 ----------------------------------------------------------------------------------------------------------------------------------------
 local GAMEMODE_TM = 23;
 function Think()
-	if GetGameMode() == GAMEMODE_AP or GetGameMode() == GAMEMODE_TM then
+	if GetGameMode() == GAMEMODE_AP then
 		if GetGameState() == GAME_STATE_HERO_SELECTION then
 			InstallChatCallback(function (attr) SelectHeroChatCallback(attr.player_id, attr.string, attr.team_only); end);
 		end
@@ -237,9 +236,31 @@ function Think()
 		MidOnlyLogic();	
 	elseif GetGameMode() == GAMEMODE_1V1MID then
 		OneVsOneLogic();		
+	elseif GetGameMode() == GAMEMODE_TM then
+		TurboModeLogic();		
 	else 
 		print("GAME MODE NOT SUPPORTED")
 	end
+end
+
+function TurboModeLogic() 
+
+	--print(tostring(GetGameMode()).."=>"..tostring(GetGameState())..":"..tostring(DotaTime( ))..":"..tostring(GetHeroPickState()))
+	if GetHeroPickState() == 55 and GameTime() > 10  then
+		for i,id in pairs(GetTeamPlayers(GetTeam())) 
+		do 
+			if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" 
+			then 
+				if testMode then
+					hero = GetRandomHero() 
+				else
+					hero = PickRightHero(i-1) 
+				end
+				SelectHero(id, hero); 
+				return;
+			end
+		end 
+	end	
 end
 
 local oboselect = false;

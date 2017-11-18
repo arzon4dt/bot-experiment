@@ -136,7 +136,7 @@ end
 function ConsiderFireblast()
 
 	-- Make sure it's castable
-	if ( not abilityFB:IsFullyCastable() ) then 
+	if ( not abilityFB:IsFullyCastable() or npcBot:IsRooted() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 

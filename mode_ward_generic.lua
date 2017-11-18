@@ -37,7 +37,7 @@ function GetDesire()
 
 	--[[local pg = wardUtils.GetHumanPing();
 	if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
-		print(tostring(pg.location));
+		print(tostring(pg.location)..":Vis:"..tostring(IsLocationVisible(pg.location))..":Pas:"..tostring(IsLocationPassable(pg.location)));
 	end]]--
 
 	--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "ward") then

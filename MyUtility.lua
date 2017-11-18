@@ -55,7 +55,9 @@ function U.GetProperCastRange(bIgnore, hUnit, abilityCR)
 	elseif abilityCR + maxAddedRange <= maxGetRange then
 		return abilityCR + maxAddedRange;
 	elseif abilityCR > maxGetRange then
-		return maxAddedRange;
+		return maxGetRange;
+	else
+		return abilityCR;
 	end
 end
 
@@ -461,7 +463,8 @@ function U.IsInTeamFight(npcBot, range)
 end
 
 function U.CanNotUseAbility(npcBot)
-	return npcBot:IsCastingAbility() or npcBot:IsUsingAbility() or npcBot:IsInvulnerable() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:HasModifier("modifier_doom_bringer_doom");
+	return npcBot:IsCastingAbility() or npcBot:IsUsingAbility() or npcBot:IsInvulnerable() 
+	or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:HasModifier("modifier_doom_bringer_doom");
 end
 
 function U.IsGoingOnSomeone(npcBot)

@@ -3,8 +3,25 @@ local MyModule = BotsInit.CreateGeneric();
 
 local bot = GetBot();
 
-if  ( bot:GetUnitName() == 'npc_dota_hero_monkey_king' and DotaTime() < -60 and bot:GetLocation() ~= Vector(0.000000, 0.000000, 0.000000) )
-    or bot:IsInvulnerable() or bot:IsHero() == false or bot:IsIllusion()
+if bot:GetUnitName() == 'npc_dota_hero_monkey_king' then
+	local trueMK = nil;
+	for i, id in pairs(GetTeamPlayers(GetTeam())) do
+		if IsPlayerBot(id) and GetSelectedHeroName(id) == 'npc_dota_hero_monkey_king' then
+			local member = GetTeamMember(i);
+			if member ~= nil then
+				trueMK = member;
+			end
+		end
+	end
+	if trueMK ~= nil and bot ~= trueMK then
+		print("AbilityItemUsage "..tostring(bot).." isn't true MK")
+		return;
+	elseif trueMK == nil or bot == trueMK then
+		print("AbilityItemUsage "..tostring(bot).." is true MK")
+	end
+end
+
+if bot:IsInvulnerable() or bot:IsHero() == false or bot:IsIllusion()
 then
 	return;
 end
@@ -167,7 +184,7 @@ end
 
 function BuybackUsageThink() 
 	
-	if bot:IsInvulnerable() or not bot:IsHero() or bot:IsIllusion() or IsMeepoClone() then
+	if bot:IsInvulnerable() or not bot:IsHero() or bot:IsIllusion() or IsMeepoClone() or role.ShouldBuyBack() == false then
 		return;
 	end
 	
@@ -197,7 +214,8 @@ function BuybackUsageThink()
 	if ancient ~= nil 
 	then
 		local nEnemies = GetNumEnemyNearby(ancient);
-		if  nEnemies > 0 and nEnemies >= GetNumOfAliveHeroes(GetTeam()) then		
+		if  nEnemies > 0 and nEnemies >= GetNumOfAliveHeroes(GetTeam()) then
+			role['lastbbtime'] = DotaTime();
 			bot:ActionImmediate_Buyback();
 			return;
 		end	
@@ -632,17 +650,14 @@ function UnImplementedItemUsage()
 	end
 	
 	local its=IsItemAvailable("item_tango_single");
-	if its~=nil and its:IsFullyCastable() and bot:DistanceFromFountain() > 1300 then
+	if its~=nil and its:IsFullyCastable() and bot:DistanceFromFountain() > 1000 then
 		if DotaTime() > 10*60 
 		then
 			local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
-			local trees = bot:GetNearbyTrees(1300);
-			
-			if trees[1] ~= nil and #tableNearbyEnemyHeroes == 0 and GetHeightLevel(bot:GetLocation()) == GetHeightLevel(GetTreeLocation(trees[1])) then
-				if bot:GetUnitName() == 'npc_dota_hero_lion' then
-					print("Bot"..tostring( GetHeightLevel(bot:GetLocation())))
-					print("Tree"..tostring( GetHeightLevel(GetTreeLocation(trees[1]))))
-				end
+			local trees = bot:GetNearbyTrees(1000);
+			if trees[1] ~= nil  and ( IsLocationVisible(GetTreeLocation(trees[1])) or IsLocationPassable(GetTreeLocation(trees[1])) )
+			   and #tableNearbyEnemyHeroes == 0 
+			then
 				bot:Action_UseAbilityOnTree(its, trees[1]);
 				return;
 			end
@@ -681,8 +696,7 @@ function UnImplementedItemUsage()
 	
 	local mg=IsItemAvailable("item_enchanted_mango");
 	if mg~=nil and mg:IsFullyCastable() then
-		if ( bot:GetMana()/bot:GetMaxMana() < 0.25 and mode == BOT_MODE_ATTACK ) or bot:GetMana()/bot:GetMaxMana() < 0.15
-		then
+		if bot:GetMana()/bot:GetMaxMana() < 0.10 and mode == BOT_MODE_ATTACK then
 			bot:Action_UseAbility(mg);
 			return;
 		end

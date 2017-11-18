@@ -5,7 +5,7 @@ end
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
 local mutils = require(GetScriptDirectory() ..  "/MyUtility")
---local nutils = require(GetScriptDirectory() ..  "/NewUtility")
+local nutils = require(GetScriptDirectory() ..  "/NewUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -22,7 +22,9 @@ local bot = GetBot();
 "Ability1"		"earthshaker_fissure"
 "Ability2"		"earthshaker_enchant_totem"
 "Ability3"		"earthshaker_aftershock"
-"Ability4"		"earthshaker_echo_slam"
+"Ability4"		"generic_hidden"
+"Ability5"		"generic_hidden"
+"Ability6"		"earthshaker_echo_slam"
 ]]--
 local abilities = {};
 
@@ -30,21 +32,46 @@ local castQDesire = 0;
 local castWDesire = 0;
 local castRDesire = 0;
 
+local function IsValidObject(object)
+	return object ~= nil and object:IsNull() == false and object:CanBeSeen() == true;
+end
+
+local function GetUnitCountWithinRadius(tUnits, radius)
+	local count = 0;
+	if tUnits ~= nil and #tUnits > 0 then
+		for i=1,#tUnits do
+			if IsValidObject(tUnits[i]) and GetUnitToUnitDistance(bot, tUnits[i]) <= radius then
+				count = count + 1;
+			end
+		end	
+	end
+	return count;
+end
+
 local function ConsiderQ()
 	if not mutils.CanBeCast(abilities[1]) then
 		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
-	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[1]:GetCastRange());
+	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[1]:GetCastRange()-200);
 	local nCastPoint = abilities[1]:GetCastPoint();
 	local manaCost   = abilities[1]:GetManaCost();
 	local nRadius    = abilities[1]:GetSpecialValueInt( "fissure_radius" );
+	
+	if bot.data.enemies ~= nil and #bot.data.enemies > 0 then
+		for i=1,#bot.data.enemies do
+			if IsValidObject(bot.data.enemies[i]) and GetUnitToUnitDistance(bot, bot.data.enemies[i]) < nCastRange and bot.data.enemies[i]:IsChanneling()
+			then
+				return BOT_ACTION_DESIRE_HIGH, bot.data.enemies[i]:GetLocation();
+			end
+		end
+	end
 	
 	if mutils.IsRetreating(bot)
 	then
 		if bot.data.enemies ~= nil and #bot.data.enemies > 0 then
 			for i=1,#bot.data.enemies do
-				if bot.data.enemies[i] ~= nil and bot.data.enemies[i]:CanBeSeen() and bot:WasRecentlyDamagedByHero(bot.data.enemies[i],2.0) then
+				if IsValidObject(bot.data.enemies[i]) and GetUnitToUnitDistance(bot, bot.data.enemies[i]) < nCastRange then
 					return BOT_ACTION_DESIRE_HIGH, bot.data.enemies[i]:GetLocation();
 				end
 			end
@@ -63,7 +90,7 @@ local function ConsiderQ()
 	if mutils.IsGoingOnSomeone(bot)
 	then
 		local npcTarget = bot:GetTarget();
-		if mutils.IsValidTarget(npcTarget) and mutils.CanCastOnNonMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nCastRange + 200) 
+		if mutils.IsValidTarget(npcTarget) and mutils.CanCastOnNonMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nCastRange) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetExtrapolatedLocation(nCastPoint);
 		end
@@ -73,14 +100,65 @@ local function ConsiderQ()
 end
 
 local function ConsiderW()
+	
+	if not mutils.CanBeCast(abilities[2]) then
+		return BOT_ACTION_DESIRE_NONE;
+	end
+	local nCastRange = 0;
+	if bot:HasScepter() == true then
+		nCastRange = abilities[2]:GetSpecialValueInt("distance_scepter");
+	end
+	local nCastPoint = abilities[2]:GetCastPoint();
+	local manaCost   = abilities[2]:GetManaCost();
+	local nRadius    = abilities[2]:GetSpecialValueInt( "aftershock_range" );
+	
+	if mutils.IsRetreating(bot)
+	then
+		if bot.data.enemies ~= nil and #bot.data.enemies > 0 then
+			for i=1,#bot.data.enemies do
+				if IsValidObject(bot.data.enemies[i]) and GetUnitToUnitDistance(bot, bot.data.enemies[i]) < nRadius then
+					return BOT_ACTION_DESIRE_HIGH;
+				end
+			end
+		end
+	end
+	
+	if nutils.IsInTeamFight(bot) and GetUnitCountWithinRadius(bot.data.enemies, nRadius) >= 2 
+	then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
+
+	if mutils.IsGoingOnSomeone(bot) and bot:HasModifier("modifier_earthshaker_enchant_totem") == false
+	then
+		local npcTarget = bot:GetTarget();
+		if mutils.IsValidTarget(npcTarget) and mutils.CanCastOnNonMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nRadius) 
+		then
+			return BOT_ACTION_DESIRE_HIGH;
+		end
+	end
+
 	return BOT_ACTION_DESIRE_NONE;
 end
 
 local function ConsiderR()
+	
+	if not mutils.CanBeCast(abilities[3]) then
+		return BOT_ACTION_DESIRE_NONE;
+	end
+	local nCastRange = 0;
+	local nCastPoint = abilities[3]:GetCastPoint();
+	local manaCost   = abilities[3]:GetManaCost();
+	local nRadius    = abilities[2]:GetSpecialValueInt( "aftershock_range" ) + 150;
+	
+	if nutils.IsInTeamFight(bot) and GetUnitCountWithinRadius(bot.data.enemies, nRadius) >= 2
+	then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
+
 	return BOT_ACTION_DESIRE_NONE;
 end
 
-function AbilityUsageThinks()
+function AbilityUsageThink()
 	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,5}) end
 	if mutils.CantUseAbility(bot) then return end
 	castQDesire, QLoc  = ConsiderQ();

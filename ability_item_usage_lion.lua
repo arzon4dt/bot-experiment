@@ -94,7 +94,7 @@ function NonMDSpellOnCD()
 end
 
 function ConsiderQ()
-
+	
 	-- Make sure it's castable
 	if ( not abilityQ:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0, "";
@@ -102,13 +102,13 @@ function ConsiderQ()
 
 	-- Get some of its values
 	local nRadius     = abilityQ:GetSpecialValueInt('width');
-	local nCastRange  = abilityQ:GetCastRange();
 	local nLengthBuff = abilityQ:GetSpecialValueInt('length_buffer');
+	local nCastRange  = mutil.GetProperCastRange(false, npcBot, abilityQ:GetCastRange()+nLengthBuff);
 	local nCastPoint  = abilityQ:GetCastPoint( );
 	local nManaCost   = abilityQ:GetManaCost( );
 	local nDamage     = abilityQ:GetAbilityDamage();
 	
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nLengthBuff, true, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 	
 	--if we can kill any enemies
 	for _,npcEnemy in pairs(tableNearbyEnemyHeroes)
@@ -142,7 +142,7 @@ function ConsiderQ()
 
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange+nLengthBuff, nRadius, nCastPoint, 0 );
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, nCastPoint, 0 );
 		if ( locationAoE.count >= 2 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc, 'location';
@@ -153,7 +153,7 @@ function ConsiderQ()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + nLengthBuff) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		   and not mutil.IsDisabled(true, npcTarget)
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget, 'target';
@@ -322,7 +322,7 @@ function ConsiderCancelMD()
 	local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1200, false, BOT_MODE_ATTACK );
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 	if ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByCreep(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) )
-	     and ( #tableNearbyAllyHeroes <= #tableNearbyEnemyHeroes or npcBot:GetHealth() / npcBot:GetMaxHealth() < 0.35 )
+	     and ( #tableNearbyAllyHeroes <= #tableNearbyEnemyHeroes or npcBot:GetHealth() < 0.35*npcBot:GetMaxHealth() )
 	then
 		return BOT_ACTION_DESIRE_HIGH;
 	end

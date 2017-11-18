@@ -11,15 +11,16 @@ local alreadyFoundCreep = false;
 local pLane;
 local targetTree = nil;
 local targetLoc = nil;
+local treeThrowTarget = nil;
 
---[[if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
+if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
 	bot.data = {
 		['enemies'] = nil;
 		['allies'] = nil;
 		['e_creeps'] = nil;
 		['a_creeps'] = nil;
 	}
-end]]--
+end
 
 function GetProperLane(pId)
 	local lane = -1;
@@ -47,14 +48,14 @@ end
 local lastBootSlotCheck = -90;
 function GetDesire()
 
-	--[[if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
+	if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
 		bot.data = {
 			['enemies']  = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
 			['allies']   = bot:GetNearbyHeroes(1600, false, BOT_MODE_NONE);
 			['e_creeps'] = bot:GetNearbyLaneCreeps(1600, true);
 			['a_creeps'] = bot:GetNearbyLaneCreeps(1600, false);
 		}
-	end]]-- 
+	end
 
 	--[[local dropped = GetDroppedItemList();
 	for _,drop in pairs(dropped) do
@@ -158,6 +159,16 @@ function GetDesire()
 		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
 			return BOT_MODE_DESIRE_ABSOLUTE;
 		end		
+	elseif bot:GetUnitName() == "npc_dota_hero_windrunner" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "windrunner_powershot" ) end;
+		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end	
+	elseif bot:GetUnitName() == "npc_dota_hero_witch_doctor" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "witch_doctor_death_ward" ) end;
+		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_tinker" then
 		if cAbility == nil then cAbility = bot:GetAbilityByName( "tinker_rearm" ) end;
 		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
@@ -179,7 +190,7 @@ function GetDesire()
 		local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
 		if cAbility == nil then cAbility = bot:GetAbilityByName('chen_holy_persuasion') end;
 		local maxUnit = cAbility:GetSpecialValueInt('max_units');
-		if DotaTime() > 30 and #enemies == 0 and #chenCreeps < maxUnit and cAbility:IsFullyCastable() then
+		if DotaTime() > 60 and #enemies == 0 and #chenCreeps < maxUnit and cAbility:IsFullyCastable() then
 			if #camps == 0 then camps = GetNeutralSpawners(); end
 			return BOT_MODE_DESIRE_MODERATE;	
 		end
@@ -190,7 +201,7 @@ function GetDesire()
 		local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
 		local creeps = bot:GetNearbyLaneCreeps(1600, true);
 		if cAbility == nil then cAbility = bot:GetAbilityByName('enchantress_enchant') end;
-		if DotaTime() > 30 and cAbility:IsFullyCastable() and #enemies == 0 and #creeps == 0 then
+		if DotaTime() > 60 and cAbility:IsFullyCastable() and #enemies == 0 and #creeps == 0 then
 			if #camps == 0 then camps = GetNeutralSpawners(); end
 			return BOT_MODE_DESIRE_MODERATE;	
 		end
@@ -201,14 +212,28 @@ function GetDesire()
 			if #camps == 0 then camps = GetNeutralSpawners(); end
 			return BOT_MODE_DESIRE_MODERATE+0.05;	
 		end	
-	elseif bot:GetUnitName() == "npc_dota_hero_tiny" and bot:HasModifier("modifier_tiny_craggy_exterior") == false then
-		if cAbility == nil then cAbility = bot:GetAbilityByName('tiny_craggy_exterior') end;
-		if cAbility:IsFullyCastable() and bot:GetHealth() / bot:GetMaxHealth() > 0.25 and bot:DistanceFromFountain() > 1300 then
-			local trees = bot:GetNearbyTrees(400);
-			if #trees > 0 then
-				targetTree = trees[1];
-				return BOT_MODE_DESIRE_VERYHIGH;
-			end
+	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
+		if bot:HasModifier("modifier_tiny_craggy_exterior") == false then
+			if cAbility == nil or cAbility:GetName() ~= "tiny_craggy_exterior" then cAbility = bot:GetAbilityByName('tiny_craggy_exterior') end;
+			if cAbility:IsFullyCastable() and bot:GetHealth() / bot:GetMaxHealth() > 0.15 and bot:DistanceFromFountain() > 1000 then
+				local trees = bot:GetNearbyTrees(500);
+				if #trees > 0 and ( IsLocationVisible(GetTreeLocation(trees[1])) or IsLocationPassable(GetTreeLocation(trees[1])) ) then
+					targetTree = trees[1];
+					treeThrowTarget = nil;
+					return BOT_MODE_DESIRE_ABSOLUTE;
+				end
+			end	
+		elseif bot:HasModifier("modifier_tiny_craggy_exterior") == true 
+		       and bot:GetModifierStackCount( bot:GetModifierByName("modifier_tiny_craggy_exterior") ) == 1 
+		then
+			local target = bot:GetTarget(); 
+			if mutil.IsValidTarget(target) and mutil.CanCastOnNonMagicImmune(target) 
+			   and mutil.IsInRange(target, bot, 500) == false and mutil.IsInRange(target, bot, 1000) == true
+			then   
+				treeThrowTarget = target;
+				cAbility = bot:GetAbilityByName('tiny_toss_tree');
+				return BOT_MODE_DESIRE_ABSOLUTE;
+			end		
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_viper" then
 		if cAbility == nil then cAbility = bot:GetAbilityByName('viper_nethertoxin') end;
@@ -312,12 +337,14 @@ function Think()
 	end
 	
 	if bot:GetUnitName() == "npc_dota_hero_shadow_shaman" 
-	or  bot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" 
-	or  bot:GetUnitName() == "npc_dota_hero_pugna" 
-	or  bot:GetUnitName() == "npc_dota_hero_elder_titan" 
-	or  bot:GetUnitName() == "npc_dota_hero_puck" 
-	or  bot:GetUnitName() == "npc_dota_hero_tinker" 
-	or  bot:GetUnitName() == "npc_dota_hero_enigma" 
+		or  bot:GetUnitName() == "npc_dota_hero_keeper_of_the_light" 
+		or  bot:GetUnitName() == "npc_dota_hero_pugna" 
+		or  bot:GetUnitName() == "npc_dota_hero_elder_titan" 
+		or  bot:GetUnitName() == "npc_dota_hero_puck" 
+		or  bot:GetUnitName() == "npc_dota_hero_windrunner" 
+		or  bot:GetUnitName() == "npc_dota_hero_witch_doctor" 
+		or  bot:GetUnitName() == "npc_dota_hero_tinker" 
+		or  bot:GetUnitName() == "npc_dota_hero_enigma" 
 	then
 		return;	
 	elseif bot:GetUnitName() == "npc_dota_hero_spirit_breaker" then
@@ -396,8 +423,13 @@ function Think()
 			end
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
-		bot:Action_UseAbilityOnTree(cAbility, targetTree);
-		return;
+		if treeThrowTarget ~= nil then
+			bot:Action_UseAbilityOnEntity(cAbility, treeThrowTarget);
+			return;
+		else
+			bot:Action_UseAbilityOnTree(cAbility, targetTree);
+			return;
+		end
 	elseif bot:GetUnitName() == "npc_dota_hero_viper" then
 		bot:Action_UseAbilityOnLocation(cAbility, targetLoc);
 		return;	

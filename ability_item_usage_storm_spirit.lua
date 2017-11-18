@@ -151,7 +151,7 @@ end
 function ConsiderTimeWalk()
 
 	-- Make sure it's castable
-	if ( not abilityTW:IsFullyCastable() or abilityTW:IsInAbilityPhase() or npcBot:HasModifier("modifier_storm_spirit_ball_lightning") ) 
+	if ( not abilityTW:IsFullyCastable() or abilityTW:IsInAbilityPhase() or npcBot:HasModifier("modifier_storm_spirit_ball_lightning") or npcBot:IsRooted() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

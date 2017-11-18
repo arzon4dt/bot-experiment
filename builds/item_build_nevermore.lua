@@ -16,7 +16,7 @@ X["items"] = {
 	"item_silver_edge",
 	"item_butterfly",
 	"item_hurricane_pike",
-	"item_eye_of_skadi"
+	"item_skadi"
 };			
 
 X["skills"] = IBUtil.GetBuildPattern(

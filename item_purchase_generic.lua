@@ -4,8 +4,25 @@ local role = require(GetScriptDirectory() .. "/RoleUtility" )
 
 local bot = GetBot();
 
-if  ( bot:GetUnitName() == 'npc_dota_hero_monkey_king' and DotaTime() < -60 and bot:GetLocation() ~= Vector(0.000000, 0.000000, 0.000000) )
-    or bot:IsInvulnerable() or bot:IsHero() == false or bot:IsIllusion()
+if bot:GetUnitName() == 'npc_dota_hero_monkey_king' then
+	local trueMK = nil;
+	for i, id in pairs(GetTeamPlayers(GetTeam())) do
+		if IsPlayerBot(id) and GetSelectedHeroName(id) == 'npc_dota_hero_monkey_king' then
+			local member = GetTeamMember(i);
+			if member ~= nil then
+				trueMK = member;
+			end
+		end
+	end
+	if trueMK ~= nil and bot ~= trueMK then
+		print("Item Purchase "..tostring(bot).." isn't true MK")
+		return;
+	elseif trueMK == nil or bot == trueMK then
+		print("Item Purchase "..tostring(bot).." is true MK")
+	end
+end
+
+if bot:IsInvulnerable() or bot:IsHero() == false or bot:IsIllusion()
 then
 	return;
 end
@@ -67,7 +84,7 @@ end
 
 ---add tango and healing salve as starting consumables item
 ---add stout shield + queling blade for melee carry and stout shield for melee non carry
-if DotaTime() < -60 then
+if ( GetGameMode() ~= 23 and DotaTime() < -60 ) or ( GetGameMode() == 23 and DotaTime() < -50 ) then
 	if bot:GetAttackRange() < 320 and unitName ~= 'npc_dota_hero_templar_assassin' and unitName ~= 'npc_dota_hero_tidehunter' then
 		if role.IsCarry(unitName) then
 			bot.itemToBuy[#bot.itemToBuy+1] = 'item_quelling_blade';
@@ -276,7 +293,9 @@ function ItemPurchaseThink()
 	   and bot:GetAssignedLane() == LANE_MID and role["bottle"][unitName] == 1 and buyBottle == false
 	then
 		bot.currListItemToBuy[#bot.currListItemToBuy+1]  =  "item_bottle";
+		bot.currentComponentToBuy = nil;
 		buyBottle = true;
+		return
 	end
 	
 	--Update support availability status
@@ -290,7 +309,7 @@ function ItemPurchaseThink()
 	
 	--purchase flying courier and support item
 	if bot.theRole == 'support' then
-		if DotaTime() < 0 and GetItemStockCount( "item_courier" ) > 0 
+		if DotaTime() < 0 and GetItemStockCount( "item_courier" ) > 0
 		then
 			bot:ActionImmediate_PurchaseItem( 'item_courier' );
 		elseif DotaTime() < 0 and bot:GetGold() >= GetItemCost( "item_smoke_of_deceit" ) 
@@ -305,10 +324,14 @@ function ItemPurchaseThink()
 		then
 			bot:ActionImmediate_PurchaseItem("item_dust"); 
 		elseif GetItemStockCount( "item_ward_observer" ) > 0 and ( DotaTime() < 0 or( DotaTime() > 0 and buyBootsStatus == true ) ) and bot:GetGold() >= GetItemCost( "item_ward_observer" ) 
-			and items.GetEmptyInventoryAmount(bot) >= 2 and items.GetItemCharges(bot, "item_ward_observer") < 2  and bot:GetCourierValue() == 0
+			and items.GetEmptyInventoryAmount(bot) >= 3 and items.GetItemCharges(bot, "item_ward_observer") < 2  and bot:GetCourierValue() == 0
 		then
 			bot:ActionImmediate_PurchaseItem("item_ward_observer"); 
 		end
+	end
+	
+	if ( role['supportExist'] == false or ( role['supportExist'] == nil and DotaTime() > 0 ) ) and GetItemStockCount( "item_courier" ) > 0 then
+		bot:ActionImmediate_PurchaseItem( 'item_courier' );	
 	end
 	
 	--purchase courier when no support in team
@@ -331,20 +354,18 @@ function ItemPurchaseThink()
 	end	
 	  
 	--sell early game item   
-	if DotaTime() > 20*60 and DotaTime() > fullInvCheck + 2.0 and ( bot:DistanceFromFountain() == 0 or bot:DistanceFromSecretShop() == 0 ) then
+	if  ( GetGameMode() ~= 23 and DotaTime() > 20*60 and DotaTime() > fullInvCheck + 2.0 
+	      and ( bot:DistanceFromFountain() == 0 or bot:DistanceFromSecretShop() == 0 ) ) 
+		or ( GetGameMode() == 23 and DotaTime() > 10*60 and DotaTime() > fullInvCheck + 2.0  )
+	then
 		local emptySlot = items.GetEmptyInventoryAmount(bot);
 		local slotToSell = nil;
 		if emptySlot < 2 then
 			for i=1,#items['earlyGameItem'] do
 				local item = items['earlyGameItem'][i];
 				local itemSlot = bot:FindItemSlot(item);
-				if itemSlot > 0 then
-					if ( item == "item_dust" or item == "item_ward_observer" ) then
-						if  emptySlot <= 1 then
-							slotToSell = itemSlot;
-							break;
-						end
-					elseif item == "item_stout_shield" then
+				if itemSlot >= 0 and itemSlot <= 8 then
+					if item == "item_stout_shield" then
 						if buildVanguard == false  then
 							slotToSell = itemSlot;
 							break;
@@ -378,7 +399,7 @@ function ItemPurchaseThink()
 	end
 	
 	--Sell non BoT boots when have BoT
-	if DotaTime() > 40*60 and ( items.HasItem( bot, "item_travel_boots") or items.HasItem( bot, "item_travel_boots_2")) and
+	if DotaTime() > 30*60 and ( items.HasItem( bot, "item_travel_boots") or items.HasItem( bot, "item_travel_boots_2")) and
 	   ( bot:DistanceFromFountain() == 0 or bot:DistanceFromSecretShop() == 0 )
 	then	
 		for i=1,#items['earlyBoots']
@@ -422,13 +443,14 @@ function ItemPurchaseThink()
 	if  bot.currentItemToBuy == nil and #bot.currListItemToBuy == 0 then
 		bot.currentItemToBuy = bot.itemToBuy[#bot.itemToBuy];
 		local tempTable = items.GetBasicItems({bot.currentItemToBuy})
-		if bot.currentItemToBuy == "item_bfury" then 
+		--[[if bot.currentItemToBuy == "item_bfury" then 
 			tempTable = items.RemoveItem(tempTable, "item_quelling_blade");
 		elseif 	bot.currentItemToBuy == "item_crimson_guard" then
 			tempTable = items.RemoveItem(tempTable, "item_stout_shield");
 		elseif 	bot.currentItemToBuy == "item_vanguard" then
 			tempTable = items.RemoveItem(tempTable, "item_stout_shield");
-		end
+		else	
+		end]]--
 		for i=1,math.ceil(#tempTable/2) 
 		do	
 			bot.currListItemToBuy[i] = tempTable[#tempTable-i+1];
@@ -459,5 +481,3 @@ function ItemPurchaseThink()
 	end
 
 end
-
-

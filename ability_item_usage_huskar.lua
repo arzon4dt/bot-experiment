@@ -142,7 +142,7 @@ end
 function ConsiderLifeBreak()
 
 	-- Make sure it's castable
-	if ( not abilityLB:IsFullyCastable() ) then 
+	if ( not abilityLB:IsFullyCastable() or npcBot:IsRooted() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	

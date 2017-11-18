@@ -205,7 +205,7 @@ end
 function ConsiderTreeDance()
 
 	-- Make sure it's castable
-	if ( not abilityTD:IsFullyCastable() or not abilityPS:IsFullyCastable() ) 
+	if ( not abilityTD:IsFullyCastable() or not abilityPS:IsFullyCastable() or npcBot:IsRooted() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

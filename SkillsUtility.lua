@@ -160,7 +160,7 @@ function X.ConsiderEntityTarget(ability)
 		end
 		if X.IsRetreating(npcBot) and npcBot:WasRecentlyDamagedByAnyHero(2.0)
 		then
-			local furthestTarget = X.GetFurthestTarget(npcBot)
+			local furthestTarget = X.GetFurthestTarget(npcBot, nCastRange)
 			if furthestTarget ~= nil then
 				return BOT_ACTION_DESIRE_MODERATE, furthestTarget, 'unit';
 			end

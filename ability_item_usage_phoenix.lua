@@ -137,7 +137,7 @@ end
 
 function ConsiderIcarusDive()
 
-	if ( not IcarusDive:IsFullyCastable() or IcarusDive:IsHidden() or npcBot:HasModifier("modifier_phoenix_icarus_dive") ) 
+	if ( not IcarusDive:IsFullyCastable() or IcarusDive:IsHidden() or npcBot:HasModifier("modifier_phoenix_icarus_dive") or npcBot:IsRooted() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

@@ -14,7 +14,7 @@ X["items"] = {
 	"item_blink",
 	"item_ultimate_scepter",
 	"item_sheepstick",
-	"item_eye_of_skadi",
+	"item_skadi",
 	"item_heart"
 };			
 

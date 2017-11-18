@@ -54,7 +54,7 @@ end
 function ConsiderTimeWalk()
 
 	-- Make sure it's castable
-	if ( not abilityTW:IsFullyCastable() ) 
+	if ( abilityTW:IsFullyCastable() == false or npcBot:IsRooted() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

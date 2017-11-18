@@ -191,7 +191,7 @@ end
 function ConsiderPounce()
 
 	-- Make sure it's castable
-	if ( not abilityPC:IsFullyCastable() ) then 
+	if ( not abilityPC:IsFullyCastable() or npcBot:IsRooted() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 

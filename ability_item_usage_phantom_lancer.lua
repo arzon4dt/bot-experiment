@@ -133,16 +133,22 @@ end
 function ConsiderTimeWalk()
 
 	-- Make sure it's castable
-	if ( not abilityTW:IsFullyCastable() ) 
+	if ( not abilityTW:IsFullyCastable() or npcBot:IsRooted() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
 	-- Get some of its values
-	local nCastRange = abilityTW:GetSpecialValueInt("range");
+	local nCastRange = abilityTW:GetCastRange();
 	local nCastPoint = abilityTW:GetCastPoint( );
 	local nDelay = abilityTW:GetSpecialValueFloat("delay");
-
+	
+	if mutil.IsStuck(npcBot)
+	then
+		local loc = mutil.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
+	end
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
@@ -159,7 +165,7 @@ function ConsiderTimeWalk()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 320)
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation(nCastPoint + nDelay);
 		end

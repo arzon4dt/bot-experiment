@@ -60,7 +60,9 @@ function AbilityUsageThink()
 end
 
 function ConsiderQ()
-	if not mutils.CanBeCast(abilities[1]) or bot:HasModifier("modifier_pangolier_gyroshell") or bot:HasModifier('modifier_pangolier_swashbuckle_stunned') then
+	if not mutils.CanBeCast(abilities[1]) or bot:HasModifier("modifier_pangolier_gyroshell") or bot:HasModifier('modifier_pangolier_swashbuckle_stunned') 
+	   or bot:IsRooted()	
+	then
 		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
