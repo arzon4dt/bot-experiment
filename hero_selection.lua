@@ -5,9 +5,8 @@ local hero_roles = role["hero_roles"];
 local requiredHeroes = {
 	--[['npc_dota_hero_terrorblade',
 	'npc_dota_hero_rubick';]]--
-	'npc_dota_hero_tiny',
-	'npc_dota_hero_undying',
-	'npc_dota_hero_earthshaker',
+	'npc_dota_hero_abaddon',
+	'npc_dota_hero_abyssal_underlord'
 };
 
 local UnImplementedHeroes = {
@@ -206,7 +205,7 @@ function SelectHeroChatCallback(PlayerID, ChatText, bTeamOnly)
 					break;
 				end
 			end	
-		elseif not bTeamOnly and GetTeamForPlayer(PlayerID) ~= GetTeam() then
+		elseif bTeamOnly == false and GetTeamForPlayer(PlayerID) ~= GetTeam() then
 			for _,id in pairs(GetTeamPlayers(GetTeam())) 
 			do
 				if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
@@ -237,16 +236,78 @@ function Think()
 	elseif GetGameMode() == GAMEMODE_1V1MID then
 		OneVsOneLogic();		
 	elseif GetGameMode() == GAMEMODE_TM then
-		TurboModeLogic();		
+		if GetGameState() == GAME_STATE_HERO_SELECTION then
+			InstallChatCallback(function (attr) SelectHeroChatCallback(attr.player_id, attr.string, attr.team_only); end);
+		end
+		NewTurboModeLogic();		
 	else 
 		print("GAME MODE NOT SUPPORTED")
 	end
 end
 
-function TurboModeLogic() 
+local function IsHumanDonePickingFirstSlot()
+	if GetTeam() == TEAM_RADIANT then
+		for _,id in pairs(GetTeamPlayers(GetTeam())) do
+			if IsPlayerBot(id) == false and GetSelectedHeroName(id) ~= "" then
+				return true;
+			end
+		end
+	else
+		for _,id in pairs(GetTeamPlayers(GetOpposingTeam())) do
+			if IsPlayerBot(id) == false and GetSelectedHeroName(id) ~= "" then
+				return true;
+			end
+		end
+	end
+end
 
+local function IsHumanPlayerInRadiant1Slot()
+	if GetTeam() == TEAM_RADIANT then
+		for i,id in pairs(GetTeamPlayers(GetTeam())) do
+			if i == 1 and IsPlayerBot(id) == false then
+				return true;
+			end
+		end
+	else
+		for i,id in pairs(GetTeamPlayers(GetOpposingTeam())) do
+			if i == 1 and IsPlayerBot(id) == false then
+				return true;
+			end
+		end
+	end
+	return false;
+end
+
+local lastpick = 10;
+function NewTurboModeLogic()
+	if GetHeroPickState() == 58 and GameTime() >= 45 and GameTime() >= lastpick + 1.5 then
+		for i,id in pairs(GetTeamPlayers(GetTeam())) do
+			if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
+				if testMode then
+					hero = GetRandomHero() 
+				else
+					hero = PickRightHero(i-1) 
+				end
+				SelectHero(id, hero); 
+				lastpick = GameTime();
+				return;
+			end
+		end
+	end
+end
+
+local humanInRad1Slot = nil;
+
+function TurboModeLogic() 
+	
+	if #GetTeamPlayers(GetTeam()) < 5 or #GetTeamPlayers(GetOpposingTeam()) < 5 then return end  
+	
+	if humanInRad1Slot == nil then humanInRad1Slot = IsHumanPlayerInRadiant1Slot() return end
+	
 	--print(tostring(GetGameMode()).."=>"..tostring(GetGameState())..":"..tostring(DotaTime( ))..":"..tostring(GetHeroPickState()))
-	if GetHeroPickState() == 55 and GameTime() > 10  then
+	if GetHeroPickState() == 55 and ( ( humanInRad1Slot == true and IsHumanDonePickingFirstSlot() and DotaTime() > -10 and DotaTime() < -5 ) 
+	   or ( humanInRad1Slot == false and GameTime() > 10  and DotaTime() > -10 and DotaTime() < -5 ) ) 
+    then
 		for i,id in pairs(GetTeamPlayers(GetTeam())) 
 		do 
 			if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" 
@@ -798,20 +859,24 @@ end
 local chatLanes = {};
 ---------------------------------------------------------LANE ASSIGMENT WITH CHAT FEATURE-----------------------------------------------
 function SelectLaneChatCallback(PlayerID, ChatText, bTeamOnly)
-	chatLanes = {};
-	local count = 1;
-	for str in string.gmatch(ChatText, "%S+") do
-		if str == "top" then
-			chatLanes[count] = LANE_TOP;	
-		elseif str == "mid" then
-			chatLanes[count] = LANE_MID;
-		elseif str == "bot" then
-			chatLanes[count] = LANE_BOT;
+	if GetTeamForPlayer(PlayerID) == GetTeam() then
+		chatLanes = {};
+		local count = 1;
+		for str in string.gmatch(ChatText, "%S+") do
+			if str == "top" then
+				chatLanes[count] = LANE_TOP;	
+			elseif str == "mid" then
+				chatLanes[count] = LANE_MID;
+			elseif str == "bot" then
+				chatLanes[count] = LANE_BOT;
+			end
+			count = count + 1;
 		end
-		count = count + 1;
-	end
-	if #chatLanes ~= 5 then 
-		print("Wrong Command! Lane count is less or more than 5. Typo? Please type 5 lane (top, mid, or bot) with space separating each other.")
+		if #chatLanes ~= 5 then 
+			print("Wrong Command! Lane count is less or more than 5. Typo? Please type 5 lane (top, mid, or bot) with space separating each other.")
+		end
+	else
+		print("You're not my team...!")
 	end
 end
 

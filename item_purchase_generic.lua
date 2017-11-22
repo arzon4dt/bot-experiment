@@ -34,7 +34,7 @@ if bot:IsHero() then
 end
 
 --Prevent meepo clone to perform item purchase
-if  bot:GetUnitName() == 'npc_dota_hero_meepo' and DotaTime() > -60 then
+if  bot:GetUnitName() == 'npc_dota_hero_meepo' and DotaTime() > 0 then
 	bot.clone = true;
 	local item_count = 0;
 	for i=0,5 do
@@ -323,7 +323,7 @@ function ItemPurchaseThink()
 			and items.GetEmptyInventoryAmount(bot) >= 4 and items.GetItemCharges(bot, "item_dust") < 1 and bot:GetCourierValue() == 0 
 		then
 			bot:ActionImmediate_PurchaseItem("item_dust"); 
-		elseif GetItemStockCount( "item_ward_observer" ) > 0 and ( DotaTime() < 0 or( DotaTime() > 0 and buyBootsStatus == true ) ) and bot:GetGold() >= GetItemCost( "item_ward_observer" ) 
+		elseif GetItemStockCount( "item_ward_observer" ) > 0 and ( DotaTime() < 0 or ( DotaTime() > 0 and buyBootsStatus == true ) ) and bot:GetGold() >= GetItemCost( "item_ward_observer" ) 
 			and items.GetEmptyInventoryAmount(bot) >= 3 and items.GetItemCharges(bot, "item_ward_observer") < 2  and bot:GetCourierValue() == 0
 		then
 			bot:ActionImmediate_PurchaseItem("item_ward_observer"); 
@@ -443,14 +443,6 @@ function ItemPurchaseThink()
 	if  bot.currentItemToBuy == nil and #bot.currListItemToBuy == 0 then
 		bot.currentItemToBuy = bot.itemToBuy[#bot.itemToBuy];
 		local tempTable = items.GetBasicItems({bot.currentItemToBuy})
-		--[[if bot.currentItemToBuy == "item_bfury" then 
-			tempTable = items.RemoveItem(tempTable, "item_quelling_blade");
-		elseif 	bot.currentItemToBuy == "item_crimson_guard" then
-			tempTable = items.RemoveItem(tempTable, "item_stout_shield");
-		elseif 	bot.currentItemToBuy == "item_vanguard" then
-			tempTable = items.RemoveItem(tempTable, "item_stout_shield");
-		else	
-		end]]--
 		for i=1,math.ceil(#tempTable/2) 
 		do	
 			bot.currListItemToBuy[i] = tempTable[#tempTable-i+1];

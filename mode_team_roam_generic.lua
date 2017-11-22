@@ -13,12 +13,15 @@ local targetTree = nil;
 local targetLoc = nil;
 local treeThrowTarget = nil;
 
-if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
+if bot:GetUnitName() == "npc_dota_hero_earthshaker" 
+	--or bot:GetUnitName() == "npc_dota_hero_abaddon" 
+	--or bot:GetUnitName() == "npc_dota_hero_abyssal_underlord" 
+then
 	bot.data = {
-		['enemies'] = nil;
-		['allies'] = nil;
-		['e_creeps'] = nil;
-		['a_creeps'] = nil;
+		['enemies']  = {};
+		['allies']   = {};
+		['e_creeps'] = {};
+		['a_creeps'] = {};
 	}
 end
 
@@ -48,7 +51,10 @@ end
 local lastBootSlotCheck = -90;
 function GetDesire()
 
-	if bot:GetUnitName() == "npc_dota_hero_earthshaker" then
+	if bot:GetUnitName() == "npc_dota_hero_earthshaker" 
+		--or bot:GetUnitName() == "npc_dota_hero_abaddon" 
+		--or bot:GetUnitName() == "npc_dota_hero_abyssal_underlord" 
+	then
 		bot.data = {
 			['enemies']  = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
 			['allies']   = bot:GetNearbyHeroes(1600, false, BOT_MODE_NONE);

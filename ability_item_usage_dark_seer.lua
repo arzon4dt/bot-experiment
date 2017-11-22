@@ -24,6 +24,7 @@ local abilityIS = "";
 local abilitySG = "";
 local abilityVC = "";
 local abilityWR = "";
+local AOESurge = "";
 local npcBot = nil;
 
 function AbilityUsageThink()
@@ -37,6 +38,7 @@ function AbilityUsageThink()
 	if abilityIS == "" then abilityIS = npcBot:GetAbilityByName( "dark_seer_ion_shell" ); end
 	if abilitySG == "" then abilitySG = npcBot:GetAbilityByName( "dark_seer_surge" ); end
 	if abilityWR == "" then abilityWR = npcBot:GetAbilityByName( "dark_seer_wall_of_replica" ); end
+	if AOESurge == "" then AOESurge = npcBot:GetAbilityByName( "special_bonus_unique_dark_seer_3" ); end
 
 	-- Consider using each ability
 	castVCDesire, castVCLocation = ConsiderVacuum();
@@ -64,8 +66,13 @@ function AbilityUsageThink()
 	
 	if ( castSGDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilitySG, castSGTarget );
-		return;
+		if AOESurge:IsTrained() then
+			npcBot:Action_UseAbilityOnLocation( abilitySG, castSGTarget:GetLocation() );
+			return;
+		else	
+			npcBot:Action_UseAbilityOnEntity( abilitySG, castSGTarget );
+			return;
+		end
 	end
 
 end
