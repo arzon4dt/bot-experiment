@@ -36,14 +36,14 @@ end
 
 function U.CantUseAbility(bot)
 	return bot:NumQueuedActions() > 0 
-		   or not bot:IsAlive() or bot:IsInvulnerable() or bot:IsCastingAbility() or bot:IsUsingAbility() or bot:IsChanneling()  
-	       or bot:IsSilenced() or bot:IsStunned() or bot:IsHexed() or bot:IsHexed()   
+		   or bot:IsAlive() == false or bot:IsInvulnerable() or bot:IsCastingAbility() or bot:IsUsingAbility() or bot:IsChanneling()  
+	       or bot:IsSilenced() or bot:IsStunned() or bot:IsHexed()  
 		   or bot:HasModifier("modifier_doom_bringer_doom")
 		   or bot:HasModifier('modifier_item_forcestaff_active')
 end
 
 function U.CanBeCast(ability)
-	return ability:IsTrained() and ability:IsFullyCastable() and not ability:IsHidden();
+	return ability:IsTrained() and ability:IsFullyCastable() and ability:IsHidden() == false;
 end
 
 function U.GetProperCastRange(bIgnore, hUnit, abilityCR)
@@ -77,6 +77,12 @@ function U.GetVulnerableWeakestUnit(bHero, bEnemy, nRadius, bot)
 		end
 	end
 	return weakest;
+end
+
+function U.GetUnitCountAroundEnemyTarget(target, nRadius)
+	local heroes = target:GetNearbyHeroes(nRadius, false, BOT_MODE_NONE);	
+	local creeps = target:GetNearbyLaneCreeps(nRadius, false);	
+	return #heroes + #creeps;
 end
 
 function U.GetVulnerableUnitNearLoc(bHero, bEnemy, nCastRange, nRadius, vLoc, bot)
@@ -347,6 +353,54 @@ function U.IsSandKingThere(bot, nCastRange, fTime)
 		end
 	end
 	return false, nil;
+end
+
+function U.GetUltimateAbility(bot)
+	--print(tostring(bot:GetAbilityInSlot(5):GetName()))
+	return bot:GetAbilityInSlot(5);
+end
+
+function U.CanUseRefresherShard(bot)
+	local ult = U.GetUltimateAbility(bot);
+	if ult ~= nil and ult:IsPassive() == false then
+		local ultCD = ult:GetCooldown();
+		local manaCost = ult:GetManaCost();
+		if bot:GetMana() >= manaCost and ult:GetCooldownTimeRemaining() >= ultCD/2 then
+			return true;
+		end
+	end
+	return false;
+end
+
+function U.GetMostUltimateCDUnit()
+	local unit = nil;
+	local maxCD = 0;
+	for i,id in pairs(GetTeamPlayers(GetTeam())) do
+		if IsHeroAlive(id) then
+			local member = GetTeamMember(i);
+			if member ~= nil then
+				local ult = U.GetUltimateAbility(member);
+				--print(member:GetUnitName()..tostring(ult:GetName())..tostring(ult:GetCooldown()))
+				if ult ~= nil and ult:IsPassive() == false and ult:GetCooldown() >= maxCD then
+					unit = member;
+					maxCD = ult:GetCooldown();
+				end
+			end
+		end
+	end
+	return unit;
+end
+
+function U.CanUseRefresherOrb(bot)
+	local ult = U.GetUltimateAbility(bot);
+	if ult ~= nil and ult:IsPassive() == false then
+		local ultCD = ult:GetCooldown();
+		local manaCost = ult:GetManaCost();
+		if bot:GetMana() >= manaCost+375 and ult:GetCooldownTimeRemaining() >= ultCD/2 then
+			return true;
+		end
+	end
+	return false;
 end
 --============== ^^^^^^^^^^ NEW FUNCTION ABOVE ^^^^^^^^^ ================--
 

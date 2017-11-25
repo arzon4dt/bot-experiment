@@ -18,7 +18,7 @@ function CourierUsageThink()
 end
 
 local bot = GetBot();
---[[
+--[[ Skill Slot
 "Ability1"		"earthshaker_fissure"
 "Ability2"		"earthshaker_enchant_totem"
 "Ability3"		"earthshaker_aftershock"
@@ -26,6 +26,14 @@ local bot = GetBot();
 "Ability5"		"generic_hidden"
 "Ability6"		"earthshaker_echo_slam"
 ]]--
+--[[ Related Modifier
+modifier_earthshaker_fissure_stun
+modifier_earthshaker_fissure
+modifier_fissure_rooted
+modifier_earthshaker_enchant_totem_leap
+modifier_earthshaker_enchant_totem
+modifier_earthshaker_aftershock
+]]
 local abilities = {};
 
 local castQDesire = 0;
@@ -102,7 +110,7 @@ end
 local function ConsiderW()
 	
 	if not mutils.CanBeCast(abilities[2]) then
-		return BOT_ACTION_DESIRE_NONE;
+		return BOT_ACTION_DESIRE_NONE, "", nil;
 	end
 	local nCastRange = 0;
 	if bot:HasScepter() == true then
@@ -112,12 +120,23 @@ local function ConsiderW()
 	local manaCost   = abilities[2]:GetManaCost();
 	local nRadius    = abilities[2]:GetSpecialValueInt( "aftershock_range" );
 	
+	if bot:HasScepter() and mutils.IsStuck(bot)
+	then
+		local loc = mutils.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_HIGH, "loc", bot:GetXUnitsTowardsLocation( loc, nCastRange );
+	end
+	
 	if mutils.IsRetreating(bot)
 	then
 		if bot.data.enemies ~= nil and #bot.data.enemies > 0 then
-			for i=1,#bot.data.enemies do
-				if IsValidObject(bot.data.enemies[i]) and GetUnitToUnitDistance(bot, bot.data.enemies[i]) < nRadius then
-					return BOT_ACTION_DESIRE_HIGH;
+			if bot:HasScepter() then
+				local loc = mutils.GetEscapeLoc();
+				return BOT_ACTION_DESIRE_HIGH, "loc", bot:GetXUnitsTowardsLocation( loc, nCastRange );
+			else
+				for i=1,#bot.data.enemies do
+					if IsValidObject(bot.data.enemies[i]) and GetUnitToUnitDistance(bot, bot.data.enemies[i]) < nRadius then
+						return BOT_ACTION_DESIRE_HIGH, "", nil;
+					end
 				end
 			end
 		end
@@ -125,19 +144,41 @@ local function ConsiderW()
 	
 	if nutils.IsInTeamFight(bot) and GetUnitCountWithinRadius(bot.data.enemies, nRadius) >= 2 
 	then
-		return BOT_ACTION_DESIRE_HIGH;
+		if bot:HasScepter() then
+			return BOT_ACTION_DESIRE_HIGH, "unit", bot;
+		else
+			return BOT_ACTION_DESIRE_HIGH, "", nil;
+		end	
 	end
 
+	if ( mutils.IsDefending(bot) or mutils.IsPushing(bot) ) and mutils.CanSpamSpell(bot, manaCost) 
+	   and bot:HasModifier("modifier_earthshaker_enchant_totem") == false and GetUnitCountWithinRadius(bot.data.e_creeps, nRadius) >= 3 
+	then
+		if bot:HasScepter() then
+			return BOT_ACTION_DESIRE_HIGH, "unit", bot;
+		else
+			return BOT_ACTION_DESIRE_HIGH, "", nil;
+		end	
+	end
+	
 	if mutils.IsGoingOnSomeone(bot) and bot:HasModifier("modifier_earthshaker_enchant_totem") == false
 	then
 		local npcTarget = bot:GetTarget();
-		if mutils.IsValidTarget(npcTarget) and mutils.CanCastOnNonMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nRadius) 
+		if mutils.IsValidTarget(npcTarget) and mutils.CanCastOnNonMagicImmune(npcTarget) 
 		then
-			return BOT_ACTION_DESIRE_HIGH;
+			if bot:HasScepter() == false and mutils.IsInRange(npcTarget, bot, nRadius) then
+				return BOT_ACTION_DESIRE_HIGH, "", nil;
+			elseif bot:HasScepter() then
+				if mutils.IsInRange(npcTarget, bot, nRadius) == false and mutils.IsInRange(npcTarget, bot, nCastRange) then
+					return BOT_ACTION_DESIRE_HIGH, "loc", npcTarget:GetLocation();
+				elseif mutils.IsInRange(npcTarget, bot, nRadius) then
+					return BOT_ACTION_DESIRE_HIGH, "unit", bot;				
+				end
+			end	
 		end
 	end
 
-	return BOT_ACTION_DESIRE_NONE;
+	return BOT_ACTION_DESIRE_NONE, "", nil;
 end
 
 local function ConsiderR()
@@ -161,9 +202,9 @@ end
 function AbilityUsageThink()
 	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,5}) end
 	if mutils.CantUseAbility(bot) then return end
-	castQDesire, QLoc  = ConsiderQ();
-	castWDesire        = ConsiderW();
-	castRDesire        = ConsiderR();
+	castQDesire, QLoc  			 = ConsiderQ();
+	castWDesire, targetType, tgt = ConsiderW();
+	castRDesire        			 = ConsiderR();
 	if castRDesire > 0 then
 		bot:Action_UseAbility(abilities[3]);		
 		return
@@ -173,7 +214,13 @@ function AbilityUsageThink()
 		return
 	end
 	if castWDesire > 0 then
-		bot:Action_UseAbility(abilities[2]);		
+		if targetType == "loc" then
+			bot:Action_UseAbilityOnLocation(abilities[2], tgt);
+		elseif targetType == "unit" then
+			bot:Action_UseAbilityOnEntity(abilities[2], tgt);
+		else
+			bot:Action_UseAbility(abilities[2]);
+		end	
 		return
 	end
 end

@@ -101,7 +101,6 @@ end
 ---Update the status to prevent bots selling stout shield and queling blade
 local buildBFury = false;
 local buildVanguard = false;
-local buildBloodStone = false;
 for i=1, math.ceil(#bot.itemToBuy/2) do
 	if bot.itemToBuy[i] == "item_bfury" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_bfury" then
 		buildBFury = true;
@@ -111,9 +110,6 @@ for i=1, math.ceil(#bot.itemToBuy/2) do
 	or bot.itemToBuy[i] == "item_abyssal_blade" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_abyssal_blade"
 	then
 		buildVanguard = true;
-	end
-	if bot.itemToBuy[i] == "item_bloodstone" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_bloodstone" then
-		buildBloodStone = true;
 	end
 end
 --------------------------------------------------------------------------
@@ -372,11 +368,6 @@ function ItemPurchaseThink()
 						end
 					elseif item == "item_tpscroll" then
 						if bot:FindItemSlot("item_travel_boots") > 0  then
-							slotToSell = itemSlot;
-							break;
-						end
-					elseif item == "item_soul_ring" then
-						if buildBloodStone == false then
 							slotToSell = itemSlot;
 							break;
 						end

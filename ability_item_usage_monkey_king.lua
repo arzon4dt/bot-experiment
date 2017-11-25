@@ -265,13 +265,8 @@ end
 
 function ConsiderPrimalSpring()
 	
-	if ( not abilityPS:IsFullyCastable() or abilityPS:IsHidden() or abilityTD:GetCooldownTimeRemaining() > 1.4 ) 
+	if ( not abilityPS:IsFullyCastable() or abilityPS:IsHidden() or abilityPS:IsActivated() == false ) 
 	then 
-		return BOT_ACTION_DESIRE_NONE, 0;
-	end
-
-	local trees = npcBot:GetNearbyTrees(50);
-	if trees == nil or #trees == 0 then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	

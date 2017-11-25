@@ -18,25 +18,33 @@ end
 
 local bot = GetBot();
 
+--[[
+"Ability1"		"zuus_arc_lightning"
+"Ability2"		"zuus_lightning_bolt"
+"Ability3"		"zuus_static_field"
+"Ability4"		"zuus_cloud"
+"Ability5"		"generic_hidden"
+"Ability6"		"zuus_thundergods_wrath"
+]]
+
 local abilities = {};
 
 local castCombo1Desire = 0;
 local castCombo2Desire = 0;
 local castQDesire = 0;
 local castWDesire = 0;
-local castEDesire = 0;
+local castDDesire = 0;
 local castRDesire = 0;
 
 function AbilityUsageThink()
 	
-	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,2,5}) end
+	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,3,5}) end
 	
 	if mutils.CantUseAbility(bot) then return end
 	
 	castQDesire, targetQ = ConsiderQ();
-	
 	castWDesire, targetW = ConsiderW();
-	--castEDesire, targetE  = ConsiderE();
+	castDDesire, targetD = ConsiderD();
 	castRDesire, targetR = ConsiderR();
 	
 	if castRDesire > 0 then
@@ -54,8 +62,8 @@ function AbilityUsageThink()
 		return
 	end
 	
-	if castEDesire > 0 then
-		bot:Action_UseAbilityOnEntity(abilities[3], targetE);		
+	if castDDesire > 0 then
+		bot:Action_UseAbilityOnLocation(abilities[3], targetD);		
 		return
 	end
 	
@@ -153,6 +161,25 @@ function ConsiderW()
 	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
+function ConsiderD()
+	if not mutils.CanBeCast(abilities[2]) or bot:HasScepter() == false then
+		return BOT_ACTION_DESIRE_NONE, nil;
+	end
+
+	if mutils.IsGoingOnSomeone(bot)
+	then
+		local target = bot:GetTarget();
+		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target)
+		then
+			local allies = target:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
+			if #allies > 0 then
+				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
+			end
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
+end
 
 function ConsiderR()
 	if not mutils.CanBeCast(abilities[4]) then

@@ -2,9 +2,9 @@ if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot(
 	return;
 end
 
-
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
+local skills = require(GetScriptDirectory() ..  "/SkillsUtility")
 local mutil = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
@@ -36,82 +36,121 @@ local abilityTW = nil;
 local abilityMRA = nil;
 local abilityMRS = nil;
 local abilityRC = nil;
-
+local justMorph = true;
 local npcBot = nil;
+
+local skill1 = nil;
+local skill2 = nil;
+local skill3 = nil;
 
 function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
-	-- Check if we're already using an ability
-	if mutil.CanNotUseAbility(npcBot) then return end
 	
-	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "morphling_adaptive_strike_agi" ) end
-	if abilityFB2 == nil then abilityFB2 = npcBot:GetAbilityByName( "morphling_adaptive_strike_str" ) end
-	if abilityTW == nil then abilityTW = npcBot:GetAbilityByName( "morphling_waveform" ) end
-	if abilityMRA == nil then abilityMRA = npcBot:GetAbilityByName( "morphling_morph_agi" ) end
-	if abilityMRS == nil then abilityMRS = npcBot:GetAbilityByName( "morphling_morph_str" ) end
 	if abilityRC == nil then abilityRC = npcBot:GetAbilityByName( "morphling_replicate" ) end
-	itemGhost = IsItemAvailable("item_ghost");
-	itemEB = IsItemAvailable("item_ethereal_blade");
 	
-	-- Consider using each ability
-	castTWDesire, castTWLocation = ConsiderTimeWalk();
-	castFBDesire, castFBTarget = ConsiderFireblast();
-	castFB2Desire, castFB2Target = ConsiderFireblast2();
-	castMRADesire = ConsiderMorphAgility();
-	castMRSDesire = ConsiderMorphStrength();
-	--castRCDesire, castRCTarget = ConsiderReplicate();
-	castGhostDesire = ConsiderGhostScepter();
-	castEBDesire, castEBTarget = ConsiderEtherealBlade();
-	
-	
-	if ( castTWDesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnLocation( abilityTW, castTWLocation );
-		return;
-	end	
-	
-	if ( castEBDesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnEntity( itemEB, castEBTarget );
-		alreadyCastEB = true;
-		return;
-	end
-	
-	if ( castFBDesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
-		alreadyCastEB = false;
-		return;
-	end
-	
-	if ( castFB2Desire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnEntity( abilityFB2, castFB2Target );
-		return;
-	end
+	if abilityRC:IsHidden() then
+		if justMorph == false then
+			skill1 = npcBot:GetAbilityInSlot(0);
+			skill2 = npcBot:GetAbilityInSlot(1);
+			skill3 = npcBot:GetAbilityInSlot(2);	
+			justMorph = true; 
+		end
+		if mutil.CanNotUseAbility(npcBot) then return end
+		skills.CastStolenSpells(skill1);
+		skills.CastStolenSpells(skill2);
+		skills.CastStolenSpells(skill3);
+		if ( skill1:IsFullyCastable() == false 
+		   and skill2:IsFullyCastable() == false 
+		   and skill3:IsFullyCastable() == false ) or npcBot:GetHealth() <= 0.20*npcBot:GetMaxHealth()
+		then
+			npcBot:Action_UseAbility(npcBot:GetAbilityByName( "morphling_morph_replicate" ));
+			return
+		end 
+	else
+		--[[if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "morphling_adaptive_strike_agi" ) end
+		if abilityFB2 == nil then abilityFB2 = npcBot:GetAbilityByName( "morphling_adaptive_strike_str" ) end
+		if abilityTW == nil then abilityTW = npcBot:GetAbilityByName( "morphling_waveform" ) end
+		if abilityMRA == nil then abilityMRA = npcBot:GetAbilityByName( "morphling_morph_agi" ) end
+		if abilityMRS == nil then abilityMRS = npcBot:GetAbilityByName( "morphling_morph_str" ) end]]--
+		
+		if justMorph then
+			abilityFB = npcBot:GetAbilityByName( "morphling_adaptive_strike_agi" );
+			abilityFB2 = npcBot:GetAbilityByName( "morphling_adaptive_strike_str" );
+			abilityTW = npcBot:GetAbilityByName( "morphling_waveform" );
+			abilityMRA = npcBot:GetAbilityByName( "morphling_morph_agi" );
+			abilityMRS = npcBot:GetAbilityByName( "morphling_morph_str" ); 
+			justMorph = false;
+		end
+		
+		if npcBot:IsSilenced() == false and npcBot:IsHexed() == false 
+		   and npcBot:IsInvulnerable() == false and npcBot:HasModifier("modifier_doom_bringer_doom") == false
+		then
+			castMRADesire = ConsiderMorphAgility();
+			castMRSDesire = ConsiderMorphStrength();
+			if castMRSDesire > 0 then
+				npcBot:Action_UseAbility( abilityMRS );
+				return;
+			end
+			if castMRADesire > 0 then
+				npcBot:Action_UseAbility( abilityMRA );
+				return;
+			end
+		end
+		
+		-- Check if we're already using an ability
+		if mutil.CanNotUseAbility(npcBot) then return end
+		
+		itemGhost = IsItemAvailable("item_ghost");
+		itemEB = IsItemAvailable("item_ethereal_blade");
+		
+		-- Consider using each ability
+		castTWDesire, castTWLocation = ConsiderTimeWalk();
+		castFBDesire, castFBTarget = ConsiderFireblast();
+		castFB2Desire, castFB2Target = ConsiderFireblast2();
+		castRCDesire, castRCTarget = ConsiderReplicate();
+		castGhostDesire = ConsiderGhostScepter();
+		castEBDesire, castEBTarget = ConsiderEtherealBlade();
+		
+		
+		if ( castTWDesire > 0 ) 
+		then
+			npcBot:Action_UseAbilityOnLocation( abilityTW, castTWLocation );
+			return;
+		end	
+		
+		if ( castEBDesire > 0 ) 
+		then
+			npcBot:Action_UseAbilityOnEntity( itemEB, castEBTarget );
+			alreadyCastEB = true;
+			return;
+		end
+		
+		if ( castFBDesire > 0 ) 
+		then
+			npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
+			alreadyCastEB = false;
+			return;
+		end
+		
+		if ( castFB2Desire > 0 ) 
+		then
+			npcBot:Action_UseAbilityOnEntity( abilityFB2, castFB2Target );
+			return;
+		end
 
-	if ( castRCDesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnEntity( abilityRC, castRCTarget );
-		return;
+		if ( castRCDesire > 0 ) 
+		then
+			npcBot:Action_UseAbilityOnEntity( abilityRC, castRCTarget );
+			return;
+		end
+		
+		
+		if castGhostDesire > 0 then
+			npcBot:Action_UseAbility( itemGhost );
+			return;
+		end
 	end
-	
-	if castMRSDesire > 0 then
-		npcBot:Action_UseAbility( abilityMRS );
-		return;
-	end
-	
-	if castMRADesire > 0 then
-		npcBot:Action_UseAbility( abilityMRA );
-		return;
-	end
-	
-	if castGhostDesire > 0 then
-		npcBot:Action_UseAbility( itemGhost );
-		return;
-	end
-	
 end
 
 function IsItemAvailable(item_name)

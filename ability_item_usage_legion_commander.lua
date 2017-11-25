@@ -100,7 +100,15 @@ function ConsiderOverwhelmingOdds()
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
+	if mutil.IsRetreating(npcBot) then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes ) do
+			if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) then
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
+			end
+		end
+	end
+	
 	-- If a mode has set a target, and we can kill them, do it
 	local npcTarget = npcBot:GetTarget();
 	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 

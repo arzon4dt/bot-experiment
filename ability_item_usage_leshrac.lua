@@ -44,7 +44,9 @@ function AbilityUsageThink()
 		
 	local radius = abilityOO:GetSpecialValueInt( "radius" );
 
-	if abilityOO:IsInAbilityPhase() and not IsThereHeroWithinRadius(splitEarthLoc, radius) and not skUse then
+	if abilityOO:IsInAbilityPhase() and not IsThereHeroWithinRadius(splitEarthLoc, radius) 
+	   and not skUse and npcBot:GetActiveMode() ~= BOT_MODE_ROSHAN 
+	then
 		npcBot:Action_ClearActions(true);
 		return
 	end 	

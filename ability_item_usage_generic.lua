@@ -541,7 +541,7 @@ end
 local giveTime = -90;
 function UnImplementedItemUsage()
 
-	if bot:IsChanneling() or bot:IsUsingAbility() or bot:IsInvisible() or bot:IsMuted( ) then
+	if bot:IsChanneling() or bot:IsUsingAbility() or bot:IsInvisible() or bot:IsMuted( ) or bot:HasModifier("modifier_doom_bringer_doom") then
 		return;
 	end
 	
@@ -764,6 +764,52 @@ function UnImplementedItemUsage()
 		end
 	end
 	
+	local eb=IsItemAvailable("item_ethereal_blade");
+	if eb~=nil and eb:IsFullyCastable() and bot:GetUnitName() ~= "npc_dota_hero_morphling"
+	then
+		if ( mode == BOT_MODE_ATTACK or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY )
+		then
+			local npcTarget = bot:GetTarget();
+			if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastOnTarget(npcTarget) and GetUnitToUnitDistance(npcTarget, bot) < 1000 )
+			then
+			    bot:Action_UseAbilityOnEntity(eb,npcTarget);
+				return
+			end
+		end
+	end
+	
+	local rs=IsItemAvailable("item_refresher_shard");
+	if rs~=nil and rs:IsFullyCastable() 
+	then
+		if ( mode == BOT_MODE_ATTACK or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY ) and mutil.CanUseRefresherShard(bot)  
+		then
+			bot:Action_UseAbility(rs);
+			return
+		end
+	end
+	
+	local ro=IsItemAvailable("item_refresher");
+	if ro~=nil and ro:IsFullyCastable() 
+	then
+		if ( mode == BOT_MODE_ATTACK or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY ) and mutil.CanUseRefresherOrb(bot)  
+		then
+			bot:Action_UseAbility(ro);
+			return
+		end
+	end
+	
 	local sc=IsItemAvailable("item_solar_crest");
 	if sc~=nil and sc:IsFullyCastable() 
 	then
@@ -844,6 +890,7 @@ function UnImplementedItemUsage()
 		for _,Ally in pairs(Allies) do
 			if  not Ally:HasModifier('modifier_item_lotus_orb_active') 
 				and not Ally:IsMagicImmune()
+				and Ally:WasRecentlyDamagedByAnyHero(2.0)
 			    and (( Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 )  or 
 				IsDisabled(Ally))
 			then
@@ -890,6 +937,7 @@ function UnImplementedItemUsage()
 		for _,Ally in pairs(Allies) do
 			if not Ally:HasModifier('modifier_item_glimmer_cape') 
 			   and not Ally:IsMagicImmune()
+			   and Ally:WasRecentlyDamagedByAnyHero(2.0)
 			   and (( Ally:GetHealth()/Ally:GetMaxHealth() < 0.35 and tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) or IsDisabled(Ally))
 			then
 				bot:Action_UseAbilityOnEntity(glimer,Ally);
@@ -904,8 +952,7 @@ function UnImplementedItemUsage()
 		local maxHP = 0;
 		local NCreep = nil;
 		local tableNearbyCreeps = bot:GetNearbyCreeps( 1000, true );
-		if #tableNearbyCreeps >= 2 
-		then
+		if #tableNearbyCreeps >= 2 then
 			for _,creeps in pairs(tableNearbyCreeps)
 			do
 				local CreepHP = creeps:GetHealth();
@@ -920,6 +967,20 @@ function UnImplementedItemUsage()
 			bot:Action_UseAbilityOnEntity(hod,NCreep);
 			return
 		end	
+	end
+	
+	local hom=IsItemAvailable("item_hand_of_midas");
+	if hom~=nil and hom:IsFullyCastable() then
+		local range = bot:GetAttackRange() + 200;
+		local tableNearbyCreeps = bot:GetNearbyCreeps( range, true );
+		if #tableNearbyCreeps > 0 
+			and tableNearbyCreeps[1] ~= nil 
+			and tableNearbyCreeps[1]:IsMagicImmune() == false 
+			and tableNearbyCreeps[1]:IsAncientCreep() == false 
+		then
+			bot:Action_UseAbilityOnEntity(hom, tableNearbyCreeps[1]);
+			return;
+		end
 	end
 	
 	local guardian=IsItemAvailable("item_guardian_greaves");

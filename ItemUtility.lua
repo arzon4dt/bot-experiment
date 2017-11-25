@@ -11,6 +11,7 @@ ItemModule['earlyGameItem'] = {
 	 "item_stout_shield", 
 	 "item_magic_wand",
 	 "item_bottle",  
+	 "item_soul_ring",  
 	 "item_ring_of_aquila", 
 	 "item_dust",
 	 "item_ward_observer",
@@ -392,7 +393,11 @@ function ItemModule.GetMainInvLessValItemSlot(bot)
 	local minSlot = -1;
 	for i=0,5,1 do
 		local item = bot:GetItemInSlot(i);
-		if  item ~= nil and item:GetName() ~= "item_aegis" then
+		if  item ~= nil and item:GetName() ~= "item_aegis" 
+		    and item:GetName() ~= "item_refresher_shard" 
+		    and item:GetName() ~= "item_cheese" 
+		    and item:GetName() ~= "item_bloodstone" 
+		then
 			local cost = GetItemCost(item:GetName()); 
 			if  cost < minPrice then
 				minPrice = cost;

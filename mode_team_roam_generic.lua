@@ -47,7 +47,10 @@ function GetProperLane(pId)
 	return lane;
 	
 end
-
+local droppedCheck = -90;
+local cheeseCheck = -90;
+local refShardCheck = -90;
+local pickedItem = nil;
 local lastBootSlotCheck = -90;
 function GetDesire()
 
@@ -69,6 +72,48 @@ function GetDesire()
 			print(tostring(key)..":"..tostring(value))
 		end
 	end]]--
+	
+	if DotaTime() > 10*60 then
+		if DotaTime() >= droppedCheck + 1.0 then
+			local mostCDHero = mutil.GetMostUltimateCDUnit();
+			if mostCDHero ~= nil and mostCDHero:IsBot() and bot == mostCDHero and items.GetEmptyInventoryAmount(bot) > 0 then
+				local item = nil;
+				local dropped = GetDroppedItemList();
+				for _,drop in pairs(dropped) do
+					if drop.item:GetName() == "item_refresher_shard" then
+						item = drop;
+						break;
+					end
+				end
+				if item ~= nil then
+					pickedItem = item;
+					return BOT_MODE_DESIRE_VERYHIGH;
+				end
+			end
+			droppedCheck = DotaTime();
+		end	
+		if 	DotaTime() >= cheeseCheck + 2.0 and bot:GetActiveMode() ~= BOT_MODE_WARD then
+			local cSlot = bot:FindItemSlot('item_cheese');
+			if bot:GetItemSlotType(cSlot) == ITEM_SLOT_TYPE_BACKPACK then
+				local lessValItem = items.GetMainInvLessValItemSlot(bot);
+				if lessValItem ~= -1 then
+					bot:ActionImmediate_SwapItems( cSlot, lessValItem );
+				end
+			end
+			cheeseCheck = DotaTime();
+		end
+		if 	DotaTime() >= refShardCheck + 2.0 and bot:GetActiveMode() ~= BOT_MODE_WARD then
+			local rSlot = bot:FindItemSlot('item_refresher_shard');
+			if bot:GetItemSlotType(rSlot) == ITEM_SLOT_TYPE_BACKPACK then
+				local lessValItem = items.GetMainInvLessValItemSlot(bot);
+				if lessValItem ~= -1 then
+					bot:ActionImmediate_SwapItems( rSlot, lessValItem );
+				end
+			end
+			refShardCheck = DotaTime();
+		end
+	end
+	
 	if bot:GetActiveMode() ~= BOT_MODE_WARD and DotaTime() > lastBootSlotCheck + 1.0 then
 		local itemSlot = -1;
 		for i=1,#items['earlyBoots'] do
@@ -254,7 +299,7 @@ function GetDesire()
 			end
 		end		
 	elseif bot:GetUnitName() == "npc_dota_hero_skeleton_king" and bot:HasModifier("modifier_skeleton_king_mortal_strike") then
-		if cAbility == nil then cAbility = bot:GetAbilityByName('skeleton_king_mortal_strike') end;
+		if cAbility == nil then cAbility = bot:GetAbilityByName('skeleton_king_mortal_strike') end
 		if cAbility:IsFullyCastable() then
 			local stack = 0;
 			local modIdx = bot:GetModifierByName("modifier_skeleton_king_mortal_strike");
@@ -295,6 +340,7 @@ function OnEnd()
 	targetShrine = nil;
 	targetTree = nil;
 	targetLoc = nil;
+	pickedItem = nil;
 end
 
 function Think()
@@ -304,6 +350,17 @@ function Think()
 		return; 
 	end
 
+	if pickedItem ~= nil then
+		print(bot:GetUnitName().." picking up item");
+		if GetUnitToLocationDistance(bot, pickedItem.location) > 500 then
+			bot:Action_MoveToLocation(pickedItem.location);
+			return
+		else
+			bot:Action_PickUpItem(pickedItem.item);
+			return
+		end
+	end
+	
 	if ( bot:GetUnitName() == 'npc_dota_hero_elder_titan' or  bot:GetUnitName() == 'npc_dota_hero_wisp' ) and DotaTime() < 15 then
 		local loc  = GetLocationAlongLane(pLane, GetLaneFrontAmount( GetTeam(), pLane, false ));
 		local dist = GetUnitToLocationDistance(bot, loc);

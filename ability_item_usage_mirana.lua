@@ -222,7 +222,7 @@ function ConsiderPounce()
 	end
 
 	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) and npcBot:HasModifier('modifier_mirana_leap_buff') == false
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 500) == false and mutil.IsInRange(npcTarget, npcBot, 1000) == true 

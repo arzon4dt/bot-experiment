@@ -5,8 +5,8 @@ local hero_roles = role["hero_roles"];
 local requiredHeroes = {
 	--[['npc_dota_hero_terrorblade',
 	'npc_dota_hero_rubick';]]--
-	'npc_dota_hero_abaddon',
-	'npc_dota_hero_abyssal_underlord'
+	
+	'npc_dota_hero_warlock'
 };
 
 local UnImplementedHeroes = {
@@ -235,6 +235,11 @@ function Think()
 		MidOnlyLogic();	
 	elseif GetGameMode() == GAMEMODE_1V1MID then
 		OneVsOneLogic();		
+	elseif  GetGameMode() == GAMEMODE_SD then
+		if GetGameState() == GAME_STATE_HERO_SELECTION then
+			InstallChatCallback(function (attr) SelectHeroChatCallback(attr.player_id, attr.string, attr.team_only); end);
+		end
+		SingleDraftLogic();
 	elseif GetGameMode() == GAMEMODE_TM then
 		if GetGameState() == GAME_STATE_HERO_SELECTION then
 			InstallChatCallback(function (attr) SelectHeroChatCallback(attr.player_id, attr.string, attr.team_only); end);
@@ -322,6 +327,24 @@ function TurboModeLogic()
 			end
 		end 
 	end	
+end
+
+function SingleDraftLogic()
+	--print(tostring(GetGameMode()).."=>"..tostring(GetGameState())..":"..tostring(DotaTime( ))..":"..tostring(GetHeroPickState()))
+	if GetHeroPickState() == 2 and GameTime() >= 45 and GameTime() >= lastpick + 1.5 then
+		for i,id in pairs(GetTeamPlayers(GetTeam())) do
+			if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
+				if testMode then
+					hero = GetRandomHero() 
+				else
+					hero = PickRightHero(i-1) 
+				end
+				SelectHero(id, hero); 
+				lastpick = GameTime();
+				return;
+			end
+		end
+	end
 end
 
 local oboselect = false;
@@ -882,7 +905,7 @@ end
 
 ---------------------------------------------------------LANE ASSIGNMENT-----------------------------------------------------------------
 function UpdateLaneAssignments()    
-	if GetGameMode() == GAMEMODE_AP or GetGameMode() == GAMEMODE_TM then
+	if GetGameMode() == GAMEMODE_AP or GetGameMode() == GAMEMODE_TM or GetGameMode() == GAMEMODE_SD then
 		--print("AP Lane Assignment")
 		if GetGameState() == GAME_STATE_STRATEGY_TIME or GetGameState() == GAME_STATE_PRE_GAME then
 			InstallChatCallback(function (attr) SelectLaneChatCallback(attr.player_id, attr.string, attr.team_only); end);

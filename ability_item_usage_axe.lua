@@ -151,7 +151,7 @@ function ConsiderW()
 	if npcBot:GetActiveMode() == BOT_MODE_LANING and mutil.AllowedToSpam(npcBot, nManaCost) 
 	then
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 1200, false );
-		if ( tableNearbyEnemyCreeps == nil or #tableNearbyEnemyCreeps == 0 ) and tableNearbyEnemyHeroes[1] ~= nil then
+		if #tableNearbyEnemyCreeps == 0 and tableNearbyEnemyHeroes[1] ~= nil then
 			return BOT_ACTION_DESIRE_HIGH, tableNearbyEnemyHeroes[1];
 		end
 	end	
