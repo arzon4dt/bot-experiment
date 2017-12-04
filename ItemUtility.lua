@@ -288,13 +288,13 @@ ItemModule["item_yasha"] = { "item_boots_of_elves"; "item_blade_of_alacrity"; "i
 ---------- NEW ITEM BELOW ----------------
 ItemModule["item_meteor_hammer"] = { "item_ring_of_regen"; "item_sobi_mask"; "item_ogre_axe"; "item_staff_of_wizardry" }
 --aeon disk
-ItemModule["item_combo_breaker"] = { "item_vitality_booster"; "item_energy_booster"; "item_recipe_combo_breaker" }
+ItemModule["item_aeon_disk"] = { "item_vitality_booster"; "item_energy_booster"; "item_recipe_aeon_disk" }
 
 ItemModule["item_spirit_vessel"] = { "item_urn_of_shadows"; "item_wind_lace"; "item_vitality_booster"; "item_recipe_spirit_vessel" }
 
 ItemModule["item_nullifier"] = { "item_helm_of_iron_will"; "item_relic" }
 --kaya
-ItemModule["item_trident"] = { "item_robe"; "item_staff_of_wizardry"; "item_recipe_trident" }
+ItemModule["item_kaya"] = { "item_robe"; "item_staff_of_wizardry"; "item_recipe_kaya" }
 
 
 --Normalize some item names 
@@ -333,6 +333,23 @@ function ItemModule.GetBasicItems( ... )
 				basicItemTable[#basicItemTable+1] = w;
             end
         elseif ItemModule[v] == nil and ItemModule.IsItemInHero(v) == false then
+			basicItemTable[#basicItemTable+1] = v;
+        end
+    end
+    return basicItemTable
+end
+
+function ItemModule.GetBasicItemsNew( ... )
+    local basicItemTable = {}
+    for i,v in pairs(...) do
+		--print(tostring(v))
+		local comps = GetItemComponents(v);
+		--print(tostring(#comps))
+        if #comps > 0 and ItemModule.IsItemInHero(v) == false then
+            for _,w in pairs(ItemModule.GetBasicItems(comps[1])) do
+				basicItemTable[#basicItemTable+1] = w;
+            end
+        elseif #comps == 0 and ItemModule.IsItemInHero(v) == false then
 			basicItemTable[#basicItemTable+1] = v;
         end
     end

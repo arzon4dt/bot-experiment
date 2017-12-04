@@ -6,7 +6,13 @@ local requiredHeroes = {
 	--[['npc_dota_hero_terrorblade',
 	'npc_dota_hero_rubick';]]--
 	
-	'npc_dota_hero_warlock'
+	'npc_dota_hero_undying',
+	'npc_dota_hero_venomancer',
+	'npc_dota_hero_shadow_shaman',
+	'npc_dota_hero_beastmaster',
+	'npc_dota_hero_pugna',
+	'npc_dota_hero_jakiro',
+	'npc_dota_hero_bristleback',
 };
 
 local UnImplementedHeroes = {
@@ -306,6 +312,7 @@ local humanInRad1Slot = nil;
 function TurboModeLogic() 
 	
 	if #GetTeamPlayers(GetTeam()) < 5 or #GetTeamPlayers(GetOpposingTeam()) < 5 then return end  
+	
 	
 	if humanInRad1Slot == nil then humanInRad1Slot = IsHumanPlayerInRadiant1Slot() return end
 	

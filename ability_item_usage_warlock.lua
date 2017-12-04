@@ -33,6 +33,19 @@ end
 "Ability17"		"special_bonus_unique_warlock_1"
 ]]
 
+--[[
+modifier_warlock_fatal_bonds
+modifier_warlock_shadow_word
+modifier_warlock_upheaval
+modifier_warlock_rain_of_chaos_death_trigger
+modifier_warlock_rain_of_chaos_thinker
+modifier_special_bonus_unique_warlock_1
+modifier_special_bonus_unique_warlock_2
+modifier_warlock_golem_flaming_fists
+modifier_warlock_golem_permanent_immolation
+modifier_warlock_golem_permanent_immolation_debuff
+]]--
+
 local abilities = mutils.InitiateAbilities(bot, {0,1,2,5,11});
 
 local castQDesire = 0;
@@ -95,8 +108,10 @@ local function ConsiderW()
 		local allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
 		if #allies > 0 then
 			for i=1,#allies do
-				if mutils.CanCastOnNonMagicImmune(allies[i]) and allies[i]:GetHealth() <= minHP
-     			   and allies[i]:GetHealth() <= 0.55*allies[i]:GetMaxHealth() 
+				if allies[i]:HasModifier("modifier_warlock_shadow_word") == false
+				   and mutils.CanCastOnNonMagicImmune(allies[i]) 
+				   and allies[i]:GetHealth() <= minHP
+     			   and allies[i]:GetHealth() <= 0.55*allies[i]:GetMaxHealth()  
 				then
 					weakest = allies[i];
 					minHP = allies[i]:GetHealth();
@@ -126,6 +141,7 @@ local function ConsiderW()
 	then
 		local target = bot:GetTarget();
 		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target) and mutils.IsInRange(target, bot, nCastRange) 
+		   and target:HasModifier("modifier_warlock_shadow_word") == false
 		then
 			if abilities[5]:IsTrained() then
 				return BOT_ACTION_DESIRE_HIGH, "loc", target:GetLocation();

@@ -1,9 +1,5 @@
-print("bot_generic for "..GetBot():GetUnitName());
-local a = {"1", "2", "3"};
-		a[3] = nil;
-		a[2] = nil;
-		print(tostring(#a))
+local minionutils = dofile( GetScriptDirectory().."/NewMinionUtil" )
 
-		for a, b in pairs(a) do 
-			print(a .. " * " .. tostring(b))
-		end
+function MinionThink(  hMinionUnit ) 
+	minionutils.MinionThink(hMinionUnit);
+end	

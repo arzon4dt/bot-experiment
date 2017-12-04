@@ -10,7 +10,7 @@ X["items"] = {
 	"item_tranquil_boots",
 	"item_blink",
 	"item_aether_lens",
-	"item_trident",
+	"item_kaya",
 	"item_cyclone",
 	"item_ultimate_scepter"
 };			

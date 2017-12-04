@@ -52,8 +52,18 @@ local cheeseCheck = -90;
 local refShardCheck = -90;
 local pickedItem = nil;
 local lastBootSlotCheck = -90;
-function GetDesire()
 
+local function CheckFlag(bitfield, flag)
+    return ((bitfield/flag) % 2) >= 1
+end
+
+function GetDesire()
+	
+	--[[local units = GetUnitList(UNIT_LIST_ALLIED_OTHER)
+	for _,unit in pairs(units) do
+		print(unit:GetUnitName()..":"..tostring(unit:GetBaseMovementSpeed())..":"..tostring(unit:GetBaseDamage())..":"..tostring(unit:GetAttackPoint()))
+	end]]--
+	
 	if bot:GetUnitName() == "npc_dota_hero_earthshaker" 
 		--or bot:GetUnitName() == "npc_dota_hero_abaddon" 
 		--or bot:GetUnitName() == "npc_dota_hero_abyssal_underlord" 

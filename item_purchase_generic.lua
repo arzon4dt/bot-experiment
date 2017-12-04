@@ -433,7 +433,7 @@ function ItemPurchaseThink()
 	--It'll only done if the bot already has the item that formed from its component in their hero's inventory (not stash) to prevent unintended item combining
 	if  bot.currentItemToBuy == nil and #bot.currListItemToBuy == 0 then
 		bot.currentItemToBuy = bot.itemToBuy[#bot.itemToBuy];
-		local tempTable = items.GetBasicItems({bot.currentItemToBuy})
+		local tempTable = items.GetBasicItems({items.NormItemName(bot.currentItemToBuy)})
 		for i=1,math.ceil(#tempTable/2) 
 		do	
 			bot.currListItemToBuy[i] = tempTable[#tempTable-i+1];

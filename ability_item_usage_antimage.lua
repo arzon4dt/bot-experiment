@@ -109,16 +109,16 @@ function ConsiderCorrosiveHaze()
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
-			local npcTarget = npcBot:GetTarget();
-			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnTargetAdvanced(npcTarget)
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnTargetAdvanced(npcTarget)
+		then
+			local EstDamage = nDamagaPerHealth * ( npcTarget:GetMaxMana() - npcTarget:GetMana() )
+			local TPerMana = npcTarget:GetMana()/npcTarget:GetMaxMana();
+			if mutil.CanKillTarget(npcTarget, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.01
 			then
-				local EstDamage = nDamagaPerHealth * ( npcTarget:GetMaxMana() - npcTarget:GetMana() )
-				local TPerMana = npcTarget:GetMana()/npcTarget:GetMaxMana();
-				if mutil.CanKillTarget(npcTarget, EstDamage, DAMAGE_TYPE_MAGICAL) or TPerMana < 0.01
-				then
-					return BOT_ACTION_DESIRE_HIGH, npcTarget;
-				end
+				return BOT_ACTION_DESIRE_HIGH, npcTarget;
 			end
+		end
 	end
 	
 

@@ -9,7 +9,7 @@ X["items"] = {
 	"item_power_treads_str",
 	"item_vanguard",
 	"item_blade_mail",
-	"item_combo_breaker",
+	"item_aeon_disk",
 	"item_crimson_guard",
 	"item_shivas_guard",
 	"item_octarine_core"

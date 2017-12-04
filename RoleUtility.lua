@@ -1670,4 +1670,18 @@ function X.ShouldBuyBack()
 	return DotaTime() > X['lastbbtime'] + 2.0;
 end
 
+function X.GetHighestValueRoles(bot)
+	local maxVal = -1;
+	local role = "";
+	print("========="..bot:GetUnitName().."=========")
+	for key, value in pairs(X.hero_roles[bot:GetUnitName()]) do
+		print(tostring(key).." : "..tostring(value));
+		if value >= maxVal then
+			maxVal = value;
+			role = key;
+		end
+	end
+	print("Highest value role => "..role.." : "..tostring(maxVal))
+end
+
 return X
