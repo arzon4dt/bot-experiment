@@ -23,6 +23,7 @@ local abilityQ = nil;
 local abilityW = nil;
 local abilityE = nil;
 local abilityR = nil;
+local abilityAOEW = nil;
 
 local castQDesire = 0;
 local castWDesire = 0;
@@ -40,6 +41,7 @@ function AbilityUsageThink()
 	if abilityW == nil then abilityW = npcBot:GetAbilityByName( "lion_voodoo" ) end
 	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "lion_mana_drain" ) end
 	if abilityR == nil then abilityR = npcBot:GetAbilityByName( "lion_finger_of_death" ) end
+	if abilityAOEW == nil then abilityAOEW = npcBot:GetAbilityByName( "special_bonus_unique_lion_4" ) end
 	
 	if IsThereUnitMDed() then
 		cancelMDDesire = ConsiderCancelMD()
@@ -77,8 +79,13 @@ function AbilityUsageThink()
 	
 	if ( castWDesire > 0 and DotaTime() >= stunTime + gapTime ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityW, castWTarget );
-		return;
+		if abilityAOEW:IsTrained() then
+			npcBot:Action_UseAbilityOnLocation( abilityW, castWTarget:GetLocation() );
+			return;
+		else
+			npcBot:Action_UseAbilityOnEntity( abilityW, castWTarget );
+			return;
+		end	
 	end
 	
 	if ( castEDesire > 0 ) 

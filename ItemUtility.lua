@@ -109,7 +109,7 @@ ItemModule["item_armlet"] = { "item_helm_of_iron_will"; "item_gloves"; "item_bla
 
 ItemModule["item_assault"] = { "item_platemail"; "item_hyperstone"; "item_chainmail"; "item_recipe_assault" }
 
-ItemModule["item_bfury"] = { "item_quelling_blade"; "item_pers"; "item_demon_edge" }
+ItemModule["item_bfury"] = { "item_quelling_blade"; "item_pers"; "item_demon_edge"; "item_recipe_bfury" }
 
 ItemModule["item_black_king_bar"] = { "item_ogre_axe"; "item_mithril_hammer"; "item_recipe_black_king_bar" }
 
@@ -163,7 +163,7 @@ ItemModule["item_cyclone"] = { "item_wind_lace"; "item_void_stone"; "item_staff_
 
 ItemModule["item_skadi"] = { "item_point_booster"; "item_ultimate_orb"; "item_ultimate_orb" }
 
-ItemModule["item_force_staff"] = { "item_staff_of_wizardry"; "item_ring_of_health"; "item_recipe_force_staff" }
+ItemModule["item_force_staff"] = { "item_staff_of_wizardry"; "item_ring_of_regen"; "item_recipe_force_staff" }
 
 ItemModule["item_glimmer_cape"] = { "item_cloak"; "item_shadow_amulet" }
 
@@ -189,9 +189,9 @@ ItemModule["item_sphere"] = { "item_pers"; "item_ultimate_orb"; "item_recipe_sph
 
 ItemModule["item_lotus_orb"] = { "item_pers"; "item_platemail"; "item_energy_booster" }
 
-ItemModule["item_maelstrom"] = { "item_gloves"; "item_mithril_hammer"; "item_recipe_maelstrom" }
+ItemModule["item_maelstrom"] = { "item_javelin"; "item_mithril_hammer" }
 
-ItemModule["item_magic_wand"] = { "item_branches"; "item_branches"; "item_magic_stick"; "item_enchanted_mango" }
+ItemModule["item_magic_wand"] = { "item_branches"; "item_branches"; "item_magic_stick"; "item_recipe_magic_wand" }
 
 ItemModule["item_manta"] = { "item_yasha"; "item_ultimate_orb"; "item_recipe_manta" }
 
@@ -203,7 +203,7 @@ ItemModule["item_mekansm"] = { "item_buckler"; "item_headdress"; "item_recipe_me
 
 ItemModule["item_mjollnir"] = { "item_maelstrom"; "item_hyperstone"; "item_recipe_mjollnir" }
 
-ItemModule["item_monkey_king_bar"] = { "item_hyperstone"; "item_javelin"; "item_javelin" }
+ItemModule["item_monkey_king_bar"] = { "item_quarterstaff"; "item_javelin"; "item_demon_edge" }
 
 ItemModule["item_moon_shard"] = { "item_hyperstone"; "item_hyperstone"}
 
@@ -263,7 +263,7 @@ ItemModule["item_shivas_guard"] = { "item_platemail"; "item_mystic_staff"; "item
 
 ItemModule["item_silver_edge"] = { "item_invis_sword"; "item_ultimate_orb"; "item_recipe_silver_edge" }
 
-ItemModule["item_basher"] = { "item_javelin"; "item_belt_of_strength"; "item_recipe_basher" }
+ItemModule["item_basher"] = { "item_mithril_hammer"; "item_belt_of_strength"; "item_recipe_basher" }
 
 ItemModule["item_solar_crest"] = { "item_medallion_of_courage"; "item_talisman_of_evasion" }
 

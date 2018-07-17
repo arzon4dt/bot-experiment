@@ -43,7 +43,7 @@ function AbilityUsageThink()
 	if abilityDC == nil then abilityDC = npcBot:GetAbilityByName( "wisp_tether" ) end
 	if abilitySP == nil then abilitySP = npcBot:GetAbilityByName( "wisp_spirits" ) end
 	if abilitySPI == nil then abilitySPI = npcBot:GetAbilityByName( "wisp_spirits_in" ) end
-	if abilitySPO == nil then abilitySPO = npcBot:GetAbilityByName( "wisp_spirits_out" ) end
+	if abilitySPO == nil then abilitySPO = npcBot:GetAbilityByName( "wisp_spirits_in" ) end
 	if abilityOC == nil then abilityOC = npcBot:GetAbilityByName( "wisp_overcharge" ) end
 	if abilityRC == nil then abilityRC = npcBot:GetAbilityByName( "wisp_relocate" ) end
 
