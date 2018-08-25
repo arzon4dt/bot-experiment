@@ -184,6 +184,18 @@ X["hero_roles"] = {
 		['pusher'] = 0
 	},
 
+	["npc_dota_hero_grimstroke"] = {
+		['carry'] = 0,
+		['disabler'] = 2,
+		['durable'] = 0,
+		['escape'] = 1,
+		['initiator'] = 0,
+		['jungler'] = 0,
+		['nuker'] = 3,
+		['support'] = 3,
+		['pusher'] = 0
+	},
+	
 	["npc_dota_hero_huskar"] = {
 		['carry'] = 2,
 		['disabler'] = 0,

@@ -6,9 +6,7 @@ local requiredHeroes = {
 	--[['npc_dota_hero_terrorblade',
 	'npc_dota_hero_rubick';]]--
 	
-	'npc_dota_hero_lion',
-	'npc_dota_hero_antimage',
-	'npc_dota_hero_juggernaut',
+	'npc_dota_hero_grimstroke'
 };
 
 local UnImplementedHeroes = {
@@ -93,6 +91,7 @@ local allBotHeroes = {
         'npc_dota_hero_earthshaker',
 	'npc_dota_hero_elder_titan',
 	'npc_dota_hero_faceless_void',
+	'npc_dota_hero_grimstroke',
 	'npc_dota_hero_gyrocopter',
 	'npc_dota_hero_huskar',
     'npc_dota_hero_invoker',
@@ -168,7 +167,7 @@ local Min = -5;
 local Max = 25;
 local CMTestMode = false;
 local UnavailableHeroes = {
-
+	'npc_dota_hero_grimstroke'
 }
 local HeroLanes = {
 	[1] = LANE_MID,

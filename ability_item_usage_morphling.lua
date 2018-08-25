@@ -363,9 +363,9 @@ function ConsiderMorphAgility()
 	local currAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY);
 	local currSTRENGTH = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
 
-	if npcBot:GetMana() < 30 and abilityMRA:GetToggleState() then
+	if npcBot:GetMana() < 1 and abilityMRA:GetToggleState() then
 		return BOT_ACTION_DESIRE_LOW;
-	elseif npcBot:GetMana() < 30 and not abilityMRA:GetToggleState() then
+	elseif npcBot:GetMana() < 1 and not abilityMRA:GetToggleState() then
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
@@ -394,9 +394,9 @@ function ConsiderMorphStrength()
 	local currAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY);
 	local currSTRENGTH = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
 	
-	if npcBot:GetMana() < 30 and abilityMRS:GetToggleState() then
+	if npcBot:GetMana() < 1 and abilityMRS:GetToggleState() then
 		return BOT_ACTION_DESIRE_LOW;
-	elseif npcBot:GetMana() < 30 and not abilityMRS:GetToggleState() then
+	elseif npcBot:GetMana() < 1 and not abilityMRS:GetToggleState() then
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
