@@ -93,4 +93,8 @@ function X.GetBuildPattern(status, s, skills, t, talents)
 	end	
 end
 
+function X.GetRandomBuild(tBuilds)
+	return tBuilds[RandomInt(1,#tBuilds)]
+end	
+
 return X;

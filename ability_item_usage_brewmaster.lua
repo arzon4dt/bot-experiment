@@ -18,9 +18,12 @@ end
 
 local castPSDesire = 0;
 local castTCDesire = 0;
+local castDHDesire = 0;
+local castDBDesire = 0;
 
 local abilityTC = nil;
 local abilityDH = nil;
+local abilityDB = nil;
 local abilityPS = nil;
 
 local npcBot = nil;
@@ -33,23 +36,29 @@ function AbilityUsageThink()
 	if mutil.CanNotUseAbility(npcBot) then return end
 
 	if abilityTC == nil then abilityTC = npcBot:GetAbilityByName( "brewmaster_thunder_clap" ) end
-	if abilityDH == nil then abilityDH = npcBot:GetAbilityByName( "brewmaster_drunken_haze" ) end
+	if abilityDH == nil then abilityDH = npcBot:GetAbilityByName( "brewmaster_cinder_brew" ) end
+	if abilityDB == nil then abilityDB = npcBot:GetAbilityByName( "brewmaster_drunken_brawler" ) end
 	if abilityPS == nil then abilityPS = npcBot:GetAbilityByName( "brewmaster_primal_split" ) end
 	
 	-- Consider using each ability
 	castTCDesire = ConsiderThunderClap();
+	castDBDesire = ConsiderDrunkenBrawler();
 	castDHDesire, castDHTarget = ConsiderDrunkenHaze();
 	castPSDesire = ConsiderPrimalSplit();
 
-	if ( castDHDesire > castPSDesire and castDHDesire > castTCDesire ) 
+	if ( castDHDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityDH, castDHTarget );
+		npcBot:Action_UseAbilityOnLocation( abilityDH, castDHTarget:GetLocation() );
 		return;
-	end
-		
+	end	
 	if ( castTCDesire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityTC );
+		return;
+	end
+	if ( castDBDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityDB );
 		return;
 	end
 	if ( castPSDesire > 0  ) 
@@ -122,6 +131,59 @@ function ConsiderThunderClap()
 
 end
 
+
+function ConsiderDrunkenBrawler()
+
+	-- Make sure it's castable
+	if ( not abilityDB:IsFullyCastable() ) then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+
+	-- Get some of its values
+	local nRadius = 300;
+
+	--------------------------------------
+	-- Mode based usage
+	--------------------------------------
+
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
+			then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
+		end
+	end
+	
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)  )
+		then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end
+	
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
+		then
+			return BOT_ACTION_DESIRE_VERYHIGH;
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
+
+end
+
+
 function ConsiderPrimalSplit()
 
 	-- Make sure it's castable
@@ -182,12 +244,25 @@ function ConsiderDrunkenHaze()
 	-- Get some of its values
 	local nCastRange = abilityDH:GetCastRange();
 
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
+			then
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
+			end
+		end
+	end
+
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 			local npcTarget = npcBot:GetTarget();
 			if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and
-			     mutil.IsInRange(npcTarget, npcBot, nCastRange) and not npcTarget:HasModifier("modifier_brewmaster_drunken_haze") )
+			     mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and not npcTarget:HasModifier("modifier_brewmaster_drunken_haze") )
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcTarget;
 			end
@@ -197,7 +272,7 @@ function ConsiderDrunkenHaze()
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)  )
 		then
 			return BOT_ACTION_DESIRE_LOW, npcTarget;
 		end

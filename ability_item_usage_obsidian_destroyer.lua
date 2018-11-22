@@ -19,6 +19,7 @@ end
 
 local castSADesire = 0;
 local castDRDesire = 0;
+local castEADesire = 0;
 local castSSDesire = 0;
 local abilitySA = "";
 local abilityDR = "";
@@ -35,7 +36,7 @@ function AbilityUsageThink()
 
 	if abilitySA == "" then abilitySA = npcBot:GetAbilityByName( "obsidian_destroyer_arcane_orb" ); end 
 	if abilityDR == "" then abilityDR = npcBot:GetAbilityByName( "obsidian_destroyer_astral_imprisonment" ); end 
-	if abilityEA == "" then abilityEA = npcBot:GetAbilityByName( "obsidian_destroyer_essence_aura" ); end
+	if abilityEA == "" then abilityEA = npcBot:GetAbilityByName( "obsidian_destroyer_equilibrium" ); end
 	if abilitySS == "" then abilitySS = npcBot:GetAbilityByName( "obsidian_destroyer_sanity_eclipse" ); end
 	
 	if abilitySA:IsTrained() and abilityEA:GetLevel() >= 3 and not abilitySA:GetAutoCastState( )  then
@@ -44,6 +45,7 @@ function AbilityUsageThink()
 	
 	castSADesire, castSATarget = ConsiderSearingArrows()
 	castDRDesire, castDRTarget = ConsiderDisruption();
+	castEADesire = ConsiderEquilibrium();
 	castSSDesire, castSSLocation = ConsiderStaticStorm();
 	
 	if castSADesire > 0 
@@ -53,6 +55,11 @@ function AbilityUsageThink()
 	if ( castDRDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityDR, castDRTarget );
+		return;
+	end
+	if ( castEADesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityEA );
 		return;
 	end
 	if ( castSSDesire > 0 ) 
@@ -178,6 +185,31 @@ function ConsiderDisruption()
 	return BOT_ACTION_DESIRE_NONE, 0;
 
 end
+
+function ConsiderEquilibrium()
+
+	-- Make sure it's castable
+	if ( not abilityEA:IsFullyCastable() ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	-- Get some of its values
+	local nAttackRange = npcBot:GetAttackRange();
+
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot) 
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nAttackRange+200)
+		then
+			return BOT_ACTION_DESIRE_HIGH;
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE;
+end	
+
 
 function ConsiderStaticStorm()
 

@@ -7,17 +7,22 @@ local skills  = IBUtil.FillSkillTable(npcBot, IBUtil.GetSlotPattern(1));
 
 X["items"] = { 
 	"item_magic_wand",
-	"item_tranquil_boots",
+	"item_power_treads_str",
+	"item_echo_sabre",
 	"item_blink",
 	"item_force_staff",
 	"item_black_king_bar",
-	"item_assault",
 	"item_heart"
 };			
 
+X["builds"] = {
+	{2,1,2,3,2,4,2,1,1,1,4,3,3,3,4},
+	{2,1,2,3,1,4,2,1,2,1,4,3,3,3,4}
+}
+
 X["skills"] = IBUtil.GetBuildPattern(
 	  "normal", 
-	  {2,1,2,3,2,4,2,1,1,1,4,3,3,3,4}, skills, 
+	  IBUtil.GetRandomBuild(X['builds']), skills, 
 	  {1,3,5,7}, talents
 );
 

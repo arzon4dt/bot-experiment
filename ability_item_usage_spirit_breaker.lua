@@ -37,7 +37,7 @@ function AbilityUsageThink()
 	if ( npcBot:HasModifier("modifier_spirit_breaker_charge_of_darkness") or mutil.CanNotUseAbility(npcBot) or npcBot:NumQueuedActions() > 0 ) then return end;
 
 	if abilityCD == nil then abilityCD = npcBot:GetAbilityByName( "spirit_breaker_charge_of_darkness" ) end
-	if abilityEH == nil then abilityEH = npcBot:GetAbilityByName( "spirit_breaker_empowering_haste" ) end
+	if abilityEH == nil then abilityEH = npcBot:GetAbilityByName( "spirit_breaker_bulldoze" ) end
 	if abilityNS == nil then abilityNS = npcBot:GetAbilityByName( "spirit_breaker_nether_strike" ) end
 
 	castEHDesire = ConsiderEmpoweringHaste();

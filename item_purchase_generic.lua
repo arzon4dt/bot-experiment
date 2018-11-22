@@ -84,7 +84,14 @@ end
 
 ---add tango and healing salve as starting consumables item
 ---add stout shield + queling blade for melee carry and stout shield for melee non carry
-if ( GetGameMode() ~= 23 and DotaTime() < -60 ) or ( GetGameMode() == 23 and DotaTime() < -50 ) then
+if DotaTime() < 0 then
+	if bot:GetPrimaryAttribute() == ATTRIBUTE_STRENGTH then
+		bot.itemToBuy[#bot.itemToBuy+1] = 'item_bracer';
+	elseif bot:GetPrimaryAttribute() == ATTRIBUTE_AGILITY then
+		bot.itemToBuy[#bot.itemToBuy+1] = 'item_wraith_band';
+	elseif bot:GetPrimaryAttribute() == ATTRIBUTE_INTELLECT then
+		bot.itemToBuy[#bot.itemToBuy+1] = 'item_null_talisman';
+	end
 	if bot:GetAttackRange() < 320 and unitName ~= 'npc_dota_hero_templar_assassin' and unitName ~= 'npc_dota_hero_tidehunter' then
 		if role.IsCarry(unitName) then
 			bot.itemToBuy[#bot.itemToBuy+1] = 'item_quelling_blade';
@@ -319,7 +326,7 @@ function ItemPurchaseThink()
 			and items.GetEmptyInventoryAmount(bot) >= 4 and items.GetItemCharges(bot, "item_dust") < 1 and bot:GetCourierValue() == 0 
 		then
 			bot:ActionImmediate_PurchaseItem("item_dust"); 
-		elseif GetItemStockCount( "item_ward_observer" ) > 0 and ( DotaTime() < 0 or ( DotaTime() > 0 and buyBootsStatus == true ) ) and bot:GetGold() >= GetItemCost( "item_ward_observer" ) 
+		elseif GetItemStockCount( "item_ward_observer" ) > 1 and ( DotaTime() < 0 or ( DotaTime() > 0 and buyBootsStatus == true ) ) and bot:GetGold() >= GetItemCost( "item_ward_observer" ) 
 			and items.GetEmptyInventoryAmount(bot) >= 3 and items.GetItemCharges(bot, "item_ward_observer") < 2  and bot:GetCourierValue() == 0
 		then
 			bot:ActionImmediate_PurchaseItem("item_ward_observer"); 
@@ -426,7 +433,7 @@ function ItemPurchaseThink()
 		addVeryLateGameItem = true;
 	end
 	
-	--No need to purchase item when not item to purchase in the list
+	--No need to purchase item when no item to purchase in the list
 	if #bot.itemToBuy == 0 then bot:SetNextItemPurchaseValue( 0 ); return; end
 	
 	--Get the next item to buy and break it to item components then add it to currListItemToBuy. 

@@ -27,7 +27,7 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		abilityDM = hMinionUnit:GetAbilityByName( "brewmaster_storm_dispel_magic" );
 		abilityCY = hMinionUnit:GetAbilityByName( "brewmaster_storm_cyclone" );
 		abilityWW = hMinionUnit:GetAbilityByName( "brewmaster_storm_wind_walk" );
-		abilityCH = hMinionUnit:GetAbilityByName( "brewmaster_drunken_haze" );
+		abilityCH = hMinionUnit:GetAbilityByName( "brewmaster_cinder_brew" );
 		CastDMDesire, DMLocation = ConsiderDM(hMinionUnit); 
 		CastCYDesire, CYTarget = ConsiderCY(hMinionUnit); 
 		castCHDesire, castCHTarget = ConsiderCorrosiveHaze(hMinionUnit);
@@ -49,7 +49,7 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		
 		if ( castCHDesire > 0 ) 
 		then
-			hMinionUnit:Action_UseAbilityOnEntity( abilityCH, castCHTarget );
+			hMinionUnit:Action_UseAbilityOnLocation( abilityCH, castCHTarget:GetLocation() );
 			return;
 		end
 		

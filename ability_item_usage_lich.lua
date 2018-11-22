@@ -5,6 +5,7 @@ end
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
 local mutils = require(GetScriptDirectory() ..  "/MyUtility")
+local abUtils = require(GetScriptDirectory() ..  "/AbilityItemUsageUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -26,6 +27,8 @@ local castQDesire = 0;
 local castWDesire = 0;
 local castEDesire = 0;
 local castRDesire = 0;
+
+local lastCheck = -90;
 
 function AbilityUsageThink()
 	
@@ -125,25 +128,58 @@ function ConsiderW()
 	end
 	
 	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[2]:GetCastRange());
+	local nCastPoint = abilities[2]:GetCastPoint();
 	local manaCost  = abilities[2]:GetManaCost();
+	local nRadius   = abilities[2]:GetSpecialValueInt( "radius" );
 	
-	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) and not bot:HasModifier('modifier_lich_frost_armor')
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
 	then
-		return BOT_ACTION_DESIRE_HIGH, bot;
-	end
-	
-	if mutils.CanSpamSpell(bot, manaCost) then
-		local target = mutils.GetAllyWithNoBuff(nCastRange, 'modifier_lich_frost_armor', bot);
-		if target ~= nil then
-			return BOT_ACTION_DESIRE_HIGH, target;
+		if abilities[1]:IsFullyCastable() == false and mutils.CanCastOnNonMagicImmune(bot) then
+			return BOT_ACTION_DESIRE_HIGH, bot;
 		end
 	end
 	
-	if ( mutils.IsDefending(bot) ) and mutils.CanSpamSpell(bot, manaCost)
+	if mutils.IsInTeamFight(bot, 1300)  and mutils.CanCastOnNonMagicImmune(bot) == true
 	then
-		local target = mutils.GetBuildingWithNoBuff(nCastRange, 'modifier_lich_frost_armor', bot)
-		if target ~= nil then
-			return BOT_ACTION_DESIRE_HIGH, target;
+		local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), 0, nRadius, 0, 0 );
+		local unitCount = abUtils.CountVulnerableUnit(enemies, locationAoE, nRadius, 2);
+		if ( unitCount >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, bot;
+		end
+	end
+	
+	if DotaTime() >= lastCheck + 0.5 then 
+		local weakest = nil;
+		local minHP = 100000;
+		local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+		local allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
+		if #allies > 0 and #enemies >= 1 then
+			for i=1,#allies do
+				if mutils.CanCastOnNonMagicImmune(allies[i])
+				   and allies[i]:WasRecentlyDamagedByAnyHero(2.0) 
+				   and ( allies[i]:GetAttackTarget() == nil or mutils.IsRetreating(allies[i]) )
+				   and allies[i]:GetHealth() <= minHP
+     			   and allies[i]:GetHealth() <= 0.5*allies[i]:GetMaxHealth() 
+				then
+					weakest = allies[i];
+					minHP = allies[i]:GetHealth();
+				end
+			end
+		end
+		if weakest ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, weakest;
+		end
+		lastCheck = DotaTime();
+	end
+	
+	if mutils.IsGoingOnSomeone(bot) and mutils.CanCastOnNonMagicImmune(bot) == true
+	then
+		local target = bot:GetTarget();
+		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target) and mutils.IsInRange(target, bot, nRadius)
+		then
+			return BOT_ACTION_DESIRE_HIGH, bot;
 		end
 	end
 	
@@ -151,28 +187,66 @@ function ConsiderW()
 end	
 
 function ConsiderE()
-	if not mutils.CanBeCast(abilities[3]) then
+	if not mutils.CanBeCast(abilities[3]) 
+	then
 		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[3]:GetCastRange());
 	
-	if bot:GetActiveMode() == BOT_MODE_LANING then 
-		local creeps = bot:GetNearbyLaneCreeps(nCastRange, false);
-		for _,c in pairs(creeps) do
-			if c:GetAttackRange() > 150 then
-				return BOT_ACTION_DESIRE_HIGH, c;
-			end
-		end
-	else
-		local creeps = bot:GetNearbyLaneCreeps(nCastRange, false);
-		local target = mutils.GetMostHpUnit(creeps);
-		if target ~= nil then
-			return BOT_ACTION_DESIRE_HIGH, target;
+	local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
+	
+	--if we can kill any enemies
+	for _,npcEnemy in pairs(tableNearbyEnemyHeroes)
+	do
+		if mutils.CanCastOnNonMagicImmune(npcEnemy) and  npcEnemy:IsChanneling() then
+			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 		end
 	end
 	
-	return BOT_ACTION_DESIRE_NONE, nil;
+	if ( bot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = bot:GetAttackTarget();
+		if ( mutils.IsRoshan(npcTarget) and mutils.CanCastOnMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nCastRange) 
+            and not mutils.IsDisabled(true, npcTarget) )
+		then
+			return BOT_ACTION_DESIRE_LOW, npcTarget;
+		end
+	end
+
+	if mutils.IsInTeamFight(bot, 1200)
+	then
+		local highesAD = 0;
+		local highesADUnit = nil;
+		
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			local EnemyAD = npcEnemy:GetAttackDamage();
+			if ( mutils.CanCastOnNonMagicImmune(npcEnemy) and not mutils.IsDisabled(true, npcEnemy) and
+				 EnemyAD > highesAD ) 
+			then
+				highesAD = EnemyAD;
+				highesADUnit = npcEnemy;
+			end
+		end
+		
+		if highesADUnit ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, highesADUnit;
+		end
+	end
+	
+	-- If we're going after someone
+	if mutils.IsGoingOnSomeone(bot)
+	then
+		local npcTarget = bot:GetTarget();
+		if mutils.IsValidTarget(npcTarget) and mutils.CanCastOnNonMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nCastRange + 200) 
+		   and not mutils.IsDisabled(true, npcTarget)
+		then
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
 end		
 
 function ConsiderR()

@@ -60,7 +60,7 @@ function AbilityUsageThink()
 	
 	if ( castCTDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnLocation( abilityCT, castCTLocation );
+		npcBot:Action_UseAbilityOnEntity( abilityCT, castCTLocation );
 		return;
 	end	
 	
@@ -281,20 +281,18 @@ function ConsiderChillingTouch()
 	end
 
 	-- Get some of its values
-	local nRadius = abilityCT:GetSpecialValueInt("radius");
-	local nCastRange = abilityCT:GetCastRange();
-	local nCastPoint = abilityCT:GetCastPoint();
+	local nCastRange = npcBot:GetAttackRange();
 
+	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		local locationAoE = npcBot:FindAoELocation( false, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );	
-		if  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
-			and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and locationAoE.count >= 2   
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+			return BOT_ACTION_DESIRE_VERYHIGH, npcTarget;
 		end
 	end
+	
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end

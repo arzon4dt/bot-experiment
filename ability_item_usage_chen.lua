@@ -45,7 +45,7 @@ function AbilityUsageThink()
 	if mutil.CanNotUseAbility(npcBot) then return end
 
 	if abilityUFB == nil then abilityUFB = npcBot:GetAbilityByName( "chen_penitence" ) end
-	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "chen_test_of_faith" ) end
+	if abilityFB == nil then abilityFB = npcBot:GetAbilityByName( "chen_divine_favor" ) end
 	--if abilityAC == nil then abilityAC = npcBot:GetAbilityByName( "chen_test_of_faith_teleport" ) end
 	if abilityHP == nil then abilityHP = npcBot:GetAbilityByName( "chen_holy_persuasion" ) end
 	if abilityHoG == nil then abilityHoG = npcBot:GetAbilityByName( "chen_hand_of_god" ) end
@@ -188,67 +188,32 @@ function ConsiderFireblast()
 
 	-- Get some of its values
 	local nCastRange = abilityFB:GetCastRange();
-	local nDamage = abilityFB:GetSpecialValueInt("damage_max");
-
-	--------------------------------------
-	-- Mode based usage
-	--------------------------------------
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTarget = npcBot:GetTarget();
-	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_PURE) and
-	   mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
-	then
-		return BOT_ACTION_DESIRE_HIGH, npcTarget;
-	end
-	
-	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if mutil.IsRetreating(npcBot)
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
-			then
-				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
-			end
-		end
-	end
-	
+	-- local nDamage = abilityFB:GetSpecialValueInt("damage_max");
 	
 	-- If we're in a teamfight, use it on the scariest enemy
-	if mutil.IsInTeamFight(npcBot, 1200)
-	then
-		local lowHpAlly = nil;
-		local nLowestHealth = 10000;
+	
+	local lowHpAlly = nil;
+	local nLowestHealth = 10000;
 
-		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
-		for _,npcAlly in pairs( tableNearbyAllies )
-		do
-			if ( mutil.CanCastOnNonMagicImmune(npcAlly) )
+	local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE  );
+	for _,npcAlly in pairs( tableNearbyAllies )
+	do
+		if ( mutil.CanCastOnNonMagicImmune(npcAlly) )
+		then
+			local nAllyHP = npcAlly:GetHealth();
+			if  nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 and npcAlly:WasRecentlyDamagedByAnyHero(3.0)  
 			then
-				local nAllyHP = npcAlly:GetHealth();
-				if  nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.25 and npcAlly:WasRecentlyDamagedByAnyHero(3.0)  
-				then
-					nLowestHealth = nAllyHP;
-					lowHpAlly = npcAlly;
-				end
+				nLowestHealth = nAllyHP;
+				lowHpAlly = npcAlly;
 			end
 		end
-
-		if ( lowHpAlly ~= nil )
-		then
-			return BOT_ACTION_DESIRE_MODERATE, lowHpAlly;
-		end
 	end
 
-	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if ( lowHpAlly ~= nil )
 	then
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
-		end
+		return BOT_ACTION_DESIRE_MODERATE, lowHpAlly;
 	end
+	
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 

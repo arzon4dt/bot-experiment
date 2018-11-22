@@ -325,7 +325,12 @@ function GetDesire()
 					return BOT_MODE_DESIRE_ABSOLUTE;
 				end
 			end
-		end			
+		end	
+	elseif bot:GetUnitName() == "npc_dota_hero_lich" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "lich_sinister_gaze" ) end;
+		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end		
 	end
 	
 	if alreadyFoundCreep then
@@ -418,6 +423,7 @@ function Think()
 		or  bot:GetUnitName() == "npc_dota_hero_witch_doctor" 
 		or  bot:GetUnitName() == "npc_dota_hero_tinker" 
 		or  bot:GetUnitName() == "npc_dota_hero_enigma" 
+		or  bot:GetUnitName() == "npc_dota_hero_lich" 
 	then
 		return;	
 	elseif bot:GetUnitName() == "npc_dota_hero_spirit_breaker" then

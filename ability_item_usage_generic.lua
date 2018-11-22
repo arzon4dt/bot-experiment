@@ -338,7 +338,8 @@ function CourierUsageThink()
 				if member ~= nil and IsPlayerBot(numPlayer[i]) and member:IsAlive() 
 				then
 					local nMSlot = GetNumStashItem(member);
-					if nMSlot > 0 and nMSlot <= nCSlot then
+					if nMSlot > 0 and nMSlot <= nCSlot 
+					then
 						member:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TAKE_STASH_ITEMS );
 						nCSlot = nCSlot - nMSlot ;
 						courierTime = DotaTime();
@@ -404,13 +405,16 @@ function IsTheClosestToCourier(bot, npcCourier)
 	for i = 1, #numPlayer
 	do
 		local member =  GetTeamMember(i);
-		if member ~= nil and IsPlayerBot(numPlayer[i]) and member:IsAlive() and member:GetCourierValue( ) > 0 and  not IsInvFull(member)
+		if member ~= nil and IsPlayerBot(numPlayer[i]) and member:IsAlive() and member:GetCourierValue( ) > 0 
 		then
-			local dist = GetUnitToUnitDistance(member, npcCourier);
-			if dist < closestD then
-				closest = member;
-				closestD = dist;
-			end
+			local invFull = IsInvFull(member);
+			if invFull == false or ( invFull == true and bot.currListItemToBuy ~= nil and #bot.currListItemToBuy <= 1 ) then
+				local dist = GetUnitToUnitDistance(member, npcCourier);
+				if dist < closestD then
+					closest = member;
+					closestD = dist;
+				end
+			end	
 		end
 	end
 	return closest ~= nil and closest == bot
@@ -577,16 +581,16 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	local aq = IsItemAvailable("item_ring_of_aquila");
-	if aq~=nil and aq:IsFullyCastable() then
-		if mode == BOT_MODE_LANING and not aq:GetToggleState() then
-			bot:Action_UseAbility(aq);
-			return
-		elseif mode ~= BOT_MODE_LANING and aq:GetToggleState() then
-			bot:Action_UseAbility(aq);
-			return
-		end
-	end
+	-- local aq = IsItemAvailable("item_ring_of_aquila");
+	-- if aq~=nil and aq:IsFullyCastable() then
+	-- 	if mode == BOT_MODE_LANING and not aq:GetToggleState() then
+	-- 		bot:Action_UseAbility(aq);
+	-- 		return
+	-- 	elseif mode ~= BOT_MODE_LANING and aq:GetToggleState() then
+	-- 		bot:Action_UseAbility(aq);
+	-- 		return
+	-- 	end
+	-- end
 	
 	local itg=IsItemAvailable("item_tango");
 	if itg~=nil and itg:IsFullyCastable() then
@@ -724,27 +728,28 @@ function UnImplementedItemUsage()
 	if bst ~= nil and bst:IsFullyCastable() then
 		if  mode == BOT_MODE_RETREAT and 
 			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
-			( bot:GetHealth() / bot:GetMaxHealth() ) < 0.10 - ( bot:GetLevel() / 500 )
+			( bot:GetHealth() / bot:GetMaxHealth() ) < 0.10 - ( bot:GetLevel() / 500 ) and
+			( bot:GetMana() / bot:GetMaxMana() > 0.6 )
 		then
-			bot:Action_UseAbilityOnLocation(bst, bot:GetLocation());
+			bot:Action_UseAbility(bst);
 			return;
 		end
 	end
 	
-	local pb=IsItemAvailable("item_phase_boots");
-	if pb~=nil and pb:IsFullyCastable() 
-	then
-		if ( mode == BOT_MODE_ATTACK or
-			 mode == BOT_MODE_RETREAT or
-			 mode == BOT_MODE_ROAM or
-			 mode == BOT_MODE_TEAM_ROAM or
-			 mode == BOT_MODE_GANK or
-			 mode == BOT_MODE_DEFEND_ALLY )
-		then
-			bot:Action_UseAbility(pb);
-			return;
-		end	
-	end
+	-- local pb=IsItemAvailable("item_phase_boots");
+	-- if pb~=nil and pb:IsFullyCastable() 
+	-- then
+	-- 	if ( mode == BOT_MODE_ATTACK or
+	-- 		 mode == BOT_MODE_RETREAT or
+	-- 		 mode == BOT_MODE_ROAM or
+	-- 		 mode == BOT_MODE_TEAM_ROAM or
+	-- 		 mode == BOT_MODE_GANK or
+	-- 		 mode == BOT_MODE_DEFEND_ALLY )
+	-- 	then
+	-- 		bot:Action_UseAbility(pb);
+	-- 		return;
+	-- 	end	
+	-- end
 	
 	local bt=IsItemAvailable("item_bloodthorn");
 	if bt~=nil and bt:IsFullyCastable() 

@@ -35,12 +35,12 @@ function AbilityUsageThink()
 	if abilityQ == nil then abilityQ = npcBot:GetAbilityByName( "dazzle_poison_touch" ) end
 	if abilityW == nil then abilityW = npcBot:GetAbilityByName( "dazzle_shallow_grave" ) end
 	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "dazzle_shadow_wave" ) end
-	if abilityR == nil then abilityR = npcBot:GetAbilityByName( "dazzle_weave" ) end
+	if abilityR == nil then abilityR = npcBot:GetAbilityByName( "dazzle_bad_juju" ) end
 	
 	castQDesire, castQTarget = ConsiderQ();
 	castWDesire, castWTarget = ConsiderW();
 	castEDesire, castETarget = ConsiderE();
-	castRDesire, castRLoc    = ConsiderR();
+	-- castRDesire, castRLoc    = ConsiderR();
 
 	if ( castRDesire > 0 ) 
 	then

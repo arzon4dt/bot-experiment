@@ -260,6 +260,19 @@ function ConsiderShadowDance()
 	
 	local nAttackRange = npcBot:GetAttackRange();
 	
+
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
+		end
+	end
+
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------

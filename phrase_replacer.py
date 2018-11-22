@@ -1,10 +1,10 @@
 import glob
 import os
 
-phrase = "item_trident"	
-replacer = "item_kaya"
+phrase = "item_ring_of_basilius"	
+replacer = "item_"
 found = 0
-path = "C:\\Program Files (x86)\\Steam\\SteamApps\\common\\dota 2 beta\\game\\dota\\scripts\\vscripts\\bots\\builds"
+path = "E:\\Steam\\SteamApps\\common\\dota 2 beta\\game\\dota\\scripts\\vscripts\\bots\\builds"
 for filename in glob.glob(os.path.join(path, '*.lua')):
 	phraseFound = False;
 	file = open(filename, "r")

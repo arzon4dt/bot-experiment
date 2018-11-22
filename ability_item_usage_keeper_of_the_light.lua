@@ -24,6 +24,7 @@ local castCS2Desire = 0;
 local castBLDesire = 0;
 local castFGDesire = 0;
 local castRCDesire = 0;
+local castWoWDesire = 0;
 
 local CancelIlmDesire = 0;
 
@@ -34,6 +35,7 @@ local abilityCS2 = nil;
 local abilityBL = nil;
 local abilityFB = nil;
 local abilityRC = nil;
+local abilityWoW = nil;
 
 local npcBot = nil;
 
@@ -49,6 +51,7 @@ function AbilityUsageThink()
 	if abilityBL == nil then abilityBL = npcBot:GetAbilityByName( "keeper_of_the_light_chakra_magic" ) end
 	if abilityFG == nil then abilityFG = npcBot:GetAbilityByName( "keeper_of_the_light_spirit_form" ) end
 	if abilityRC == nil then abilityRC = npcBot:GetAbilityByName( "keeper_of_the_light_recall" ) end
+	if abilityWoW == nil then abilityWoW = npcBot:GetAbilityByName( "keeper_of_the_light_will_o_wisp" ) end
 	
 	CancelIlmDesire = ConsiderCancelIlm();
 	
@@ -60,14 +63,22 @@ function AbilityUsageThink()
 	if mutil.CanNotUseAbility(npcBot)  or npcBot:NumQueuedActions() > 0  then return end
 
 	-- Consider using each ability
-	castFBDesire, castFBTarget = ConsiderFireblast();
+	-- castFBDesire, castFBTarget = ConsiderFireblast();
 	castCSDesire, castCSLocation = ConsiderChrono();
-	castCSSDesire, castCSSLocation = ConsiderChronoS();
+	--castCSSDesire, castCSSLocation = ConsiderChronoS();
 	castCS2Desire, castCS2Location = ConsiderChrono2();
 	castBLDesire, castBLTarget = ConsiderBloodlust();
-	castFGDesire, castFGTarget = ConsiderFleshGolem();
-	castRCDesire, castRCTarget = ConsiderRecall();
-	
+	castWoWDesire, castWoWLoc = ConsiderWillOWisp();
+
+	-- castFGDesire, castFGTarget = ConsiderFleshGolem();
+	-- castRCDesire, castRCTarget = ConsiderRecall();
+	if ( castWoWDesire > 0 ) 
+	then
+		npcBot:Action_UseAbilityOnLocation( abilityWoW, castWoWLoc );
+		return;
+	end	
+
+
 	if ( castFGDesire > 0 ) 
 	then
 		
@@ -161,7 +172,7 @@ end
 function ConsiderChrono()
 
 	-- Make sure it's castable
-	if ( npcBot:HasScepter() or npcBot:HasModifier("modifier_keeper_of_the_light_spirit_form") or not abilityCS:IsFullyCastable() ) 
+	if ( abilityCS:IsHidden() or not abilityCS:IsFullyCastable() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
@@ -355,7 +366,11 @@ end
 function ConsiderChrono2()
 
 	-- Make sure it's castable
-	if ( not npcBot:HasModifier("modifier_keeper_of_the_light_spirit_form") or abilityCS2:IsHidden() or not abilityCS2:IsFullyCastable() ) 
+	if ( 
+		-- not npcBot:HasModifier("modifier_keeper_of_the_light_spirit_form") 
+		abilityCS2:IsHidden() or 
+		not abilityCS2:IsFullyCastable() 
+	) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
@@ -506,4 +521,54 @@ function ConsiderCancelIlm()
 	
 	return BOT_ACTION_DESIRE_NONE;
 	
+end
+
+function ConsiderWillOWisp()
+
+	-- Make sure it's castable
+	if ( abilityWoW:IsHidden() or not abilityWoW:IsFullyCastable() ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+
+	-- Get some of its values
+	local nRadius = abilityWoW:GetSpecialValueInt("radius");
+	local nCastRange = abilityWoW:GetCastRange();
+	local nCastPoint = abilityWoW:GetCastPoint();
+	
+	if nCastRange > 1300 then
+		nCastRange = 1300;
+	end
+
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius+200, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
+			then
+				return BOT_ACTION_DESIRE_HIGH, npcBot;
+			end
+		end
+	end
+
+	if mutil.IsInTeamFight(npcBot, 1200)
+	then
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		end
+	end
+	
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
+		then
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation(nCastPoint);
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
 end

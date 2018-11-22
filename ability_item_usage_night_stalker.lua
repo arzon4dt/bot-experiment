@@ -44,7 +44,7 @@ function AbilityUsageThink()
 	-- Consider using each ability
 	castCH1Desire, castCH1Target = ConsiderCorrosiveHaze1();
 	castCHDesire, castCHTarget = ConsiderCorrosiveHaze();
-	castEDesire = ConsiderE();
+	-- castEDesire = ConsiderE();
 	castWBDesire = ConsiderWildBoar();
 
 	if ( castCH1Desire > 0 ) 
@@ -55,7 +55,7 @@ function AbilityUsageThink()
 	
 	if ( castCHDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityCH, castCHTarget );
+		npcBot:Action_UseAbility( abilityCH );
 		return;
 	end
 	
@@ -161,23 +161,14 @@ function ConsiderCorrosiveHaze()
 	end
 
 	-- Get some of its values
-	local nCastRange = abilityCH:GetCastRange();
+	local nCastRange = abilityCH:GetSpecialValueInt('radius');
 
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 	for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 	do
 		if ( npcEnemy:IsChanneling()  and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
-		end
-	end
-	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
-	then
-		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
-		then
-			return BOT_ACTION_DESIRE_LOW, npcTarget;
 		end
 	end
 	
@@ -198,19 +189,9 @@ function ConsiderCorrosiveHaze()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget;
-		end
-	end
-	
-	-- If we're going after someone
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
-	then
-		local npcTarget = npcBot:GetAttackTarget();
-		if ( npcTarget ~= nil and mutil.CanCastOnNonMagicImmune(npcTarget) )
-		then
-			return BOT_ACTION_DESIRE_LOW, npcTarget;
 		end
 	end
 

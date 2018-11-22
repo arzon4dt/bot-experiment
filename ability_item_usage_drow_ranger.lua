@@ -136,19 +136,10 @@ end
 function ConsiderE()
 
 	-- Make sure it's castable
-	if ( not abilityE:IsFullyCastable() ) then 
+	if ( abilityE:IsFullyCastable() == false or abilityE:IsTrained() == false ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
-	
-	-- If We're pushing or defending
-	if mutil.IsPushing(npcBot)
-	then
-		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 1200, true );
-		if ( tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers >= 1  ) then
-			return BOT_ACTION_DESIRE_MODERATE;
-		end
-	end
 
-	return BOT_ACTION_DESIRE_NONE;
+	return BOT_ACTION_DESIRE_HIGH;
 
 end

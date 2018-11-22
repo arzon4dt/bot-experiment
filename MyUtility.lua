@@ -85,6 +85,11 @@ function U.GetUnitCountAroundEnemyTarget(target, nRadius)
 	return #heroes + #creeps;
 end
 
+function U.GetNumEnemyAroundMe(npcBot)
+	local heroes = npcBot:GetNearbyHeroes(1000, true, BOT_MODE_NONE);	
+	return #heroes;
+end
+
 function U.GetVulnerableUnitNearLoc(bHero, bEnemy, nCastRange, nRadius, vLoc, bot)
 	local units = {};
 	local weakest = nil;
@@ -405,7 +410,10 @@ end
 --============== ^^^^^^^^^^ NEW FUNCTION ABOVE ^^^^^^^^^ ================--
 
 function U.IsRetreating(npcBot)
-	return npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE and npcBot:DistanceFromFountain() > 0
+	return ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE and 
+	      ( npcBot:DistanceFromFountain() > 0 or ( npcBot:DistanceFromFountain() < 300 and U.GetNumEnemyAroundMe(npcBot) > 0 ))) or
+		  ( npcBot:GetActiveMode() == BOT_MODE_EVASIVE_MANEUVERS and npcBot:WasRecentlyDamagedByAnyHero(3.0) ) or
+		  ( npcBot:HasModifier('modifier_bloodseeker_rupture') and npcBot:WasRecentlyDamagedByAnyHero(3.0) )
 end
 
 function U.IsValidTarget(npcTarget)

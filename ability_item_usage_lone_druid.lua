@@ -42,7 +42,7 @@ function AbilityUsageThink()
 	if mutil.CanNotUseAbility(npcBot) then return end
 
 	if abilityFG == nil then abilityFG = npcBot:GetAbilityByName( "lone_druid_spirit_bear" ) end
-	if abilityOP == nil then abilityOP = npcBot:GetAbilityByName( "lone_druid_rabid" ) end
+	if abilityOP == nil then abilityOP = npcBot:GetAbilityByName( "lone_druid_spirit_link" ) end
 	if abilityES == nil then abilityES = npcBot:GetAbilityByName( "lone_druid_savage_roar" ) end
 	if abilityTF == nil then abilityTF = npcBot:GetAbilityByName( "lone_druid_true_form" ) end
 	if abilityDF == nil then abilityDF = npcBot:GetAbilityByName( "lone_druid_true_form_druid" ) end

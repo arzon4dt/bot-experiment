@@ -45,7 +45,7 @@ function AbilityUsageThink()
 	-- Consider using each ability
 	castWBDesire = ConsiderTempestDouble();
 	castCH1Desire, castCH1Target = ConsiderCorrosiveHaze1();
-	castSCDesire = ConsiderSlithereenCrush();
+	-- castSCDesire = ConsiderSlithereenCrush();
 	castOGDesire, castOGTarget = ConsiderOvergrowth();
 	castOGSDesire = ConsiderSongStop();
 	

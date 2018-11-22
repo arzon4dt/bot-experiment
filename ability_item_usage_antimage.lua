@@ -18,9 +18,11 @@ end
 
 local castTWDesire = 0;
 local castCHDesire = 0;
+local castCSDesire = 0;
 
 local abilityTW = nil;
 local abilityCH = nil;
+local abilityCS = nil;
 
 local npcBot = nil;
 
@@ -33,9 +35,11 @@ function AbilityUsageThink()
 	
 	if abilityTW == nil then abilityTW = npcBot:GetAbilityByName( "antimage_blink" ); end
 	if abilityCH == nil then abilityCH = npcBot:GetAbilityByName( "antimage_mana_void" ); end
+	if abilityCS == nil then abilityCS = npcBot:GetAbilityByName( "antimage_counterspell" ); end
 	-- Consider using each ability
 	castTWDesire, castTWLocation = ConsiderTimeWalk();
 	castCHDesire, castCHTarget = ConsiderCorrosiveHaze();
+	castCSDesire = ConsiderCounterSpell();
 	
 	if ( castTWDesire > 0 ) 
 	then
@@ -45,6 +49,10 @@ function AbilityUsageThink()
 	if ( castCHDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityCH, castCHTarget );
+		return;
+	end
+	if ( castCSDesire > 0 ) then
+		npcBot:Action_UseAbility( abilityCS );
 		return;
 	end
 	
@@ -88,6 +96,45 @@ function ConsiderTimeWalk()
 			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 			if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes < 2 then
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( 1.5*nCastPoint );
+			end
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
+end
+
+function ConsiderCounterSpell()
+
+	-- Make sure it's castable
+	if ( abilityCS:IsFullyCastable() == false ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+	
+	
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if mutil.IsRetreating(npcBot)
+	then
+		local incProj = npcBot:GetIncomingTrackingProjectiles()
+		for _,p in pairs(incProj)
+		do
+			if GetUnitToLocationDistance(npcBot, p.location) <= 300 and p.is_attack == false then
+				return BOT_ACTION_DESIRE_HIGH;
+			end
+		end
+	end
+	
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 600)  
+		then
+			local incProj = npcBot:GetIncomingTrackingProjectiles()
+			for _,p in pairs(incProj)
+			do
+				if GetUnitToLocationDistance(npcBot, p.location) <= 300 and p.is_attack == false then
+					return BOT_ACTION_DESIRE_HIGH;
+				end
 			end
 		end
 	end

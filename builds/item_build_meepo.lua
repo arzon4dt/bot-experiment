@@ -11,16 +11,21 @@ is a clone and skill/item decisions will possilby break! ]]
 
 X["items"] = { 
 	"item_power_treads",
-	"item_blink",
 	"item_ultimate_scepter",
+	"item_blink",
 	"item_sheepstick",
 	"item_skadi",
 	"item_heart"
 };			
 
+X["builds"] = {
+	{2,1,4,2,2,3,2,3,3,4,3,1,1,1,4},
+	{2,1,4,2,2,3,2,1,1,4,3,3,1,3,4}
+}
+
 X["skills"] = IBUtil.GetBuildPattern(
 	  "meepo", 
-	  {2,1,4,2,2,3,2,3,3,4,3,1,1,1,4}, skills, 
+	  IBUtil.GetRandomBuild(X['builds']), skills, 
 	  {1,4,5,7}, talents
 );
 

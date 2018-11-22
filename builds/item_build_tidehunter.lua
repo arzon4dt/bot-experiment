@@ -9,15 +9,20 @@ X["items"] = {
 	"item_magic_wand",
 	"item_arcane_boots",
 	"item_pipe",
-	"item_blink",
 	"item_aeon_disk",
+	"item_blink",
 	"item_ultimate_scepter",
 	"item_shivas_guard"
 };			
 
+X["builds"] = {
+	{3,2,2,1,3,4,3,3,2,2,4,1,1,1,4},
+	{1,3,1,2,3,4,1,3,1,3,4,2,2,2,4}
+}
+
 X["skills"] = IBUtil.GetBuildPattern(
 	  "normal", 
-	  {1,3,2,3,3,4,3,2,2,2,4,1,1,1,4}, skills, 
+	  IBUtil.GetRandomBuild(X['builds']), skills, 
 	  {1,4,5,7}, talents
 );
 

@@ -100,7 +100,9 @@ function ConsiderDevour()
 		canEatAncient = true;
 	end
 	
-	if not mutil.IsRetreating(npcBot) and not mutil.IsGoingOnSomeone(npcBot) and not npcBot:HasModifier("modifier_doom_bringer_devour") then
+	if not mutil.IsRetreating(npcBot) and not mutil.IsGoingOnSomeone(npcBot) 
+	--    and not npcBot:HasModifier("modifier_doom_bringer_devour") 
+	then
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 1300, true );
 		for _,npcCreep in pairs( tableNearbyEnemyCreeps )
 		do

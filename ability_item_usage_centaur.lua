@@ -18,10 +18,12 @@ end
 
 local castHSDesire = 0;
 local castDEDesire = 0;
+local castRTDesire = 0;
 local castSTDesire = 0;
 
 local abilityHS = nil;
 local abilityDE = nil;
+local abilityRT = nil;
 local abilityST = nil;
 
 local npcBot = nil;
@@ -34,11 +36,13 @@ function AbilityUsageThink()
 
 	if abilityHS == nil then abilityHS = npcBot:GetAbilityByName( "centaur_hoof_stomp" ) end
 	if abilityDE == nil then abilityDE = npcBot:GetAbilityByName( "centaur_double_edge" ) end
+	if abilityRT == nil then abilityRT = npcBot:GetAbilityByName( "centaur_return" ) end
 	if abilityST == nil then abilityST = npcBot:GetAbilityByName( "centaur_stampede" ) end
 
 	-- Consider using each ability
 	castHSDesire = ConsiderHoofStomp();
 	castDEDesire, castDETarget = ConsiderDoubleEdge();
+	castRTDesire = ConsiderReturn();
 	castSTDesire = ConsiderStampede();
 	
 
@@ -51,6 +55,12 @@ function AbilityUsageThink()
 	if ( castHSDesire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityHS );
+		return;
+	end
+
+	if ( castRTDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityRT );
 		return;
 	end
 	
@@ -167,6 +177,54 @@ function ConsiderDoubleEdge()
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
+function ConsiderReturn()
+
+	-- Make sure it's castable
+	if ( not abilityRT:IsFullyCastable() ) then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+
+	-- Get some of its values
+	local nRadius = 300;
+	local maxStacks = abilityRT:GetSpecialValueInt('max_stacks');
+
+	local stack = 0;
+	local modIdx = npcBot:GetModifierByName("modifier_centaur_return_counter");
+	if modIdx > -1 then
+		stack = npcBot:GetModifierStackCount(modIdx);
+	end
+
+	if stack <= maxStacks / 2 then
+		return BOT_ACTION_DESIRE_NONE;
+	end	
+
+	--------------------------------------
+	-- Mode based usage
+	--------------------------------------
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)  )
+		then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end
+
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and 
+	       mutil.IsInRange(npcTarget, npcBot, nRadius) 
+		then   
+			return BOT_ACTION_DESIRE_HIGH;
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
+
+end
 
 function ConsiderStampede()
 

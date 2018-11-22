@@ -38,7 +38,7 @@ function AbilityUsageThink()
 	if abilityST == nil then abilityST = npcBot:GetAbilityByName( "clinkz_strafe" ) end
 	if abilitySA == nil then abilitySA = npcBot:GetAbilityByName( "clinkz_searing_arrows" ) end
 	if abilityWW == nil then abilityWW = npcBot:GetAbilityByName( "clinkz_wind_walk" ) end
-	if abilityDP == nil then abilityDP = npcBot:GetAbilityByName( "clinkz_death_pact" ) end
+	if abilityDP == nil then abilityDP = npcBot:GetAbilityByName( "clinkz_burning_army" ) end
 	-- Consider using each ability
 	if abilitySA:IsTrained() then
 		ToggleSearingArrow();
@@ -52,21 +52,25 @@ function AbilityUsageThink()
 	if castSTDesire > 0
 	then
 		npcBot:Action_UseAbility(abilityST);
+		return;
 	end
 	
 	if castSADesire > 0 
 	then
 		npcBot:Action_UseAbilityOnEntity(abilitySA, castSATarget);
+		return;
 	end
 	
 	if castWWDesire > 0
 	then
 		npcBot:Action_UseAbility(abilityWW);
+		return;
 	end
 	
 	if castDPDesire > 0
 	then
-		npcBot:Action_UseAbilityOnEntity(abilityDP, castDPTarget);
+		npcBot:Action_UseAbilityOnLocation(abilityDP, castDPTarget);
+		return;
 	end
 	
 end
@@ -215,34 +219,30 @@ function ConsiderDeathPack()
 	if ( not abilityDP:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
+
+	local nAttackRange = npcBot:GetAttackRange();
+	local nCastRange = abilityDP:GetCastRange();
 	
-	local currManaP = npcBot:GetMana() / npcBot:GetMaxMana();
-	
-	if currManaP < 0.15
+	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		return BOT_ACTION_DESIRE_NONE, 0;
-	end
-	
-	local maxHP = 0;
-	local NCreep = nil;
-	local tableNearbyCreeps = npcBot:GetNearbyCreeps( 800, true );
-	if #tableNearbyCreeps >= 2 then
-		for _,creeps in pairs(tableNearbyCreeps)
-		do
-			local CreepHP = creeps:GetHealth();
-			if CreepHP > maxHP and ( creeps:GetHealth() / creeps:GetMaxHealth() > .75 
-				and mutil.CanCastOnNonMagicImmune(creeps) ) and not creeps:IsAncientCreep()
-			then
-				NCreep = creeps;
-				maxHP = CreepHP;
-			end
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nAttackRange, 400, 0, 0 );
+		if ( locationAoE.count >= 2 ) then
+			skUse = false;
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
 	
-	if NCreep ~= nil then
-		return BOT_ACTION_DESIRE_LOW, NCreep;
-	end	
-
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and npcTarget:GetHealth() / npcTarget:GetMaxHealth() > 0.25 and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
+		then
+			skUse = false;
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+		end
+	end
+--
 	return BOT_ACTION_DESIRE_NONE, 0;
 
 end

@@ -37,8 +37,16 @@ function U.GetProperCastRange(bIgnore, hUnit, ability)
 	end
 end
 
+function U.GetNumEnemyAroundMe(bot)
+	local heroes = bot:GetNearbyHeroes(1000, true, BOT_MODE_NONE);	
+	return #heroes;
+end
+
 function U.IsRetreating(bot)
-	return bot:GetActiveMode() == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_MODERATE 
+	return ( bot:GetActiveMode() == BOT_MODE_RETREAT and bot:GetActiveModeDesire() > BOT_MODE_DESIRE_MODERATE and 
+	( bot:DistanceFromFountain() > 0 or ( bot:DistanceFromFountain() < 300 and U.GetNumEnemyAroundMe(bot) > 0 ))) or
+	( bot:GetActiveMode() == BOT_MODE_EVASIVE_MANEUVERS and bot:WasRecentlyDamagedByAnyHero(3.0) ) or
+	( bot:HasModifier('modifier_bloodseeker_rupture') and bot:WasRecentlyDamagedByAnyHero(3.0) )
 end
 
 function U.GetLowestHPUnit(tUnits, bIgnoreImmune)
