@@ -23,7 +23,7 @@ X["builds"] = {
 
 X["skills"] = IBUtil.GetBuildPattern(
 	  "normal", 
-	  IBUtil.GetRandomBuild(X['builds']), skills, 1,4}, skills, 
+	  IBUtil.GetRandomBuild(X['builds']), skills, 
 	  {1,4,6,7}, talents
 );
 

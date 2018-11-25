@@ -21,7 +21,16 @@ local farmLane = false;
 local tPing = 0;
 local tChat = 0;
 
-function GetDesire()
+local testTime = 0;
+
+function GetDesire()	
+	
+	--campUtils.PrintCamps()
+
+	--[[if DotaTime() > testTime + 20.0 then
+		campUtils.PingCamp(1, 3, TEAM_RADIANT, bot);
+		testTime = DotaTime();
+	end]]--
 
 	if bot:GetUnitName() == "npc_dota_hero_faceless_voids" and bot:IsAlive() then
 		cLoc = GetSaveLocToFarmLane();

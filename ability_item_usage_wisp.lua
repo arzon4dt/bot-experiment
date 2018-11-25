@@ -33,6 +33,8 @@ local abilityRC = nil;
 local moveDesire = 0;
 local npcBot = nil;
 
+local spiritState = 1;
+
 function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
@@ -79,21 +81,23 @@ function AbilityUsageThink()
 	
 	if ( castSPDesire > 0 ) 
 	then
-		--print("useSP")
+		-- print("useSP")
 		npcBot:Action_UseAbility( abilitySP );
 		return;
 	end
 	
 	if ( castSPIDesire > 0 ) 
 	then
-	--print("useSPI")
+	-- print("useSPI")
+		spiritState = 0;
 		npcBot:Action_UseAbility( abilitySPI );
 		return;
 	end
 	
 	if ( castSPODesire > 0 ) 
 	then
-	--print("useSPO")
+	-- print("useSPO")
+		spiritState = 1
 		npcBot:Action_UseAbility( abilitySPO );
 		return;
 	end
@@ -235,7 +239,7 @@ end
 function ConsiderSpirits()
 
 	-- Make sure it's castable
-	if ( not abilitySP:IsFullyCastable() ) then 
+	if ( not abilitySP:IsFullyCastable() or abilitySP:IsHidden() == true ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	local nMaxRange = abilitySP:GetSpecialValueInt("max_range");
@@ -258,7 +262,7 @@ end
 function ConsiderSpiritsIn()
 
 	-- Make sure it's castable
-	if ( not abilitySPI:IsFullyCastable() or abilitySPI:IsHidden() or not npcBot:HasModifier("modifier_wisp_spirits") ) then 
+	if ( spiritState == 0 or not abilitySPI:IsFullyCastable() or abilitySPI:IsHidden() or not npcBot:HasModifier("modifier_wisp_spirits") ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
@@ -271,9 +275,7 @@ function ConsiderSpiritsIn()
 		local npcTarget = npcBot:GetTarget();
 		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) < nMaxRange /2 )
 		then
-			if not abilitySPI:GetToggleState() then
-				return BOT_ACTION_DESIRE_MODERATE
-			end
+			return BOT_ACTION_DESIRE_MODERATE
 		end
 	end
 	
@@ -284,7 +286,7 @@ end
 function ConsiderSpiritsOut()
 	
 	-- Make sure it's castable
-	if ( not abilitySPO:IsFullyCastable() or abilitySPO:IsHidden() or not npcBot:HasModifier("modifier_wisp_spirits") ) then 
+	if ( spiritState == 1 or not abilitySPO:IsFullyCastable() or abilitySPO:IsHidden() or not npcBot:HasModifier("modifier_wisp_spirits") ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
@@ -297,9 +299,7 @@ function ConsiderSpiritsOut()
 		local npcTarget = npcBot:GetTarget();
 		if ( npcTarget ~= nil and GetUnitToUnitDistance( npcTarget, npcBot ) >= nMaxRange/2  ) 
 		then
-			if not abilitySPO:GetToggleState() then
-				return BOT_ACTION_DESIRE_MODERATE
-			end
+			return BOT_ACTION_DESIRE_MODERATE
 		end
 	end
 	

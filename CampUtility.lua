@@ -3,24 +3,24 @@ local X = {}
 local team =  GetTeam();
 local CStackTime = {55,55,55,55,55,54,55,55,55,55,55,55,55,55,55,55,55,55}
 local CStackLoc = {
-	Vector(-800.000000,  -5000.000000, 0.000000),
-	Vector(-1871.000000, -2936.000000, 0.000000),
-	Vector(801.000000,   -3146.000000, 0.000000),
-	Vector(-3481.000000, -1122.000000, 0.000000),
-	Vector(5773.000000,  -3071.000000, 0.000000),
-	Vector(3570.000000,  -5963.000000, 0.000000),
-	Vector(-5374.000000, 446.000000,   0.000000),
-	Vector(-1872.000000, 1141.000000,  0.000000),
-	Vector(801.000000,   -3146.000000, 0.000000),
-	Vector(586.000000,   4456.000000,  0.000000),
-	Vector(-3457.000000, 6297.000000,  0.000000),
-	Vector(-955.000000,  5121.000000,  0.000000),
-	Vector(-3050.000000, 3434.000000,  0.000000),
-	Vector(3473.000000,  1870.000000,  0.000000),
-	Vector(2474.000000,  5051.000000,  0.000000),
-	Vector(3036.000000,  -1168.000000, 0.000000),
-	Vector(957.000000,   2295.000000,  0.000000),
-	Vector(4071.000000,  -2013.000000, 0.000000)
+	Vector(1854.000000, -4469.000000, 0.000000), 
+	Vector(1249.000000, -2416.000000, 0.000000),
+	Vector(3471.000000, -5841.000000, 0.000000),
+	Vector(5153.000000, -3620.000000, 0.000000),
+	Vector(-1846.000000, -2996.000000, 0.000000),
+	Vector(-4961.000000, 559.000000, 0.000000),
+	Vector(-3873.000000, -833.000000, 0.000000),
+	Vector(-3146.000000, 702.000000, 0.000000),
+	Vector(1141.000000, -3111.000000, 0.000000),
+	Vector(660.000000, 2300.000000, 0.000000),
+	Vector(3666.000000, 1836.000000, 0.000000),
+	Vector(482.000000, 4723.000000, 0.000000),
+	Vector(3173.000000, -861.000000, 0.000000),
+	Vector(-3443.000000, 6098.000000, 0.000000),
+	Vector(-4353.000000, 4842.000000, 0.000000),
+	Vector(-1083.000000, 3385.000000, 0.000000),
+	Vector(-922.000000, 4299.000000, 0.000000),
+	Vector(4136.000000, -1753.000000, 0.000000)
 }
 
 --test hero
@@ -100,6 +100,29 @@ function X.IsStrongJungler(bot)
 	return false;
 end
 
+function X.PrintCamps()
+	print("========CAMPS==========")
+	local camps = GetNeutralSpawners();
+	for i=1, #camps do
+		print("==============")
+		for k,v in pairs(camps[i]) do
+			print(tostring(k)..":"..tostring(v))
+		end
+	end
+end
+
+function X.PingCamp(nCamp, nPId, nTeam, bot)
+	if bot:GetTeam() == nTeam and bot:GetPlayerID() == nPId then
+		local camps = GetNeutralSpawners();
+		for i=1, #camps do
+			if i == nCamp then
+				local cLoc = camps[i].location;
+				bot:ActionImmediate_Ping( cLoc.x, cLoc.y, true );	
+			end
+		end
+	end
+end
+
 function X.GetClosestNeutralSpwan(bot, AvailableCamp)
 	local minDist = 10000;
 	local pCamp = nil;
@@ -177,132 +200,132 @@ end
 return X
 
 --[[
---RADIANT CAMP
-[VScript] =======================
-[VScript] max:Vector 00000000005D3140 [-29.500122 -2992.000000 639.999939]
+RADIANT CAMP
+[VScript] ==============
+[VScript] max:Vector 00000000006D9B60 [1112.000000 -4128.000000 512.000061]
 [VScript] team:2
-[VScript] location:Vector 0000000000258AD0 [-371.000000 -3374.000000 265.000000]
-[VScript] type:large
-[VScript] min:Vector 00000000005D3048 [-1204.000000 -3598.000000 -384.000000]
-[VScript] speed:fast
-[VScript] =======================
-[VScript] max:Vector 000000000072F370 [-1472.000000 -3784.000000 608.000061]
-[VScript] team:2
-[VScript] location:Vector 00000000005D31B8 [-1806.244507 -4485.535156 256.000000]
+[VScript] location:Vector 00000000006D99C8 [384.000000 -4672.000000 519.999939]
 [VScript] type:medium
-[VScript] min:Vector 00000000005D31E8 [-2187.000000 -4640.000000 -384.000000]
+[VScript] min:Vector 00000000006D99F8 [178.999939 -5093.500000 -384.000000]
 [VScript] speed:fast
-[VScript] =======================
-[VScript] max:Vector 000000000072F4F0 [1112.000000 -4128.000000 512.000061]
+[VScript] ==============
+[VScript] max:Vector 00000000006D9D00 [515.999939 -1593.750000 704.000000]
 [VScript] team:2
-[VScript] location:Vector 000000000072F3C8 [384.000000 -4672.000000 519.999939]
+[VScript] location:Vector 00000000006D9BD8 [69.066162 -1851.600098 392.000000]
 [VScript] type:medium
-[VScript] min:Vector 000000000072F3F8 [178.999939 -5093.500000 -384.000000]
+[VScript] min:Vector 00000000006D9C08 [-200.000000 -2287.999756 280.500000]
 [VScript] speed:fast
-[VScript] =======================
-[VScript] max:Vector 00000000009A19C8 [-4272.000000 96.000000 1096.000000]
+[VScript] ==============
+[VScript] max:Vector 00000000006D9E80 [3696.000000 -4032.000000 608.000000]
 [VScript] team:2
-[VScript] location:Vector 00000000005D2FE0 [-4873.000000 -512.500000 263.999756]
+[VScript] location:Vector 00000000006D9D58 [2937.953857 -4557.562012 263.999878]
+[VScript] type:small
+[VScript] min:Vector 00000000006D9D88 [2784.000000 -4912.000000 -384.000000]
+[VScript] speed:normal
+[VScript] ==============
+[VScript] max:Vector 00000000006DA030 [4768.000000 -4032.000000 800.000000]
+[VScript] team:2
+[VScript] location:Vector 00000000006D9F08 [4507.048828 -4425.680664 263.999878]
 [VScript] type:large
-[VScript] min:Vector 00000000005D3010 [-5165.500000 -640.000000 112.500000]
+[VScript] min:Vector 00000000006D9F38 [3956.000000 -4736.000000 -384.000000]
+[VScript] speed:normal
+[VScript] ==============
+[VScript] max:Vector 0000000000675730 [-1472.000000 -3808.000000 608.000061]
+[VScript] team:2
+[VScript] location:Vector 00000000006DA088 [-1848.000000 -4216.000000 263.999878]
+[VScript] type:large
+[VScript] min:Vector 00000000006DA0B8 [-2224.000000 -4640.000000 -384.000000]
 [VScript] speed:fast
-[VScript] =======================
-[VScript] max:Vector 00000000009A1B90 [-3962.000000 4224.000000 384.500061]
+[VScript] ==============
+[VScript] max:Vector 00000000006758D8 [-3474.999756 1088.000000 528.000061]
 [VScript] team:2
-[VScript] location:Vector 00000000009A19F8 [-4448.000000 3456.000000 470.714874]
+[VScript] location:Vector 00000000006757B0 [-3722.178223 872.843018 391.999878]
+[VScript] type:medium
+[VScript] min:Vector 00000000006757E0 [-4160.000000 192.000000 -383.999817]
+[VScript] speed:normal
+[VScript] ==============
+[VScript] max:Vector 0000000000675A58 [-4288.000000 104.000031 1096.000000]
+[VScript] team:2
+[VScript] location:Vector 0000000000675930 [-4966.994141 -380.421631 391.999878]
 [VScript] type:large
-[VScript] min:Vector 00000000009A1A28 [-4784.000000 3328.000244 -384.000000]
+[VScript] min:Vector 0000000000675960 [-5165.500000 -640.000000 112.500000]
+[VScript] speed:fast
+[VScript] ==============
+[VScript] max:Vector 0000000000675BD8 [-2464.750488 -198.250000 592.000000]
+[VScript] team:2
+[VScript] location:Vector 0000000000675AB0 [-2544.000000 -560.000000 393.000000]
+[VScript] type:ancient
+[VScript] min:Vector 0000000000675AE0 [-3368.000000 -1024.000000 -384.000000]
+[VScript] speed:normal
+[VScript] ==============
+[VScript] max:Vector 0000000000675D58 [265.249939 -3032.500000 639.999939]
+[VScript] team:2
+[VScript] location:Vector 0000000000675C30 [-247.370605 -3299.183594 391.999878]
+[VScript] type:ancient
+[VScript] min:Vector 0000000000675C60 [-617.249939 -3767.500000 -384.000000]
+[VScript] speed:fast
+DIRE CAMP
+[VScript] ==============
+[VScript] max:Vector 000000000040B3F8 [-288.000000 2752.000000 896.000000]
+[VScript] team:3
+[VScript] location:Vector 0000000000675E40 [-948.000000 2268.500000 391.999756]
+[VScript] type:medium
+[VScript] min:Vector 0000000000675E70 [-1034.875000 1967.999878 383.999756]
+[VScript] speed:normal
+[VScript] ==============
+[VScript] max:Vector 000000000040B578 [4738.593750 1088.000000 944.000000]
+[VScript] team:3
+[VScript] location:Vector 000000000040B450 [4452.000000 840.000000 391.999878]
+[VScript] type:large
+[VScript] min:Vector 000000000040B480 [4016.000000 511.999878 384.000000]
+[VScript] speed:fast
+[VScript] ==============
+[VScript] max:Vector 000000000040B6F8 [1592.250000 3827.750000 792.000000]
+[VScript] team:3
+[VScript] location:Vector 000000000040B5D0 [1346.833252 3289.285156 391.999878]
+[VScript] type:large
+[VScript] min:Vector 000000000040B600 [615.749939 3036.250000 -384.000000]
+[VScript] speed:normal
+[VScript] ==============
+[VScript] max:Vector 000000000040B878 [3040.000000 424.000000 448.000000]
+[VScript] team:3
+[VScript] location:Vector 000000000040B750 [2548.799561 92.937256 391.999878]
+[VScript] type:medium
+[VScript] min:Vector 000000000040B780 [2320.000000 -160.000000 -384.000122]
+[VScript] speed:normal
+[VScript] ==============
+[VScript] max:Vector 000000000040B9F8 [-2142.000000 5193.812500 512.000061]
+[VScript] team:3
+[VScript] location:Vector 000000000040B8D0 [-2464.000000 4816.000000 298.862183]
+[VScript] type:small
+[VScript] min:Vector 000000000040B900 [-3138.000000 4374.187500 -384.000000]
 [VScript] speed:slow
-[VScript] =======================
-[VScript] max:Vector 00000000002FBA50 [3800.000000 -4048.000000 608.000000]
-[VScript] team:2
-[VScript] location:Vector 00000000009A1BC0 [2849.953857 -4557.562012 263.999878]
-[VScript] type:small
-[VScript] min:Vector 00000000005D3280 [2784.000000 -4912.000000 -384.000000]
-[VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 00000000002FBBA8 [-3474.999756 1088.000000 768.000061]
-[VScript] team:2
-[VScript] location:Vector 00000000002FBA80 [-3685.870605 871.857666 263.999939]
-[VScript] type:medium
-[VScript] min:Vector 00000000002FBAB0 [-4319.999512 192.000000 -383.999817]
-[VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 0000000000290EC0 [-2277.000000 207.999939 928.000000]
-[VScript] team:2
-[VScript] location:Vector 00000000002FBC00 [-3077.500000 -199.000000 393.000000]
-[VScript] type:ancient
-[VScript] min:Vector 00000000002FBC30 [-3203.500000 -643.500061 -384.000000]
-[VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 0000000000291018 [516.000000 -1593.750000 704.000000]
-[VScript] team:2
-[VScript] location:Vector 0000000000290EF0 [69.066162 -1851.600098 392.000000]
-[VScript] type:ancient
-[VScript] min:Vector 0000000000290F20 [-356.000000 -2292.000000 280.500000]
-[VScript] speed:normal
---DIRE CAMP
-[VScript] =======================
-[VScript] max:Vector 00000000005D3248 [113.500000 3645.500000 735.000000]
+[VScript] ==============
+[VScript] max:Vector 000000000040BB78 [-3920.000000 3946.000000 384.500061]
 [VScript] team:3
-[VScript] location:Vector 00000000009A1A88 [-108.500000 3339.500000 393.000000]
+[VScript] location:Vector 000000000040BA50 [-4235.449219 3424.000000 307.733032]
 [VScript] type:large
-[VScript] min:Vector 00000000005D3218 [-768.000000 3232.000000 -384.000000]
+[VScript] min:Vector 000000000040BA80 [-4748.750000 3254.000000 -384.000000]
 [VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 000000000028F0E8 [-2524.000244 5199.250000 512.000061]
+[VScript] ==============
+[VScript] max:Vector 00000000003EA830 [-1392.000000 4665.500000 540.500061]
 [VScript] team:3
-[VScript] location:Vector 000000000028EF50 [-2816.000000 4736.000000 393.000000]
-[VScript] type:small
-[VScript] min:Vector 000000000028EF80 [-3620.000244 4424.000000 -384.000000]
-[VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 0000000000260268 [-1264.000000 4302.000000 540.500061]
-[VScript] team:3
-[VScript] location:Vector 000000000028EFB8 [-1952.000000 4128.000000 280.000000]
+[VScript] location:Vector 00000000003EA708 [-1864.476807 4431.666504 391.999939]
 [VScript] type:medium
-[VScript] min:Vector 000000000028EFE8 [-2096.000000 3680.000000 77.000061]
+[VScript] min:Vector 00000000003EA738 [-2120.000000 4031.999512 77.000061]
 [VScript] speed:fast
-[VScript] =======================
-[VScript] max:Vector 0000000000260458 [4738.593750 1088.000000 944.000000]
+[VScript] ==============
+[VScript] max:Vector 00000000003EA9B0 [113.500061 3760.000000 735.000000]
 [VScript] team:3
-[VScript] location:Vector 00000000002602C0 [4452.000000 840.000000 391.999878]
-[VScript] type:large
-[VScript] min:Vector 00000000002602F0 [4032.000000 511.999878 384.000000]
-[VScript] speed:fast
-[VScript] =======================
-[VScript] max:Vector 0000000000765398 [4992.000000 -3872.000000 800.000000]
-[VScript] team:3
-[VScript] location:Vector 0000000000260350 [4804.000000 -4472.000000 264.000000]
-[VScript] type:large
-[VScript] min:Vector 00000000007652A0 [4016.000000 -4640.000000 -384.000000]
-[VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 0000000000765238 [1584.500000 3920.000000 1152.000000]
-[VScript] team:3
-[VScript] location:Vector 00000000007653F0 [1346.833252 3289.285156 391.999878]
-[VScript] type:medium
-[VScript] min:Vector 0000000000765420 [607.999939 3128.500000 -384.000000]
-[VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 00000000005DBBB0 [3284.000000 424.000000 448.000000]
-[VScript] team:3
-[VScript] location:Vector 00000000002B7B40 [2548.799561 92.937256 391.999878]
-[VScript] type:medium
-[VScript] min:Vector 00000000005DBAB8 [2320.000000 -160.000000 -384.000122]
-[VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 00000000002B7B70 [-288.000000 2752.000000 1144.500000]
-[VScript] team:3
-[VScript] location:Vector 00000000005DBC08 [-948.000000 2268.500000 391.999756]
+[VScript] location:Vector 00000000003EA888 [-132.500000 3355.500000 393.000000]
 [VScript] type:ancient
-[VScript] min:Vector 00000000005DBC38 [-1034.875000 1967.999878 383.999756]
+[VScript] min:Vector 00000000003EA8B8 [-752.000000 3112.000000 -384.000000]
 [VScript] speed:normal
-[VScript] =======================
-[VScript] max:Vector 0000000000803520 [4176.000000 -384.000000 400.000000]
+[VScript] ==============
+[VScript] max:Vector 00000000003DA990 [4512.000000 -36.000000 400.000000]
 [VScript] team:3
-[VScript] location:Vector 00000000005DBA78 [3936.000000 -576.000000 295.644104]
+[VScript] location:Vector 00000000003EAB18 [4195.220703 -363.070129 440.971680]
 [VScript] type:ancient
-[VScript] min:Vector 0000000000291048 [3192.000000 -976.000000 -384.000000]
+[VScript] min:Vector 00000000003EAB48 [3464.000000 -752.000000 -384.000000]
 [VScript] speed:normal
 ]]--

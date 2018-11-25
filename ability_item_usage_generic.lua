@@ -408,7 +408,10 @@ function IsTheClosestToCourier(bot, npcCourier)
 		if member ~= nil and IsPlayerBot(numPlayer[i]) and member:IsAlive() and member:GetCourierValue( ) > 0 
 		then
 			local invFull = IsInvFull(member);
-			if invFull == false or ( invFull == true and bot.currListItemToBuy ~= nil and #bot.currListItemToBuy <= 1 ) then
+			local nStash = GetNumStashItem(member);
+			if invFull == false 
+				or ( invFull == true and nStash == 0 and bot.currListItemToBuy ~= nil and #bot.currListItemToBuy == 0 ) 
+			then
 				local dist = GetUnitToUnitDistance(member, npcCourier);
 				if dist < closestD then
 					closest = member;
@@ -542,7 +545,152 @@ function CanSwitchPTStat(pt)
 	return false;
 end
 
+local myTeam = GetTeam()
+local opTeam = GetOpposingTeam()
+local teamT1Top = GetTower(myTeam,TOWER_TOP_1):GetLocation()
+local teamT1Mid = GetTower(myTeam,TOWER_MID_1):GetLocation()
+local teamT1Bot = GetTower(myTeam,TOWER_BOT_1):GetLocation()
+local enemyT1Top = GetTower(opTeam,TOWER_TOP_1):GetLocation()
+local enemyT1Mid = GetTower(opTeam,TOWER_MID_1):GetLocation()
+local enemyT1Bot = GetTower(opTeam,TOWER_BOT_1):GetLocation()
+
+function GetLaningTPLocation(nLane)
+	if nLane == LANE_TOP then
+		return teamT1Top
+	elseif nLane == LANE_MID then
+		return teamT1Mid
+	elseif nLane == LANE_BOT then
+		return teamT1Bot			
+	end	
+	return teamT1Mid
+end	
+
+function GetDefendTPLocation(nLane)
+	return GetLaneFrontLocation(opTeam,nLane,-1600)
+end
+
+function GetPushTPLocation(nLane)
+	return GetLaneFrontLocation(myTeam,nLane,0)
+end
+
+
+local idlt = 0;
+local idlm = 0;
+local idlb = 0;
+function printDefendLaneDesire()
+	local md = bot:GetActiveMode()
+	local mdd = bot:GetActiveModeDesire()
+	local dlt = GetDefendLaneDesire(LANE_TOP)
+	local dlm = GetDefendLaneDesire(LANE_MID)
+	local dlb = GetDefendLaneDesire(LANE_BOT)
+	if bot:GetPlayerID() == 2 then
+		if idlt ~= dlt then 
+			idlt = dlt
+			print("DefendLaneDesire TOP: "..tostring(dlt))
+		elseif idlm ~= dlm then 
+			idlm = dlm
+			print("DefendLaneDesire MID: "..tostring(dlm))
+		elseif idlb ~= dlb then 
+			idlb = dlb
+			print("DefendLaneDesire TOP: "..tostring(dlb))
+		end	
+		if md == BOT_MODE_DEFEND_TOWER_TOP then 
+			print("Def Tower Des TOP: "..tostring(mdd))
+		elseif md == BOT_MODE_DEFEND_TOWER_MID then
+			print("Def Tower Des MID: "..tostring(mdd))
+		elseif md == BOT_MODE_DEFEND_TOWER_BOT then 	
+			print("Def Tower Des BOT: "..tostring(mdd))
+		end
+	end	
+end
+
+local tpThreshold = 4500;
+
+function ShouldTP()
+	local tpLoc = nil;
+	local mode = bot:GetActiveMode();
+	local modDesire = bot:GetActiveModeDesire()
+	local botLoc = bot:GetLocation()
+	local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
+	if mode == BOT_MODE_LANING and #enemies == 0 then
+		local assignedLane = bot:GetAssignedLane();
+		if assignedLane == LANE_TOP  then
+			local botAmount = GetAmountAlongLane(LANE_TOP, botLoc)
+			local laneFront = GetLaneFrontAmount(myTeam, LANE_TOP, false)
+			if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+				tpLoc = GetLaningTPLocation(LANE_TOP)
+			end	
+		elseif assignedLane == LANE_MID then
+			local botAmount = GetAmountAlongLane(LANE_MID, botLoc)
+			local laneFront = GetLaneFrontAmount(myTeam, LANE_MID, false)
+			if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+				tpLoc = GetLaningTPLocation(LANE_MID)
+			end	
+		elseif assignedLane == LANE_BOT then
+			local botAmount = GetAmountAlongLane(LANE_BOT, botLoc)
+			local laneFront = GetLaneFrontAmount(myTeam, LANE_BOT, false)
+			if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+				tpLoc = GetLaningTPLocation(LANE_BOT)
+			end	
+		end
+	elseif mode == BOT_MODE_DEFEND_TOWER_TOP and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+		local botAmount = GetAmountAlongLane(LANE_TOP, botLoc)
+		local laneFront = GetLaneFrontAmount(myTeam, LANE_TOP, false)
+		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+			tpLoc = GetDefendTPLocation(LANE_TOP)
+		end	
+	elseif mode == BOT_MODE_DEFEND_TOWER_MID and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+		local botAmount = GetAmountAlongLane(LANE_MID, botLoc)
+		local laneFront = GetLaneFrontAmount(myTeam, LANE_MID, false)
+		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+			tpLoc = GetDefendTPLocation(LANE_MID)
+		end	
+	elseif mode == BOT_MODE_DEFEND_TOWER_BOT and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then	
+		local botAmount = GetAmountAlongLane(LANE_BOT, botLoc)
+		local laneFront = GetLaneFrontAmount(myTeam, LANE_BOT, false)
+		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+			tpLoc = GetDefendTPLocation(LANE_BOT)
+		end	
+	elseif mode == BOT_MODE_PUSH_TOWER_TOP and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+		local botAmount = GetAmountAlongLane(LANE_TOP, botLoc)
+		local laneFront = GetLaneFrontAmount(myTeam, LANE_TOP, false)
+		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+			tpLoc = GetPushTPLocation(LANE_TOP)
+		end	
+	elseif mode == BOT_MODE_PUSH_TOWER_MID and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+		local botAmount = GetAmountAlongLane(LANE_MID, botLoc)
+		local laneFront = GetLaneFrontAmount(myTeam, LANE_MID, false)
+		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+			tpLoc = GetPushTPLocation(LANE_MID)
+		end	
+	elseif mode == BOT_MODE_PUSH_TOWER_BOT and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+		local botAmount = GetAmountAlongLane(LANE_BOT, botLoc)
+		local laneFront = GetLaneFrontAmount(myTeam, LANE_BOT, false)
+		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
+			tpLoc = GetPushTPLocation(LANE_BOT)
+		end	
+	elseif mode == BOT_MODE_DEFEND_ALLY and modDesire >= BOT_MODE_DESIRE_MODERATE and role.CanBeSupport(bot:GetUnitName()) == true and #enemies == 0 then
+		local target = bot:GetTarget()
+		if target ~= nil and target:IsHero() then
+			local nearbyTower = target:GetNearbyTowers(1300, true)
+			if nearbyTower ~= nil and #nearbyTower > 0 and bot:GetMana() >  0.25*bot:GetMaxMana()  then
+				tpLoc = nearbyTower[1]:GetLocation()
+			end
+		end
+	elseif mode == BOT_MODE_RETREAT then
+		tpLoc = nil
+	elseif mutil.IsStuck(bot) and #enemies == 0 then
+		bot:ActionImmediate_Chat("I'm using tp while stuck.", true);
+		tpLoc = GetAncient(GetTeam()):GetLocation()
+	end	
+	if tpLoc ~= nil then
+		return true, tpLoc;
+	end
+	return false, nil;
+end
+
 local giveTime = -90;
+
 function UnImplementedItemUsage()
 
 	if bot:IsChanneling() or bot:IsUsingAbility() or bot:IsInvisible() or bot:IsMuted( ) or bot:HasModifier("modifier_doom_bringer_doom") then
@@ -552,6 +700,17 @@ function UnImplementedItemUsage()
 	local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( 800, true, BOT_MODE_NONE );
 	local npcTarget = bot:GetTarget();
 	local mode = bot:GetActiveMode();
+	
+	local tps = bot:GetItemInSlot(15);
+	if tps ~= nil and tps:IsFullyCastable() then
+		local tpLoc = nil
+		local shouldTP = false
+		shouldTP, tpLoc = ShouldTP()
+		if shouldTP then
+			bot:Action_UseAbilityOnLocation(tps, tpLoc);
+			return;
+		end	
+	end
 	
 	local pt = IsItemAvailable("item_power_treads");
 	if pt~=nil and pt:IsFullyCastable() then
@@ -643,7 +802,7 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	local tpt=IsItemAvailable("item_tpscroll");
+	--[[local tpt=IsItemAvailable("item_tpscroll");
 	if tpt~=nil and tpt:IsFullyCastable() then
 		if mutil.IsStuck(bot)
 		then
@@ -651,7 +810,7 @@ function UnImplementedItemUsage()
 			bot:Action_UseAbilityOnLocation(tpt, GetAncient(GetTeam()):GetLocation());
 			return;
 		end
-	end
+	end]]--
 	
 	local its=IsItemAvailable("item_tango_single");
 	if its~=nil and its:IsFullyCastable() and bot:DistanceFromFountain() > 1000 then
@@ -668,7 +827,7 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	local irt=IsItemAvailable("item_iron_talon");
+	--[[local irt=IsItemAvailable("item_iron_talon");
 	if irt~=nil and irt:IsFullyCastable() then
 		if bot:GetActiveMode() == BOT_MODE_FARM 
 		then
@@ -687,7 +846,7 @@ function UnImplementedItemUsage()
 				return;
 			end
 		end
-	end
+	end]]--
 	
 	local msh=IsItemAvailable("item_moon_shard");
 	if msh~=nil and msh:IsFullyCastable() then

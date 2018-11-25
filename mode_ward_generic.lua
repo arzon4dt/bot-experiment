@@ -35,6 +35,26 @@ local chat = false;
 
 function GetDesire()
 
+	
+	-- if bot:GetPlayerID() == 2 then
+		-- print(bot:GetUnitName())
+		-- local at = GetAmountAlongLane(LANE_TOP, bot:GetLocation())
+		-- local am = GetAmountAlongLane(LANE_MID, bot:GetLocation())
+		-- local ab = GetAmountAlongLane(LANE_BOT, bot:GetLocation())
+		-- print("AT: "..tostring(at.amount).."|"..tostring(at.distance))
+		-- print("AM: "..tostring(am.amount).."|"..tostring(am.distance))
+		-- print("AB: "..tostring(ab.amount).."|"..tostring(ab.distance))
+	-- end
+	
+	--[[print(bot:GetUnitName())
+	print("tp:"..tostring(bot:FindItemSlot('item_tpscroll')))
+	for i=0, 23 do
+		local it = bot:GetItemInSlot(i)
+		if(it ~= nil) then
+			print("Slot "..tostring(i)..":"..it:GetName());
+		end
+	end]]--
+
 	--[[local pg = wardUtils.GetHumanPing();
 	if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
 		print(tostring(pg.location)..":Vis:"..tostring(IsLocationVisible(pg.location))..":Pas:"..tostring(IsLocationPassable(pg.location)));
@@ -114,6 +134,8 @@ function OnStart()
 				bot:ActionImmediate_SwapItems( wardSlot, leastCostItem );
 				return
 			end
+			local active = bot:GetItemInSlot(leastCostItem);
+			print(tostring(active:IsFullyCastable()));
 		end
 	end
 end

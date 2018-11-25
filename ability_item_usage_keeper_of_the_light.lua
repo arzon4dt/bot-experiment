@@ -547,7 +547,7 @@ function ConsiderWillOWisp()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
 			then
-				return BOT_ACTION_DESIRE_HIGH, npcBot;
+				return BOT_ACTION_DESIRE_HIGH, npcBot:GetLocation();
 			end
 		end
 	end

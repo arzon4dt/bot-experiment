@@ -39,7 +39,10 @@ function AbilityUsageThink()
 	if abilityEA == "" then abilityEA = npcBot:GetAbilityByName( "obsidian_destroyer_equilibrium" ); end
 	if abilitySS == "" then abilitySS = npcBot:GetAbilityByName( "obsidian_destroyer_sanity_eclipse" ); end
 	
-	if abilitySA:IsTrained() and abilityEA:GetLevel() >= 3 and not abilitySA:GetAutoCastState( )  then
+	if abilitySA:IsTrained() 
+		--and abilityEA:GetLevel() >= 3 
+		and abilitySA:GetAutoCastState( ) == true 
+	then
 		abilitySA:ToggleAutoCast();
 	end
 	
@@ -51,6 +54,7 @@ function AbilityUsageThink()
 	if castSADesire > 0 
 	then
 		npcBot:Action_UseAbilityOnEntity(abilitySA, castSATarget);
+		return;
 	end
 	if ( castDRDesire > 0 ) 
 	then
@@ -74,7 +78,7 @@ end
 
 function ConsiderSearingArrows()
 
-	if ( not abilitySA:IsFullyCastable() or abilitySA:GetAutoCastState( ) ) then 
+	if ( abilitySA:IsFullyCastable() == false ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 

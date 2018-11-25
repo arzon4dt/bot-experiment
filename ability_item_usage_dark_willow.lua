@@ -46,6 +46,11 @@ function AbilityUsageThink()
 	castRDesire          = ConsiderR();
 	castR2Desire, R2Loc  = ConsiderR2();
 	
+	if castWDesire > 0 then
+		bot:Action_UseAbility(abilities[2]);		
+		return
+	end
+
 	if castR2Desire > 0 then
 		castR2Time = DotaTime();
 		bot:Action_UseAbilityOnLocation(abilities[5], R2Loc);		
@@ -62,10 +67,6 @@ function AbilityUsageThink()
 		return
 	end
 	
-	if castWDesire > 0 then
-		bot:Action_UseAbility(abilities[2]);		
-		return
-	end
 	
 	if castEDesire > 0 then
 		bot:Action_UseAbilityOnEntity(abilities[3], ETarget);		

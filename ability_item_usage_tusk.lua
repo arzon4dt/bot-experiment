@@ -50,7 +50,7 @@ function AbilityUsageThink()
 	if mutil.CanNotUseAbility(npcBot) then return end
 
 	if abilityIS == nil then abilityIS = npcBot:GetAbilityByName( "tusk_ice_shards" ) end
-	if abilityFS == nil then abilityFS = npcBot:GetAbilityByName( "tusk_frozen_sigil" ) end
+	if abilityFS == nil then abilityFS = npcBot:GetAbilityByName( "tusk_tag_team" ) end
 	if abilitySB == nil then abilitySB = npcBot:GetAbilityByName( "tusk_snowball" ) end
 	if abilityWP == nil then abilityWP = npcBot:GetAbilityByName( "tusk_walrus_punch" ) end
 	if abilityWK == nil then abilityWK = npcBot:GetAbilityByName( "tusk_walrus_kick" ) end
