@@ -499,12 +499,6 @@ function IsDisabled(npcTarget)
 	return false;
 end
 
-function UseConsumables()
-
-	
-
-end
-
 function GiveToMidLaner()
 	local teamPlayers = GetTeamPlayers(GetTeam())
 	local target = nil;
@@ -604,15 +598,55 @@ function printDefendLaneDesire()
 	end	
 end
 
+local enemyPids = nil;
+function CanJuke()
+	if enemyPids == nil then
+		enemyPids = GetTeamPlayers(GetOpposingTeam())
+	end	
+	local heroHG = GetHeightLevel(bot:GetLocation())
+	for i = 1, #enemyPids do
+		local info = GetHeroLastSeenInfo(enemyPids[i])
+		if info ~= nil then
+			local dInfo = info[1]; 
+			if dInfo ~= nil and dInfo.time_since_seen < 2.0  
+				and GetUnitToLocationDistance(bot,dInfo.location) < 1300 
+				and GetHeightLevel(dInfo.location) <= heroHG  
+			then
+				return false;
+			end
+		end	
+	end
+	return true;
+end	
+
+function GetNumHeroWithinRange(nRange)
+	if enemyPids == nil then
+		enemyPids = GetTeamPlayers(GetOpposingTeam())
+	end	
+	local cHeroes = 0;
+	for i = 1, #enemyPids do
+		local info = GetHeroLastSeenInfo(enemyPids[i])
+		if info ~= nil then
+			local dInfo = info[1]; 
+			if dInfo ~= nil and dInfo.time_since_seen < 2.0  
+				and GetUnitToLocationDistance(bot,dInfo.location) < nRange 
+			then
+				cHeroes = cHeroes + 1;
+			end
+		end	
+	end
+	return cHeroes;
+end	
+
 local tpThreshold = 4500;
 
 function ShouldTP()
 	local tpLoc = nil;
 	local mode = bot:GetActiveMode();
-	local modDesire = bot:GetActiveModeDesire()
-	local botLoc = bot:GetLocation()
-	local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE)
-	if mode == BOT_MODE_LANING and #enemies == 0 then
+	local modDesire = bot:GetActiveModeDesire();
+	local botLoc = bot:GetLocation();
+	local enemies = GetNumHeroWithinRange(1600);
+	if mode == BOT_MODE_LANING and enemies == 0 then
 		local assignedLane = bot:GetAssignedLane();
 		if assignedLane == LANE_TOP  then
 			local botAmount = GetAmountAlongLane(LANE_TOP, botLoc)
@@ -633,43 +667,43 @@ function ShouldTP()
 				tpLoc = GetLaningTPLocation(LANE_BOT)
 			end	
 		end
-	elseif mode == BOT_MODE_DEFEND_TOWER_TOP and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+	elseif mode == BOT_MODE_DEFEND_TOWER_TOP and modDesire >= BOT_MODE_DESIRE_MODERATE and enemies == 0 then
 		local botAmount = GetAmountAlongLane(LANE_TOP, botLoc)
 		local laneFront = GetLaneFrontAmount(myTeam, LANE_TOP, false)
 		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
 			tpLoc = GetDefendTPLocation(LANE_TOP)
 		end	
-	elseif mode == BOT_MODE_DEFEND_TOWER_MID and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+	elseif mode == BOT_MODE_DEFEND_TOWER_MID and modDesire >= BOT_MODE_DESIRE_MODERATE and enemies == 0 then
 		local botAmount = GetAmountAlongLane(LANE_MID, botLoc)
 		local laneFront = GetLaneFrontAmount(myTeam, LANE_MID, false)
 		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
 			tpLoc = GetDefendTPLocation(LANE_MID)
 		end	
-	elseif mode == BOT_MODE_DEFEND_TOWER_BOT and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then	
+	elseif mode == BOT_MODE_DEFEND_TOWER_BOT and modDesire >= BOT_MODE_DESIRE_MODERATE and enemies == 0 then	
 		local botAmount = GetAmountAlongLane(LANE_BOT, botLoc)
 		local laneFront = GetLaneFrontAmount(myTeam, LANE_BOT, false)
 		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
 			tpLoc = GetDefendTPLocation(LANE_BOT)
 		end	
-	elseif mode == BOT_MODE_PUSH_TOWER_TOP and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+	elseif mode == BOT_MODE_PUSH_TOWER_TOP and modDesire >= BOT_MODE_DESIRE_MODERATE and enemies == 0 then
 		local botAmount = GetAmountAlongLane(LANE_TOP, botLoc)
 		local laneFront = GetLaneFrontAmount(myTeam, LANE_TOP, false)
 		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
 			tpLoc = GetPushTPLocation(LANE_TOP)
 		end	
-	elseif mode == BOT_MODE_PUSH_TOWER_MID and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+	elseif mode == BOT_MODE_PUSH_TOWER_MID and modDesire >= BOT_MODE_DESIRE_MODERATE and enemies == 0 then
 		local botAmount = GetAmountAlongLane(LANE_MID, botLoc)
 		local laneFront = GetLaneFrontAmount(myTeam, LANE_MID, false)
 		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
 			tpLoc = GetPushTPLocation(LANE_MID)
 		end	
-	elseif mode == BOT_MODE_PUSH_TOWER_BOT and modDesire >= BOT_MODE_DESIRE_MODERATE and #enemies == 0 then
+	elseif mode == BOT_MODE_PUSH_TOWER_BOT and modDesire >= BOT_MODE_DESIRE_MODERATE and enemies == 0 then
 		local botAmount = GetAmountAlongLane(LANE_BOT, botLoc)
 		local laneFront = GetLaneFrontAmount(myTeam, LANE_BOT, false)
 		if botAmount.distance > tpThreshold or botAmount.amount < laneFront / 5 then 
 			tpLoc = GetPushTPLocation(LANE_BOT)
 		end	
-	elseif mode == BOT_MODE_DEFEND_ALLY and modDesire >= BOT_MODE_DESIRE_MODERATE and role.CanBeSupport(bot:GetUnitName()) == true and #enemies == 0 then
+	elseif mode == BOT_MODE_DEFEND_ALLY and modDesire >= BOT_MODE_DESIRE_MODERATE and role.CanBeSupport(bot:GetUnitName()) == true and enemies == 0 then
 		local target = bot:GetTarget()
 		if target ~= nil and target:IsHero() then
 			local nearbyTower = target:GetNearbyTowers(1300, true)
@@ -677,20 +711,31 @@ function ShouldTP()
 				tpLoc = nearbyTower[1]:GetLocation()
 			end
 		end
-	elseif mode == BOT_MODE_RETREAT then
-		tpLoc = nil
-	elseif mutil.IsStuck(bot) and #enemies == 0 then
+	elseif mode == BOT_MODE_RETREAT and modDesire >= BOT_MODE_DESIRE_HIGH 
+	then
+		if bot:GetHealth() < 0.15*bot:GetMaxHealth() and bot:WasRecentlyDamagedByAnyHero(1.0) and enemies == 0 then
+			tpLoc = mutil.GetTeamFountain();
+		elseif bot:GetHealth() < 0.25*bot:GetMaxHealth() and bot:WasRecentlyDamagedByAnyHero(3.0) and CanJuke() == true then
+			print(bot:GetUnitName().." JUKE TP")
+			tpLoc = mutil.GetTeamFountain();	
+		end
+	elseif bot:HasModifier('modifier_bloodseeker_rupture') and enemies <= 1 then
+		local allies = bot:GetNearbyHeroes(1000, false, BOT_MODE_NONE);
+		if #allies <= 1 then
+			tpLoc = mutil.GetTeamFountain();
+		end
+	elseif mutil.IsStuck(bot) and enemies == 0 then
 		bot:ActionImmediate_Chat("I'm using tp while stuck.", true);
 		tpLoc = GetAncient(GetTeam()):GetLocation()
 	end	
-	if tpLoc ~= nil then
+	if tpLoc ~= nil and GetUnitToLocationDistance(bot, tpLoc) > 2000 then
 		return true, tpLoc;
 	end
 	return false, nil;
 end
 
 local giveTime = -90;
-
+local armToggle = -90;
 function UnImplementedItemUsage()
 
 	if bot:IsChanneling() or bot:IsUsingAbility() or bot:IsInvisible() or bot:IsMuted( ) or bot:HasModifier("modifier_doom_bringer_doom") then
@@ -1322,6 +1367,148 @@ function UseGlyph()
 	end
 
 end
+
+--ITEM USAGE
+bot.mainSlotItem = {
+	bot:GetItemInSlot(0),
+	bot:GetItemInSlot(1),
+	bot:GetItemInSlot(2),
+	bot:GetItemInSlot(3),
+	bot:GetItemInSlot(4),
+	bot:GetItemInSlot(5),
+	bot:GetItemInSlot(15),
+}
+
+function GetTheItem(sItem)
+	for i = 1, #bot.mainSlotItem do
+		if bot.mainSlotItem[i] ~=  nil and bot.mainSlotItem[i]:GetName() == sItem then
+			return bot.mainSlotItem[i];
+		end	
+	end	
+	return nil;
+end	
+
+function CanUseItem(sItem)
+	local item = GetTheItem(sItem);
+	if item ~= nil and item:IsFullyCastable() then
+		return item;
+	end	
+	return false;
+end
+
+function IsItemCanBeUsed(hItem)
+	return hItem ~= nil and hItem:IsFullyCastable();
+end	
+
+function UpdateBotItemTable()
+	bot.mainSlotItem = {
+		bot:GetItemInSlot(0),
+		bot:GetItemInSlot(1),
+		bot:GetItemInSlot(2),
+		bot:GetItemInSlot(3),
+		bot:GetItemInSlot(4),
+		bot:GetItemInSlot(5),
+		bot:GetItemInSlot(15),
+	}
+end	 
+
+function HaveHealthRegenBuff()
+	return bot:HasModifier('modifier_fountain_aura_buff') 
+			or bot:HasModifier('modifier_bottle_regeneration')  
+			or bot:HasModifier('modifier_flask_healing')  
+			or bot:HasModifier('modifier_tango_heal')  
+end
+
+function HaveManaRegenBuff()
+	return bot:HasModifier('modifier_fountain_aura_buff') 
+			or bot:HasModifier('modifier_bottle_regeneration')  
+			or bot:HasModifier('modifier_clarity_potion') 
+end
+
+local itemToUse = nil;
+
+local lastToggle = -90; 
+function ItemUsageThinks()
+	UpdateBotItemTable();
+
+	if 	bot:IsChanneling() 
+		or bot:IsUsingAbility() 
+		or bot:IsInvisible() 
+		or bot:IsMuted( ) 
+		or bot:HasModifier("modifier_doom_bringer_doom") 
+	then
+		return;
+	end
+
+	local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
+	local mode = bot:GetActiveMode();
+	local modeDesire = bot:GetActiveModeDesire();
+	
+	--item_courier
+	itemToUse = CanUseItem('item_courier');
+	if itemToUse ~= false then
+		bot:Action_UseAbility(itemToUse);
+		return;
+	end
+
+	--item_clarity
+	itemToUse = CanUseItem('item_clarity');
+	if itemToUse ~= false 
+		and HaveManaRegenBuff() == false 
+		and bot:GetMana() + 225 <= bot:GetMaxMana() 
+		and mutil.IsGoingOnSomeone(bot) == false
+	then
+		bot:Action_UseAbility(itemToUse);
+		return;
+	end
+	
+	--item_tp_scroll
+	itemToUse = CanUseItem('item_tpscroll');
+	if itemToUse ~= false 
+	then
+	
+	end
+	
+	--item_enchanted_mango
+	itemToUse = CanUseItem('item_enchanted_mango');
+	if itemToUse ~= false and bot:GetMana() < 0.25*bot:GetMaxMana() and mode == BOT_MODE_ATTACK 
+	then
+		bot:Action_UseAbility(itemToUse);
+		return;
+	end
+	
+	--item_faerie_fire
+	itemToUse = CanUseItem('item_faerie_fire');
+	if itemToUse ~= false 
+	then
+		if ( mode == BOT_MODE_RETREAT and modeDesire >= BOT_MODE_DESIRE_HIGH 
+		     and bot:DistanceFromFountain() > 0 and bot:GetHealth() < 0.15*bot:GetMaxHealth() ) 
+			 or DotaTime() > 10*60 
+		then
+			bot:Action_UseAbility(itemToUse);
+			return;
+		end
+	end
+	
+	
+	
+	local test = CanUseItem('item_armlet');
+	
+	if test ~= false then
+		if test:GetToggleState() == true and bot:GetHealth() <= 150 and DotaTime() > lastToggle + 0.5 then
+			bot:ActionPush_UseAbility(test)
+			bot:ActionPush_UseAbility(test)
+			lastToggle = DotaTime()
+			return
+		elseif test:GetToggleState() == false then	
+			bot:Action_UseAbility(test);
+			return;	
+		end	
+	end	
+
+
+
+end	
 
 return MyModule;
 

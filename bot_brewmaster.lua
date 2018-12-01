@@ -14,6 +14,7 @@ local MoveDesire = 0
 local RetreatDesire = 0
 local castSCDesire = 0;
 local castCHDesire = 0;
+local castDBDesire = 0;
 local radius = 1000;
 
 function  MinionThink(  hMinionUnit ) 
@@ -115,9 +116,16 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 	
 	if string.find(hMinionUnit:GetUnitName(), "npc_dota_brewmaster_fire") then
 		
+		abilityDB = hMinionUnit:GetAbilityByName( "brewmaster_drunken_brawler" );
 		AttackDesire, AttackTarget = ConsiderAttacking(hMinionUnit); 
 		MoveDesire, Location = ConsiderMove(hMinionUnit); 
+		castDBDesire = ConsiderDrunkenBrawler(hMinionUnit);
 		
+		if ( castDBDesire > 0 ) 
+		then
+			hMinionUnit:Action_UseAbility( abilityDB );
+			return;
+		end
 		if (AttackDesire > 0)
 		then
 			hMinionUnit:Action_AttackUnit( AttackTarget, true );
@@ -444,5 +452,25 @@ function ConsiderHB(hMinionUnit)
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
+
+end
+
+function ConsiderDrunkenBrawler(hMinionUnit)
+
+	-- Make sure it's castable
+	if ( not abilityDB:IsFullyCastable() or abilityDB:IsHidden() or not bot:HasScepter() ) then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	-- Get some of its values
+	local nRange = hMinionUnit:GetAttackRange();
+
+	local tableNearbyEnemyHeroes = hMinionUnit:GetNearbyHeroes( nRange+200, true, BOT_MODE_NONE );
+	
+	if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 ) then
+		return BOT_ACTION_DESIRE_HIGH;
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
 
 end

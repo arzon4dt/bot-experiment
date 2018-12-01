@@ -10,10 +10,10 @@ X["items"] = {
 	"item_power_treads_agi",
 	"item_echo_sabre",
 	"item_invis_sword",
-	"item_abyssal_blade",
-	"item_silver_edge",
+	"item_sange_and_yasha",
 	"item_skadi",
-	"item_butterfly"
+	"item_abyssal_blade",
+	"item_silver_edge"
 };			
 
 X["builds"] = {

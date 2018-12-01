@@ -82,6 +82,9 @@ function GetDesire()
 			print(tostring(key)..":"..tostring(value))
 		end
 	end]]--
+	if bot:HasModifier('modifier_item_forcestaff_active') then
+		return BOT_MODE_DESIRE_ABSOLUTE;
+	end	
 	
 	if DotaTime() > 10*60 then
 		if DotaTime() >= droppedCheck + 1.0 then
@@ -326,11 +329,40 @@ function GetDesire()
 				end
 			end
 		end	
+	elseif bot:GetUnitName() == "npc_dota_hero_phantom_assassin" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "phantom_assassin_blur" ) end;
+		if cAbility ~= nil and cAbility:IsFullyCastable() 
+			and bot:GetActiveMode() == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and bot:WasRecentlyDamagedByAnyHero(3.0) 
+		then
+			local enemies = bot:GetNearbyHeroes(650,true,BOT_MODE_NONE);
+			if enemies ~= nil and #enemies == 0 then
+				return BOT_MODE_DESIRE_ABSOLUTE;
+			end	 
+		end			
+	elseif bot:GetUnitName() == "npc_dota_hero_sniper" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "sniper_take_aim" ) end;
+		if cAbility ~= nil and cAbility:IsFullyCastable() and bot:GetActiveMode() == BOT_MODE_ATTACK 
+		then
+			local target = bot:GetTarget();
+			local attackRange = bot:GetAttackRange();
+			local bonusRange = cAbility:GetSpecialValueInt('bonus_attack_range');
+			if target ~= nil and target:IsHero() then
+				local dst = GetUnitToUnitDistance(bot, target);
+				if dst >= attackRange and dst < attackRange + bonusRange then
+					return BOT_MODE_DESIRE_ABSOLUTE;
+				end
+			end	 
+		end			
 	elseif bot:GetUnitName() == "npc_dota_hero_lich" then
 		if cAbility == nil then cAbility = bot:GetAbilityByName( "lich_sinister_gaze" ) end;
 		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
 			return BOT_MODE_DESIRE_ABSOLUTE;
 		end		
+	elseif bot:GetUnitName() == "npc_dota_hero_magnataur" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "magnataur_skewer" ) end;
+		if cAbility:IsInAbilityPhase() then
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end	
 	end
 	
 	if alreadyFoundCreep then
@@ -364,6 +396,11 @@ function Think()
 		bot:Action_ClearActions(true);
 		return; 
 	end
+
+	if bot:HasModifier('modifier_item_forcestaff_active') then
+		bot:Action_ClearActions(true);
+		return; 
+	end	
 
 	if pickedItem ~= nil then
 		print(bot:GetUnitName().." picking up item");
@@ -425,6 +462,9 @@ function Think()
 		or  bot:GetUnitName() == "npc_dota_hero_enigma" 
 		or  bot:GetUnitName() == "npc_dota_hero_lich" 
 	then
+		return;	
+	elseif bot:GetUnitName() == "npc_dota_hero_magnataur" then
+		bot:Action_ClearActions(false);
 		return;	
 	elseif bot:GetUnitName() == "npc_dota_hero_spirit_breaker" then
 		local target = bot.chargeTarget;
@@ -514,7 +554,13 @@ function Think()
 		return;	
 	elseif bot:GetUnitName() == "npc_dota_hero_skeleton_king" then
 		bot:Action_UseAbility(cAbility);
-		return;		
+		return;	
+	elseif bot:GetUnitName() == "npc_dota_hero_phantom_assassin" then
+		bot:Action_UseAbility(cAbility);
+		return;	
+	elseif bot:GetUnitName() == "npc_dota_hero_sniper" then
+		bot:Action_UseAbility(cAbility);
+		return;			
 	end
 end
 

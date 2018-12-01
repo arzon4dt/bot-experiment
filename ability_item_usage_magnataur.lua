@@ -86,6 +86,8 @@ function ConsiderDecay()
 	local nDamage = abilityDC:GetSpecialValueInt("shock_damage");
 	local nSpeed = abilityDC:GetSpecialValueInt("shock_speed");
 
+	if nCastRange > 1600 then nCastRange = 1600; end
+
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
@@ -135,7 +137,7 @@ function ConsiderBloodlust()
 	end
 	
 	local nCastRange = abilityBL:GetCastRange();
-	
+	if nCastRange > 1600 then nCastRange = 1600; end
 	-- If we're pushing or defending a lane
 	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
 	then
@@ -191,6 +193,7 @@ function ConsiderTimeWalk()
 	local nCastRange = abilityTW:GetSpecialValueInt("range");
 	local nSpeed = abilityTW:GetSpecialValueInt("skewer_speed");
 	local nCastPoint = abilityTW:GetCastPoint( );
+	if nCastRange > 1600 then nCastRange = 1600; end
 	
 	if mutil.IsStuck(npcBot)
 	then

@@ -20,6 +20,22 @@ function  MinionThink(  hMinionUnit )
 			hMinionUnit:Action_MoveToLocation(Location)
 			return
 		end
+	elseif hMinionUnit:GetUnitName() == "npc_dota_clinkz_skeleton_archer" then
+		-- local attackRange = hMinionUnit:GetAttackRange();
+		-- local enemies = hMinionUnit:GetNearbyHeroes(attackRange, true, BOT_MODE_NONE);
+		-- local minHP = 100000;
+		-- local target = nil;
+		-- for i = 1, #enemies do
+			-- if enemies[i] ~= nil and enemies[i]:GetHealth() < minHP then
+				-- minHP = enemies[i]:GetHealth();
+				-- target = enemies[i]
+			-- end
+		-- end
+		-- if target ~= nil then
+			-- hMinionUnit:Action_AttackUnit(target, true);
+			-- return
+		-- end
+		return;
 	end
 		
 end

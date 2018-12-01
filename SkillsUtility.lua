@@ -29,7 +29,7 @@ function X.CastStolenSpells(ability)
 	
 	local bot = GetBot()
 	
-	if not string.find(ability:GetName(), "empty") and not X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_PASSIVE)  then
+	if ability:IsNull() == false and ability ~= nil and not string.find(ability:GetName(), "empty") and not X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_PASSIVE)  then
 	
 		if X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_UNIT_TARGET) then
 			castEntityTarget, castTarget, UnitType = X.ConsiderEntityTarget(ability);

@@ -32,10 +32,8 @@ local route2 = {
 local vNonStuck = Vector(-2610.000000, 538.000000, 0.000000);
 
 local chat = false;
-
+local height = -1;
 function GetDesire()
-
-	
 	-- if bot:GetPlayerID() == 2 then
 		-- print(bot:GetUnitName())
 		-- local at = GetAmountAlongLane(LANE_TOP, bot:GetLocation())

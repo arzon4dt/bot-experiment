@@ -60,9 +60,9 @@ function AbilityUsageThink()
 		skills.CastStolenSpells(skill1);
 		skills.CastStolenSpells(skill2);
 		skills.CastStolenSpells(skill3);
-		if ( skill1:IsFullyCastable() == false 
-		   and skill2:IsFullyCastable() == false 
-		   and skill3:IsFullyCastable() == false ) or npcBot:GetHealth() <= 0.20*npcBot:GetMaxHealth()
+		if ( (skill1:IsNull() == false and skill1 ~= nil and skill1:IsFullyCastable() == false) and
+		     (skill2:IsNull() == false and skill2 ~= nil and skill2:IsFullyCastable() == false) and
+		     (skill3:IsNull() == false and skill3 ~= nil and skill3:IsFullyCastable() == false) ) or npcBot:GetHealth() <= 0.25*npcBot:GetMaxHealth()
 		then
 			npcBot:Action_UseAbility(npcBot:GetAbilityByName( "morphling_morph_replicate" ));
 			return
