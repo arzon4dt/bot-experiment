@@ -940,20 +940,20 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	-- local pb=IsItemAvailable("item_phase_boots");
-	-- if pb~=nil and pb:IsFullyCastable() 
-	-- then
-	-- 	if ( mode == BOT_MODE_ATTACK or
-	-- 		 mode == BOT_MODE_RETREAT or
-	-- 		 mode == BOT_MODE_ROAM or
-	-- 		 mode == BOT_MODE_TEAM_ROAM or
-	-- 		 mode == BOT_MODE_GANK or
-	-- 		 mode == BOT_MODE_DEFEND_ALLY )
-	-- 	then
-	-- 		bot:Action_UseAbility(pb);
-	-- 		return;
-	-- 	end	
-	-- end
+	local pb=IsItemAvailable("item_phase_boots");
+	if pb~=nil and pb:IsFullyCastable() 
+	then
+		if ( mode == BOT_MODE_ATTACK or
+			 mode == BOT_MODE_RETREAT or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY )
+		then
+			bot:Action_UseAbility(pb);
+			return;
+		end	
+	end
 	
 	local bt=IsItemAvailable("item_bloodthorn");
 	if bt~=nil and bt:IsFullyCastable() 
