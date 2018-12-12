@@ -73,7 +73,8 @@ function ConsiderQ()
 	then
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
+			-- it is counterproductive to cast this to a target when the whole enemy team is chasing us, so cast only if we have scepter
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) and npcBot:HasScepter()) 
 			then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 			end
@@ -123,16 +124,14 @@ function ConsiderW()
 	local nCastPoint = abilityW:GetCastPoint( );
 	local nManaCost  = abilityW:GetManaCost( );
 
-	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	-- If we're seriously retreating, see what we can do
 	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
+			-- just give them pain, we wont lose anything with this
+			return BOT_ACTION_DESIRE_ABSOLUTE;
 		end
 	end
 	
@@ -142,7 +141,7 @@ function ConsiderW()
 		local npcTarget = npcBot:GetAttackTarget();
 		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcBot, npcTarget, nRadius)  )
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			return BOT_ACTION_DESIRE_VERYHIGH;
 		end
 	end
 	
@@ -150,15 +149,16 @@ function ConsiderW()
 	if mutil.IsPushing(npcBot) or mutil.IsDefending(npcBot)
 	then
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nRadius, true );
-		if ( tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 4 and mutil.AllowedToSpam(npcBot, nManaCost) ) then
-			return BOT_ACTION_DESIRE_MODERATE;
+		if ( tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 2 and mutil.AllowedToSpam(npcBot, nManaCost) ) then
+			return BOT_ACTION_DESIRE_VERYHIGH;
 		end
 	end
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 then
-			return BOT_ACTION_DESIRE_LOW;
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 then
+			return BOT_ACTION_DESIRE_VERYHIGH;
 		end
 	end
 	
@@ -166,9 +166,9 @@ function ConsiderW()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius-100)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius-30)
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			return BOT_ACTION_DESIRE_VERYHIGH;
 		end
 	end
 
