@@ -123,7 +123,19 @@ X["hero_roles"] = {
 		['support'] = 0,
 		['pusher'] = 0
 	},
-
+  
+  ["npc_dota_hero_dark_willow"] = {
+		['carry'] = 0,
+		['disabler'] = 1,
+		['durable'] = 0,
+		['escape'] = 1,
+		['initiator'] = 1,
+		['jungler'] = 0,
+		['nuker'] = 1,
+		['support'] = 1,
+		['pusher'] = 0
+	},
+  
 	["npc_dota_hero_doom_bringer"] = {
 		['carry'] = 1,
 		['disabler'] = 2,
@@ -365,7 +377,7 @@ X["hero_roles"] = {
 	},
 
 	["npc_dota_hero_sven"] = {
-		['carry'] = 2,
+		['carry'] = 3,
 		['disabler'] = 2,
 		['durable'] = 2,
 		['escape'] = 0,
@@ -581,7 +593,7 @@ X["hero_roles"] = {
 	},
 
 	["npc_dota_hero_faceless_void"] = {
-		['carry'] = 2,
+		['carry'] = 3,
 		['disabler'] = 2,
 		['durable'] = 1,
 		['escape'] = 1,
@@ -637,7 +649,7 @@ X["hero_roles"] = {
 		['jungler'] = 0,
 		['nuker'] = 2,
 		['support'] = 0,
-		['pusher'] = 0
+		['pusher'] = 2
 	},
 
 	["npc_dota_hero_medusa"] = {
@@ -797,7 +809,7 @@ X["hero_roles"] = {
 	},
 
 	["npc_dota_hero_sniper"] = {
-		['carry'] = 2,
+		['carry'] = 3,
 		['disabler'] = 0,
 		['durable'] = 0,
 		['escape'] = 0,
@@ -1147,7 +1159,7 @@ X["hero_roles"] = {
 	["npc_dota_hero_necrolyte"] = {
 		['carry'] = 1,
 		['disabler'] = 1,
-		['durable'] = 1,
+		['durable'] = 2,
 		['escape'] = 0,
 		['initiator'] = 0,
 		['jungler'] = 0,
@@ -1426,7 +1438,7 @@ X["bottle"] = {
 	["npc_dota_hero_obsidian_destroyer"] = 1;
 	["npc_dota_hero_death_prophet"] = 1;
 	["npc_dota_hero_tiny"] = 1;
-	["npc_dota_hero_dragon_knight"] = 1;
+	--["npc_dota_hero_dragon_knight"] = 1; -- it was viable when bottle crew worked, now dk has to go for soul ring if he wants mana
 	["npc_dota_hero_pugna"] = 1;
 	["npc_dota_hero_naga_siren"] = 1;
 }
@@ -1523,7 +1535,14 @@ function X.BetterBuyPhaseBoots(hero)
 end	
 
 function X.GetRoleLevel(hero, role)
-	return X["hero_roles"][hero][role];
+  if hero ~= nil and role ~= nil and X["hero_roles"][hero] ~= nil and X["hero_roles"][hero][role] ~= nil then
+    return X["hero_roles"][hero][role];
+  end
+  if hero ~= nil then
+    print("hero has no role: " .. hero);
+  end
+
+  return 0;
 end
 
 function X.IsRemovedFromSupportPoll(hero)
@@ -1558,7 +1577,6 @@ X['off'] = {
 	'npc_dota_hero_spirit_breaker',
 	'npc_dota_hero_tidehunter',
 	'npc_dota_hero_tusk',
-	'npc_dota_hero_venomancer',
 	'npc_dota_hero_windrunner'
 }
 
@@ -1567,6 +1585,7 @@ X['mid'] = {
 	'npc_dota_hero_arc_warden',
 	'npc_dota_hero_bloodseeker',
 	'npc_dota_hero_broodmother',
+	'npc_dota_hero_bristleback',
 	'npc_dota_hero_clinkz',
 	'npc_dota_hero_death_prophet',
 	'npc_dota_hero_dragon_knight',
@@ -1587,6 +1606,8 @@ X['mid'] = {
 	'npc_dota_hero_puck',
 	'npc_dota_hero_pugna',
 	'npc_dota_hero_queenofpain',
+	'npc_dota_hero_shredder',
+	'npc_dota_hero_skywrath_mage',
 	'npc_dota_hero_sniper',
 	'npc_dota_hero_storm_spirit',
 	'npc_dota_hero_templar_assassin',
@@ -1619,7 +1640,8 @@ X['safe'] = {
 	'npc_dota_hero_terrorblade',
 	'npc_dota_hero_troll_warlord',
 	'npc_dota_hero_ursa',
-	'npc_dota_hero_weaver'
+	'npc_dota_hero_weaver',
+	'npc_dota_hero_sniper'
 }
 
 X['supp'] = {
@@ -1666,12 +1688,14 @@ X['supp'] = {
 function X.CanBeOfflanerOld(hero)
 	if X["hero_roles"][hero] == nil then return false end;
 	return hero == "npc_dota_hero_bounty_hunter" or hero == "npc_dota_hero_nyx_assassin" or hero == "npc_dota_hero_magnataur" or hero == "npc_dota_hero_sand_king"
-           or hero == "npc_dota_hero_shredder" or hero == "npc_dota_hero_tusk" or hero == "npc_dota_hero_dark_seer" or hero == "npc_dota_hero_techies" or hero == "npc_dota_hero_batrider"
+           or hero == "npc_dota_hero_shredder" or hero == "npc_dota_hero_tusk" or hero == "npc_dota_hero_dark_seer" or hero == "npc_dota_hero_techies" or hero == "npc_dota_hero_batrider" 
+            or hero == "npc_dota_hero_furion" or hero == "npc_dota_hero_night_stalker" or hero == "npc_dota_hero_slardar" or hero == "npc_dota_hero_undying" or hero == "npc_dota_hero_bristleback"
 		   or (  X["hero_roles"][hero]["initiator"] > 0 and
 		         X["hero_roles"][hero]["disabler"] > 0 and
 		         X["hero_roles"][hero]["durable"] > 0 and
 		         X["hero_roles"][hero]["support"] == 0 )
 end
+
 
 function X.CanBeOfflaner(hero)
 	for i = 1, #X['off'] do
@@ -1679,19 +1703,21 @@ function X.CanBeOfflaner(hero)
 			return true;	
 		end	
 	end
+
 	return false;	
 end	
 
---MIDLANER
+
 function X.CanBeMidlanerOld(hero)
 	if X["hero_roles"][hero] == nil then return false end;
-	return hero == "npc_dota_hero_zuus" or hero == "npc_dota_hero_templar_assassin" or hero == "npc_dota_hero_ember_spirit" or hero == "npc_dota_hero_puck" 
-	       or hero == "npc_dota_hero_pugna" 
-		   or ( X["hero_roles"][hero]["carry"] > 0 and
-		      ( 
-		        X["hero_roles"][hero]["nuker"] > 0 or
-			    X["hero_roles"][hero]["pusher"] > 0 
-			   ) 
+   -- return hero == "npc_dota_hero_huskar" or hero == "npc_dota_hero_bristleback" or hero == "npc_dota_hero_necrolyte";
+	return hero == "npc_dota_hero_zuus" or 
+         hero == "npc_dota_hero_huskar" or 
+         hero == "npc_dota_hero_skywrath_mage" or 
+         hero == "npc_dota_hero_bloodseeker" or 
+         hero == "npc_dota_hero_viper" or 
+         hero == "npc_dota_hero_necrolyte" or 
+         ( X["hero_roles"][hero]["carry"] > 0 and ( X["hero_roles"][hero]["nuker"] > 0 or X["hero_roles"][hero]["pusher"] > 0 ) 
 			)
 end
 
@@ -1701,6 +1727,7 @@ function X.CanBeMidlaner(hero)
 			return true;	
 		end	
 	end
+
 	return false;	
 end	
 
@@ -1722,6 +1749,7 @@ function X.CanBeSafeLaneCarry(hero)
 			return true;	
 		end	
 	end
+
 	return false;	
 end	
 
@@ -1742,6 +1770,7 @@ function X.CanBeSupport(hero)
 			return true;	
 		end	
 	end
+
 	return false;	
 end	
 

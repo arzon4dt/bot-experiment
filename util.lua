@@ -643,6 +643,40 @@ function utilsModule.GetLocationDanger( vLoc )
 
     return danger
 end
+
+function utilsModule.IsDangerDistFromEnemyMidTower()
+  local npcBot = GetBot()
+  local tower = nil
+    
+  if GetTeam() == TEAM_DIRE then
+      tower = GetTower(TEAM_RADIANT, TOWER_MID_1)
+  else
+      tower = GetTower(TEAM_DIRE, TOWER_MID_1)
+  end
+  
+   if tower and #(npcBot:GetLocation() - tower:GetLocation()) < 1000 then
+      return true
+   end
+   
+   return false
+end
+
+function utilsModule.GetDistFromEnemyMidTower()
+  local npcBot = GetBot()
+  local tower =  nil
+    
+  if GetTeam() == TEAM_DIRE then
+      tower = GetTower(TEAM_RADIANT, TOWER_MID_1)
+  else
+      tower = GetTower(TEAM_DIRE, TOWER_MID_1)
+  end
+  
+  if tower then
+      return #(npcBot:GetLocation() - tower:GetLocation())
+  end
+ 
+  return 30000
+end
 ----------------------------------------------------------------------------------------------------
 
 return utilsModule
