@@ -11,8 +11,15 @@ local wt = nil;
 local itemWard = nil;
 local targetLoc = nil;
 local smoke = nil;
-local wardCastTime = -90;
-local swapTime = -90;
+local itemSwapCooldown = 7.0;
+local gameStartTime = -90;
+local wardCastTime = gameStartTime;
+local swapTimeDefault = gameStartTime;
+local swapTime = gameStartTime;
+
+local isWardSwaped = function()
+    return swapTime > gameStartTime;
+end
 
 bot.ward = false;
 bot.steal = false;
@@ -166,9 +173,11 @@ function Think()
 	
 	if bot.ward then
 		if targetDist <= nWardCastRange then
-			if  DotaTime() > swapTime + 7.0 then
+			if DotaTime() > swapTime + itemSwapCooldown then
 				bot:Action_UseAbilityOnLocation(itemWard, targetLoc);
-				wardCastTime = DotaTime();	
+				if isWardSwaped() then
+					wardCastTime = DotaTime();
+				end
 				return
 			else
 				if targetLoc.x == Vector(-2948.000000, 769.000000, 0.000000) then
