@@ -3,9 +3,8 @@ local bnUtil = require(GetScriptDirectory() .. "/BotNameUtility");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
-	"npc_dota_hero_phantom_assassin",
-	"npc_dota_hero_sniper"
-
+	"npc_dota_hero_obsidian_destroyer",
+	"npc_dota_hero_troll_warlord"
 };
 
 local UnImplementedHeroes = {
@@ -166,7 +165,7 @@ local Min = -5;
 local Max = 25;
 local CMTestMode = false;
 local UnavailableHeroes = {
-
+	"npc_dota_hero_wisp"
 }
 local HeroLanes = {
 	[1] = LANE_MID,

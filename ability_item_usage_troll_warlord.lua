@@ -144,9 +144,9 @@ function ConsiderDarkPact()
 			else
 				if Dist > nCastRange + 200 and not inMelee then
 					return BOT_ACTION_DESIRE_MODERATE;
-				elseif Dist > nCastRange / 2 and Dist < nCastRange + 200 and inMelee then
+				elseif Dist > nCastRange / 2 + 150 and Dist < nCastRange + 200 and inMelee then
 					return BOT_ACTION_DESIRE_MODERATE;
-				elseif Dist < nCastRange / 2 and not inMelee then
+				elseif Dist < nCastRange / 2 + 150 and not inMelee then
 					return BOT_ACTION_DESIRE_MODERATE;
 				end
 			end

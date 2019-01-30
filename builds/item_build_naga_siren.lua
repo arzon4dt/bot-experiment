@@ -11,7 +11,8 @@ X["items"] = {
 	"item_diffusal_blade",
 	"item_manta",
 	"item_heart",
-	"item_butterfly"
+	"item_butterfly",
+	"item_radiance"
 };			
 
 X["builds"] = {

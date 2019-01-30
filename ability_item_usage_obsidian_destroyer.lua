@@ -39,18 +39,23 @@ function AbilityUsageThink()
 	if abilityEA == "" then abilityEA = npcBot:GetAbilityByName( "obsidian_destroyer_equilibrium" ); end
 	if abilitySS == "" then abilitySS = npcBot:GetAbilityByName( "obsidian_destroyer_sanity_eclipse" ); end
 	
-	if abilitySA:IsTrained() 
-		--and abilityEA:GetLevel() >= 3 
-		and abilitySA:GetAutoCastState( ) == true 
-	then
-		abilitySA:ToggleAutoCast();
-	end
+	-- if abilitySA:IsTrained() 
+		-- --and abilityEA:GetLevel() >= 3 
+		-- and abilitySA:GetAutoCastState( ) == true 
+	-- then
+		-- abilitySA:ToggleAutoCast();
+	-- end
 	
 	castSADesire, castSATarget = ConsiderSearingArrows()
 	castDRDesire, castDRTarget = ConsiderDisruption();
 	castEADesire = ConsiderEquilibrium();
 	castSSDesire, castSSLocation = ConsiderStaticStorm();
 	
+	if ( castEADesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityEA );
+		return;
+	end
 	if castSADesire > 0 
 	then
 		npcBot:Action_UseAbilityOnEntity(abilitySA, castSATarget);
@@ -59,11 +64,6 @@ function AbilityUsageThink()
 	if ( castDRDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityDR, castDRTarget );
-		return;
-	end
-	if ( castEADesire > 0 ) 
-	then
-		npcBot:Action_UseAbility( abilityEA );
 		return;
 	end
 	if ( castSSDesire > 0 ) 

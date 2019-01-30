@@ -9,7 +9,8 @@ X["items"] = {
 	"item_magic_wand",
 	"item_power_treads_int",
 	"item_hurricane_pike",
-	"item_rod_of_atos",
+	"item_kaya",
+	"item_yasha_and_kaya",
 	"item_black_king_bar",
 	"item_shivas_guard",
 	"item_sheepstick"

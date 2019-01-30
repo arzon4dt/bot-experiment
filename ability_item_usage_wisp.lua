@@ -319,37 +319,56 @@ function ConsiderOverCharge()
 	local NearbyAttackingAllies = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_ATTACK );
 	for _,ally in pairs(NearbyAttackingAllies)
 	do
-		if ally:GetActiveMode() == BOT_MODE_ATTACK and ally:HasModifier('modifier_wisp_tether') then
+		if ally:HasModifier('modifier_wisp_tether') then
 			tetheredAlly = ally
 		end
 	end
 	
-	if npcBot:GetActiveMode() == BOT_MODE_ATTACK and tetheredAlly ~= nil then
+	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 and npcBot:WasRecentlyDamagedByAnyHero(2.0) then
+			return BOT_ACTION_DESIRE_MODERATE;
+		end
+	end
+
+	if npcBot:GetActiveMode() == BOT_MODE_ATTACK and tetheredAlly ~= nil and npcBot:HasModifier('modifier_wisp_tether') then
 		local npcTarget = npcBot:GetTarget();
 		local allyAttackRange = tetheredAlly:GetAttackRange();
 		local nAttackRange = npcBot:GetAttackRange();
 		if npcTarget ~= nil and npcTarget:IsHero() and 
 			( GetUnitToUnitDistance(npcTarget ,tetheredAlly) <= allyAttackRange or  GetUnitToUnitDistance(npcTarget ,npcBot) <= nAttackRange )
 		then
-			if  npcBot:HasModifier('modifier_wisp_tether') and npcBot:GetHealth()/npcBot:GetMaxHealth() > .3 and npcBot:GetMana()/npcBot:GetMaxMana() > .15 then
-				if not abilityOC:GetToggleState() then
-					return BOT_ACTION_DESIRE_MODERATE
-				end
-			else
-				if abilityOC:GetToggleState() then
-					return BOT_ACTION_DESIRE_MODERATE
-				end
-			end
-		else
-			if abilityOC:GetToggleState() then
-				return BOT_ACTION_DESIRE_MODERATE
-			end
-		end	
-	else
-		if abilityOC:GetToggleState() then
 			return BOT_ACTION_DESIRE_MODERATE
-		end
+		end	
 	end
+
+	-- if npcBot:GetActiveMode() == BOT_MODE_ATTACK and tetheredAlly ~= nil then
+	-- 	local npcTarget = npcBot:GetTarget();
+	-- 	local allyAttackRange = tetheredAlly:GetAttackRange();
+	-- 	local nAttackRange = npcBot:GetAttackRange();
+	-- 	if npcTarget ~= nil and npcTarget:IsHero() and 
+	-- 		( GetUnitToUnitDistance(npcTarget ,tetheredAlly) <= allyAttackRange or  GetUnitToUnitDistance(npcTarget ,npcBot) <= nAttackRange )
+	-- 	then
+	-- 		if  npcBot:HasModifier('modifier_wisp_tether') and npcBot:GetHealth()/npcBot:GetMaxHealth() > .3 and npcBot:GetMana()/npcBot:GetMaxMana() > .15 then
+	-- 			if not abilityOC:GetToggleState() then
+	-- 				return BOT_ACTION_DESIRE_MODERATE
+	-- 			end
+	-- 		else
+	-- 			if abilityOC:GetToggleState() then
+	-- 				return BOT_ACTION_DESIRE_MODERATE
+	-- 			end
+	-- 		end
+	-- 	else
+	-- 		if abilityOC:GetToggleState() then
+	-- 			return BOT_ACTION_DESIRE_MODERATE
+	-- 		end
+	-- 	end	
+	-- else
+	-- 	if abilityOC:GetToggleState() then
+	-- 		return BOT_ACTION_DESIRE_MODERATE
+	-- 	end
+	-- end
 	
 	return BOT_ACTION_DESIRE_NONE;
 end
@@ -365,7 +384,7 @@ function ConsiderRelocate()
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1 and npcBot:WasRecentlyDamagedByAnyHero(1.0) then
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 and npcBot:WasRecentlyDamagedByAnyHero(1.0) then
 			local location = mutil.GetTeamFountain();
 			return BOT_ACTION_DESIRE_MODERATE, location;
 		end

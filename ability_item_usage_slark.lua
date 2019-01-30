@@ -125,7 +125,8 @@ function ConsiderPounce()
 
 	-- Get some of its values
 	local nCastRange = abilityPC:GetSpecialValueInt( "pounce_distance" );
-	local nDamage = abilityPC:GetSpecialValueInt( "pounce_damage" );
+	local nDamage = 0;
+	-- local nDamage = abilityPC:GetSpecialValueInt( "pounce_damage" );
 
 	--------------------------------------
 	-- Mode based usage
