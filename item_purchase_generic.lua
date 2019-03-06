@@ -121,11 +121,11 @@ for i=1, math.ceil(#bot.itemToBuy/2) do
 end
 
 --Temporary change phase boots to power thread due to behavior change
-for i=1, #bot.itemToBuy do
-	if bot.itemToBuy[i] == 'item_phase_boots' then
-		bot.itemToBuy[i] = 'item_power_treads_str';
-	end	
-end	
+-- for i=1, #bot.itemToBuy do
+	-- if bot.itemToBuy[i] == 'item_phase_boots' then
+		-- bot.itemToBuy[i] = 'item_power_treads_str';
+	-- end	
+-- end	
 --------------------------------------------------------------------------
 
 --[[print(bot:GetUnitName())
