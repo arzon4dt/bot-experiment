@@ -26,8 +26,8 @@ local CStackLoc = {
 --test hero
 local jungler = {
 	'npc_dota_hero_alchemist',
-	'npc_dota_hero_bloodseeker',
-	'npc_dota_hero_legion_commander',
+	--'npc_dota_hero_bloodseeker', -- after lvl 6 this hero has to fight
+	--'npc_dota_hero_legion_commander', -- after lvl 6 this hero has to fight
 	'npc_dota_hero_life_stealer'
 	--'npc_dota_hero_skeleton_king',
 	--'npc_dota_hero_ursa'
