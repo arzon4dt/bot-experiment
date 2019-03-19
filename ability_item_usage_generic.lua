@@ -539,14 +539,31 @@ function CanSwitchPTStat(pt)
 	return false;
 end
 
-local myTeam = GetTeam()
-local opTeam = GetOpposingTeam()
-local teamT1Top = GetTower(myTeam,TOWER_TOP_1):GetLocation()
-local teamT1Mid = GetTower(myTeam,TOWER_MID_1):GetLocation()
-local teamT1Bot = GetTower(myTeam,TOWER_BOT_1):GetLocation()
-local enemyT1Top = GetTower(opTeam,TOWER_TOP_1):GetLocation()
-local enemyT1Mid = GetTower(opTeam,TOWER_MID_1):GetLocation()
-local enemyT1Bot = GetTower(opTeam,TOWER_BOT_1):GetLocation()
+local myTeam = GetTeam();
+local opTeam = GetOpposingTeam();
+
+local teamT1Top = nil;
+local teamT1Mid = nil;
+local teamT1Bot = nil;
+local enemyT1Top = nil;
+local enemyT1Mid = nil;
+local enemyT1Bot = nil;
+
+if myTeam == TEAM_DIRE then
+	teamT1Top = GetTower(myTeam,TOWER_TOP_1) == nil and Vector(-4693, 5998) or GetTower(myTeam,TOWER_TOP_1):GetLocation();
+	teamT1Mid = GetTower(myTeam,TOWER_MID_1) == nil and Vector(530, 657) or GetTower(myTeam,TOWER_MID_1):GetLocation();
+	teamT1Bot = GetTower(myTeam,TOWER_BOT_1) == nil and Vector(6262, -1687) or GetTower(myTeam,TOWER_BOT_1):GetLocation();
+	enemyT1Top = GetTower(opTeam,TOWER_TOP_1) == nil and Vector(-6262, 1815) or GetTower(opTeam,TOWER_TOP_1):GetLocation();
+	enemyT1Mid = GetTower(opTeam,TOWER_MID_1) == nil and Vector(-1530, -1412) or GetTower(opTeam,TOWER_MID_1):GetLocation();
+	enemyT1Bot = GetTower(opTeam,TOWER_BOT_1) == nil and Vector(4949, -6130) or GetTower(opTeam,TOWER_BOT_1):GetLocation();
+else
+	teamT1Top = GetTower(myTeam,TOWER_TOP_1) == nil and Vector(-6262, 1815) or GetTower(myTeam,TOWER_TOP_1):GetLocation();
+	teamT1Mid = GetTower(myTeam,TOWER_MID_1) == nil and Vector(-1530, -1412) or GetTower(myTeam,TOWER_MID_1):GetLocation();
+	teamT1Bot = GetTower(myTeam,TOWER_BOT_1) == nil and Vector(4949, -6130) or GetTower(myTeam,TOWER_BOT_1):GetLocation();
+	enemyT1Top = GetTower(opTeam,TOWER_TOP_1) == nil and Vector(-4693, 5998) or GetTower(opTeam,TOWER_TOP_1):GetLocation();
+	enemyT1Mid = GetTower(opTeam,TOWER_MID_1) == nil and Vector(530, 657) or GetTower(opTeam,TOWER_MID_1):GetLocation();
+	enemyT1Bot = GetTower(opTeam,TOWER_BOT_1) == nil and Vector(6262, -1687) or GetTower(opTeam,TOWER_BOT_1):GetLocation();
+end
 
 function GetLaningTPLocation(nLane)
 	if nLane == LANE_TOP then

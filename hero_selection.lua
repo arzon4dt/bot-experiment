@@ -4,7 +4,9 @@ local counters = require(GetScriptDirectory() .. "/counters");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
-	"--npc_dota_hero_wisp"
+	"npc_dota_hero_sniper",
+	"npc_dota_hero_mars",
+	"npc_dota_hero_viper"
 };
 
 local UnImplementedHeroes = {
@@ -21,9 +23,10 @@ end
 -- quickMode eliminates the 30s delay before picks begin
 -- it also eliminates the delay between bot picks
 local quickMode = false;
-local testMode =	false;
+local testMode = false;
 
 local allBotHeroes = {
+	'npc_dota_hero_mars',
 	'npc_dota_hero_pangolier',
 	'npc_dota_hero_dark_willow',
 	'npc_dota_hero_ember_spirit',
@@ -166,7 +169,8 @@ local Min = -5;
 local Max = 25;
 local CMTestMode = false;
 local UnavailableHeroes = {
-
+	"npc_dota_hero_wisp",
+	"npc_dota_hero_mars"
 }
 local RadiantUnavailableHeroes = {
 

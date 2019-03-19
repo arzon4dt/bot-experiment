@@ -228,19 +228,19 @@ ItemModule["item_orchid"] = { "item_oblivion_staff"; "item_oblivion_staff"; "ite
 
 ItemModule["item_pers"] = { "item_ring_of_health"; "item_void_stone" }
 
-ItemModule["item_phase_boots"] = { "item_boots"; "item_chainmail"; "item_gloves" }
+ItemModule["item_phase_boots"] = { "item_boots"; "item_chainmail"; "item_blades_of_attack" }
 
 ItemModule["item_pipe"] = { "item_hood_of_defiance"; "item_headdress"; "item_recipe_pipe" }
 
 ItemModule["item_poor_mans_shield"] = { "item_stout_shield"; "item_slippers"; "item_slippers" }
 
-ItemModule["item_power_treads_agi"] = { "item_boots"; "item_boots_of_elves"; "item_blades_of_attack" }
+ItemModule["item_power_treads_agi"] = { "item_boots"; "item_boots_of_elves"; "item_gloves" }
 
-ItemModule["item_power_treads_int"] = { "item_boots"; "item_robe"; "item_blades_of_attack" }
+ItemModule["item_power_treads_int"] = { "item_boots"; "item_robe"; "item_gloves" }
 
-ItemModule["item_power_treads_str"] = { "item_boots"; "item_belt_of_strength"; "item_blades_of_attack" }
+ItemModule["item_power_treads_str"] = { "item_boots"; "item_belt_of_strength"; "item_gloves" }
 
-ItemModule["item_power_treads"] = { "item_boots"; "item_belt_of_strength"; "item_blades_of_attack" }
+ItemModule["item_power_treads"] = { "item_boots"; "item_belt_of_strength"; "item_gloves" }
 
 ItemModule["item_radiance"] = { "item_relic"; "item_recipe_radiance" }
 
@@ -284,7 +284,7 @@ ItemModule["item_vanguard"] = { "item_stout_shield" ; "item_vitality_booster"; "
 
 ItemModule["item_veil_of_discord"] = { "item_crown"; "item_helm_of_iron_will"; "item_recipe_veil_of_discord" }
 
-ItemModule["item_vladmir"] = { "item_ring_of_basilius" ; "item_lifesteal"; "item_headdress" }
+ItemModule["item_vladmir"] = { "item_ring_of_basilius" ; "item_lifesteal"; "item_recipe_vladmir" }
 
 ItemModule["item_wraith_band"] = { "item_slippers"; "item_circlet"; "item_recipe_wraith_band" }
 
@@ -305,7 +305,7 @@ ItemModule["item_kaya_and_sange"] = { "item_sange"; "item_kaya" }
 --yasha and kaya
 ItemModule["item_yasha_and_kaya"] = { "item_yasha"; "item_kaya" }
 --item_holy_locket
-ItemModule["item_holy_locket"] = { "item_ring_of_tarrasque"; "item_cloak"; "item_void_stone"; "item_recipe_holy_locket" }
+ItemModule["item_holy_locket"] = { "item_ring_of_tarrasque"; "item_cloak"; "item_energy_booster"; "item_recipe_holy_locket" }
 
 
 --Normalize some item names 

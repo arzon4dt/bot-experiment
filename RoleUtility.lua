@@ -1156,6 +1156,18 @@ X["hero_roles"] = {
 		['pusher'] = 3
 	},
 
+	["npc_dota_hero_mars"] = {
+		['carry'] = 1,
+		['disabler'] = 2,
+		['durable'] = 2,
+		['escape'] = 0,
+		['initiator'] = 3,
+		['jungler'] = 0,
+		['nuker'] = 1,
+		['support'] = 0,
+		['pusher'] = 0
+	},
+	
 	["npc_dota_hero_necrolyte"] = {
 		['carry'] = 1,
 		['disabler'] = 1,
@@ -1568,6 +1580,7 @@ X['off'] = {
 	'npc_dota_hero_furion',
 	'npc_dota_hero_legion_commander',
 	'npc_dota_hero_magnataur',
+	'npc_dota_hero_mars',
 	'npc_dota_hero_night_stalker',
 	'npc_dota_hero_omniknight',
 	'npc_dota_hero_pangolier',
