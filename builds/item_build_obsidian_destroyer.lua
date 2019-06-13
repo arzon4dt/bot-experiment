@@ -13,6 +13,7 @@ X["items"] = {
 	"item_yasha_and_kaya",
 	"item_black_king_bar",
 	"item_shivas_guard",
+	"item_ultimate_scepter_2",
 	"item_sheepstick"
 };			
 

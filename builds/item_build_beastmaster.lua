@@ -12,9 +12,9 @@ X["items"] = {
 	"item_necronomicon_3",
 	"item_solar_crest",
 	"item_vladmir",
+	"item_ultimate_scepter_2",
 	"item_heavens_halberd",
-	"item_travel_boots",
-	"item_ultimate_scepter"
+	"item_travel_boots"
 };
 
 X["builds"] = {

@@ -13,6 +13,7 @@ X["items"] = {
 	"item_black_king_bar",
 	"item_heavens_halberd",
 	"item_hurricane_pike",
+	"item_ultimate_scepter_2",
 	"item_assault",
 	"item_satanic"
 };			

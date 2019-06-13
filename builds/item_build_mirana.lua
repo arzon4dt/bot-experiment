@@ -13,7 +13,9 @@ X["items"] = {
 	"item_black_king_bar",
 	"item_manta",
 	"item_mjollnir",
-	"item_monkey_king_bar"
+	"item_monkey_king_bar",
+	"item_ultimate_scepter_2",
+	"item_butterfly"
 };			
 
 X["builds"] = {

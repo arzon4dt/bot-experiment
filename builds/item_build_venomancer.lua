@@ -13,7 +13,10 @@ X["items"] = {
 	"item_yasha_and_kaya",
 	"item_ultimate_scepter",
 	"item_octarine_core",
-	"item_hurricane_pike"
+	"item_hurricane_pike",
+	"item_ultimate_scepter_2",
+	"item_shivas_guard"
+	
 };			
 
 X["builds"] = {

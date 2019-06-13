@@ -12,6 +12,7 @@ X["items"] = {
 	"item_desolator",
 	"item_silver_edge",
 	"item_blink",
+	"item_ultimate_scepter_2",
 	"item_monkey_king_bar"
 };			
 

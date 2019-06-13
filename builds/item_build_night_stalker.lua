@@ -14,7 +14,8 @@ X["items"] = {
 	"item_black_king_bar",
 	"item_solar_crest",
 	"item_ultimate_scepter",
-	"item_heart"
+	"item_heart",
+	"item_ultimate_scepter_2"
 };			
 
 X["builds"] = {

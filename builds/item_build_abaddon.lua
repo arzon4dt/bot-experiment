@@ -12,6 +12,7 @@ X["items"] = {
 	"item_holy_locket",
 	"item_kaya_and_sange",
 	"item_lotus_orb",
+	"item_ultimate_scepter_2",
 	"item_shivas_guard"
 };
 

@@ -12,7 +12,9 @@ X["items"] = {
 	"item_cyclone",
 	"item_blink",
 	"item_ultimate_scepter",
-	"item_dagon_5"
+	"item_dagon_5",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

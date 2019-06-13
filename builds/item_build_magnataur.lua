@@ -12,7 +12,9 @@ X["items"] = {
 	"item_blink",
 	"item_force_staff",
 	"item_shivas_guard",
-	"item_greater_crit"
+	"item_greater_crit",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

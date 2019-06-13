@@ -12,7 +12,9 @@ X["items"] = {
 	"item_veil_of_discord",
 	"item_ultimate_scepter",
 	"item_cyclone",
-	"item_octarine_core"
+	"item_octarine_core",
+	"item_ultimate_scepter_2",
+	"item_sheepstick"
 };			
 
 X["builds"] = {

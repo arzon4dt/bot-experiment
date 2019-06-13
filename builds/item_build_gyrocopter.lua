@@ -13,7 +13,9 @@ X["items"] = {
 	"item_ultimate_scepter",
 	"item_hurricane_pike",
 	"item_butterfly",
-	"item_satanic"
+	"item_satanic",
+	"item_ultimate_scepter_2",
+	"item_monkey_king_bar"
 };			
 
 X["builds"] = {

@@ -14,7 +14,9 @@ X["items"] = {
 	"item_pipe",
 	"item_ultimate_scepter",
 	"item_guardian_greaves",
-	"item_shivas_guard"
+	"item_shivas_guard",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

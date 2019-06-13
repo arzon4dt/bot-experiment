@@ -14,6 +14,15 @@ if not hMinionUnit:IsNull() and hMinionUnit ~= nil then
 		local Enemies = hMinionUnit:GetNearbyHeroes(nRadius, true, BOT_MODE_NONE);
 		local Allies = hMinionUnit:GetNearbyHeroes(2*nRadius, false, BOT_MODE_NONE);
 		local distance = GetUnitToUnitDistance(npcBot, hMinionUnit);
+		if npcBot:HasScepter() then
+			local abilityPP = npcBot:GetAbilityByName( "templar_assassin_trap_teleport" );
+			if abilityPP:IsFullyCastable() == true and abilityPP:IsHidden() == false then
+				if Enemies ~= nil and #Enemies >=1 and ( distance < 800 or Allies ~= nil ) then
+					npcBot:Action_UseAbilityOnLocation( abilityPP, hMinionUnit:GetLocation() );
+					return;
+				end
+			end	
+		end
 		if Enemies ~= nil and #Enemies >=1 and ( distance < 800 or Allies ~= nil ) and abilityTP:IsFullyCastable() then
 			npcBot:Action_UseAbility( abilityTP );
 			return;

@@ -12,6 +12,7 @@ X["items"] = {
 	"item_blink",
 	"item_kaya_and_sange",
 	"item_assault",
+	"item_ultimate_scepter_2",
 	"item_greater_crit"
 };			
 

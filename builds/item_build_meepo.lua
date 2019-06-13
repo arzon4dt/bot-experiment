@@ -15,7 +15,9 @@ X["items"] = {
 	"item_blink",
 	"item_sheepstick",
 	"item_skadi",
-	"item_heart"
+	"item_heart",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

@@ -26,19 +26,21 @@ local castCombo2Desire = 0;
 local castQDesire = 0;
 local castWDesire = 0;
 local castEDesire = 0;
+local castDDesire = 0;
 local castRDesire = 0;
 
 local lastCheck = -90;
 
 function AbilityUsageThink()
 	
-	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,2,5}) end
+	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,2,5,3}) end
 	
 	if mutils.CantUseAbility(bot) then return end
 	
 	castQDesire, targetQ = ConsiderQ();
 	castWDesire, targetW = ConsiderW();
 	castEDesire, targetE  = ConsiderE();
+	castDDesire, targetD  = ConsiderD();
 	castRDesire, targetR = ConsiderR();
 	
 	if castRDesire > 0 then
@@ -58,6 +60,11 @@ function AbilityUsageThink()
 	
 	if castEDesire > 0 then
 		bot:Action_UseAbilityOnEntity(abilities[3], targetE);		
+		return
+	end
+	
+	if castDDesire > 0 then
+		bot:Action_UseAbilityOnEntity(abilities[5], targetD);		
 		return
 	end
 	
@@ -212,6 +219,54 @@ function ConsiderE()
 	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
+function ConsiderD()
+	if not mutils.CanBeCast(abilities[5]) then
+		return BOT_ACTION_DESIRE_NONE, nil;
+	end
+	
+	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[5]:GetCastRange());
+	local nCastPoint = abilities[5]:GetCastPoint();
+	local manaCost  = abilities[5]:GetManaCost();
+	
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) 
+	then
+		local target = mutils.GetVulnerableWeakestUnit(true, true, nCastRange, bot);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, target;
+		end
+	end
+	
+	if mutils.IsInTeamFight(bot, 1300)
+	then
+		local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+		if  #enemies >= 1 then
+			local max_dmg = 0;
+			local tgt = nil;
+			for i=1,#enemies do
+				if mutils.IsValidTarget(enemies[i]) and mutils.CanCastOnNonMagicImmune(enemies[i]) then
+					if  enemies[i]:GetAttackDamage() > max_dmg then
+						max_dmg = enemies[i]:GetAttackDamage();
+						tgt = enemies[i];
+					end 
+				end
+			end
+			if tgt ~= nil then
+				return BOT_ACTION_DESIRE_HIGH, tgt;
+			end
+		end		
+	end
+	
+	if mutils.IsGoingOnSomeone(bot)
+	then
+		local target = bot:GetTarget();
+		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target) and mutils.IsInRange(target, bot, nCastRange)
+		then
+			return BOT_ACTION_DESIRE_HIGH, target;
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
+end
 
 function ConsiderR()
 	if not mutils.CanBeCast(abilities[4]) then

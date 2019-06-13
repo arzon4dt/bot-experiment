@@ -65,7 +65,7 @@ function AbilityUsageThink()
 	-- Consider using each ability
 	-- castFBDesire, castFBTarget = ConsiderFireblast();
 	castCSDesire, castCSLocation = ConsiderChrono();
-	--castCSSDesire, castCSSLocation = ConsiderChronoS();
+	castCSSDesire, castCSSLocation = ConsiderChronoS();
 	castCS2Desire, castCS2Location = ConsiderChrono2();
 	castBLDesire, castBLTarget = ConsiderBloodlust();
 	castWoWDesire, castWoWLoc = ConsiderWillOWisp();
@@ -313,6 +313,32 @@ function ConsiderBloodlust()
 			end
 		end	
 	end
+	
+	if  npcBot:GetMana() / npcBot:GetMaxMana() > 0.5 then
+		-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+		if mutil.IsRetreating(npcBot)
+		then
+			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
+				then
+					return BOT_ACTION_DESIRE_HIGH, npcEnemy;
+				end
+			end
+		end
+
+		-- If we're going after someone
+		if mutil.IsGoingOnSomeone(npcBot)
+		then
+			local npcTarget = npcBot:GetTarget();
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
+			then
+				return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			end
+		end
+	end
+	
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end

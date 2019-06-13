@@ -12,7 +12,9 @@ X["items"] = {
 	"item_aeon_disk",
 	"item_blink",
 	"item_ultimate_scepter",
-	"item_shivas_guard"
+	"item_shivas_guard",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

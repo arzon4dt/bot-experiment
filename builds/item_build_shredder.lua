@@ -13,6 +13,7 @@ X["items"] = {
 	"item_pipe",
 	"item_lotus_orb",
 	"item_shivas_guard",
+	"item_ultimate_scepter_2",
 	"item_octarine_core"
 };			
 

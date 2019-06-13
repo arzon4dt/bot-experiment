@@ -12,6 +12,7 @@ local pLane;
 local targetTree = nil;
 local targetLoc = nil;
 local treeThrowTarget = nil;
+local treeThrowLoc = nil;
 
 if bot:GetUnitName() == "npc_dota_hero_earthshaker" 
 	--or bot:GetUnitName() == "npc_dota_hero_abaddon" 
@@ -277,27 +278,46 @@ function GetDesire()
 			return BOT_MODE_DESIRE_MODERATE+0.05;	
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
-		if bot:HasModifier("modifier_tiny_craggy_exterior") == false then
-			if cAbility == nil or cAbility:GetName() ~= "tiny_craggy_exterior" then cAbility = bot:GetAbilityByName('tiny_craggy_exterior') end;
-			if cAbility:IsFullyCastable() and bot:GetHealth() / bot:GetMaxHealth() > 0.15 and bot:DistanceFromFountain() > 1000 then
-				local trees = bot:GetNearbyTrees(500);
-				if #trees > 0 and ( IsLocationVisible(GetTreeLocation(trees[1])) or IsLocationPassable(GetTreeLocation(trees[1])) ) then
-					targetTree = trees[1];
-					treeThrowTarget = nil;
+		if bot:IsChanneling() == false then
+			if bot:HasModifier("modifier_tiny_craggy_exterior") == false then
+				if cAbility == nil or cAbility:GetName() ~= "tiny_craggy_exterior" then cAbility = bot:GetAbilityByName('tiny_craggy_exterior') end;
+				if cAbility:IsFullyCastable() and bot:GetHealth() / bot:GetMaxHealth() > 0.15 and bot:DistanceFromFountain() > 1000 then
+					local trees = bot:GetNearbyTrees(500);
+					if #trees > 0 and ( IsLocationVisible(GetTreeLocation(trees[1])) or IsLocationPassable(GetTreeLocation(trees[1])) ) then
+						targetTree = trees[1];
+						treeThrowTarget = nil;
+						return BOT_MODE_DESIRE_ABSOLUTE;
+					end
+				end	
+			elseif bot:HasModifier("modifier_tiny_craggy_exterior") == true 
+				   and bot:GetModifierStackCount( bot:GetModifierByName("modifier_tiny_craggy_exterior") ) == 1 
+			then
+				local target = bot:GetTarget(); 
+				if mutil.IsValidTarget(target) and mutil.CanCastOnNonMagicImmune(target) 
+				   and mutil.IsInRange(target, bot, 500) == false and mutil.IsInRange(target, bot, 1000) == true
+				then   
+					treeThrowTarget = target;
+					cAbility = bot:GetAbilityByName('tiny_toss_tree');
 					return BOT_MODE_DESIRE_ABSOLUTE;
+				end		
+			elseif bot:HasScepter() == true then
+				cAbility = bot:GetAbilityByName('tiny_tree_channel');
+				local tSearchRad = cAbility:GetSpecialValueInt('tree_grab_radius');
+				local nCastRange = cAbility:GetCastRange();
+				local trees = bot:GetNearbyTrees(tSearchRad);
+				if #trees >= 3 then
+					if cAbility:IsFullyCastable() == true and cAbility:IsHidden() == false then
+						local npcTarget = bot:GetTarget()
+						if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange)
+						then
+							treeThrowLoc = npcTarget:GetLocation();
+							return BOT_MODE_DESIRE_ABSOLUTE;
+						end
+					end
 				end
 			end	
-		elseif bot:HasModifier("modifier_tiny_craggy_exterior") == true 
-		       and bot:GetModifierStackCount( bot:GetModifierByName("modifier_tiny_craggy_exterior") ) == 1 
-		then
-			local target = bot:GetTarget(); 
-			if mutil.IsValidTarget(target) and mutil.CanCastOnNonMagicImmune(target) 
-			   and mutil.IsInRange(target, bot, 500) == false and mutil.IsInRange(target, bot, 1000) == true
-			then   
-				treeThrowTarget = target;
-				cAbility = bot:GetAbilityByName('tiny_toss_tree');
-				return BOT_MODE_DESIRE_ABSOLUTE;
-			end		
+		elseif bot:IsChanneling() == true then
+			return BOT_MODE_DESIRE_ABSOLUTE;
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_viper" then
 		if cAbility == nil then cAbility = bot:GetAbilityByName('viper_nethertoxin') end;
@@ -542,10 +562,18 @@ function Think()
 			end
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
-		if treeThrowTarget ~= nil then
+		if bot:IsChanneling() == true then
+			bot:Action_ClearActions(true);
+			return
+		elseif treeThrowTarget ~= nil then
 			bot:Action_UseAbilityOnEntity(cAbility, treeThrowTarget);
 			return;
-		else
+		elseif treeThrowLoc ~= nil then
+			bot:Action_ClearActions(true);
+			bot:Action_UseAbilityOnLocation(cAbility, treeThrowLoc);
+			treeThrowLoc = nil;
+			return;
+		elseif targetTree ~= nil then
 			bot:Action_UseAbilityOnTree(cAbility, targetTree);
 			return;
 		end

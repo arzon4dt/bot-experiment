@@ -34,6 +34,36 @@ local vNonStuck = Vector(-2610.000000, 538.000000, 0.000000);
 local chat = false;
 local height = -1;
 function GetDesire()
+
+
+	-- "morphling_replicate"
+	-- "morphling_morph_replicate"
+
+	-- local numPlayer =  GetTeamPlayers(GetTeam());
+	-- for i = 1, #numPlayer
+	-- do
+	-- 	local player = GetTeamMember(i);
+	-- 	if player ~= nil and not IsPlayerBot(player:GetPlayerID()) then
+	-- 		local ab = player:GetAbilityInSlot(0);
+	-- 		print(ab:GetName());
+	-- 		local m1 = player:GetAbilityByName('morphling_replicate');
+	-- 		local m2 = player:GetAbilityByName('morphling_morph_replicate');
+	-- 		if m1:IsHidden() == false then
+	-- 			print('morphling_replicate');
+	-- 		end	
+
+	-- 		if m2:IsHidden() == false then
+	-- 			print('morphling_morph_replicate');
+	-- 		end	
+	-- 			-- local mods = player:GetModifierList( );
+	-- 			-- for _,r in pairs(mods) do
+	-- 			-- 	if r ~= nil then
+	-- 			-- 		print(r);
+	-- 			-- 	end
+	-- 			-- end
+	-- 	end
+	-- end
+
 	-- if bot:GetPlayerID() == 2 then
 		-- print(bot:GetUnitName())
 		-- local at = GetAmountAlongLane(LANE_TOP, bot:GetLocation())

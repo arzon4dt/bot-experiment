@@ -13,7 +13,9 @@ X["items"] = {
 	"item_sange_and_yasha",
 	"item_invis_sword",
 	"item_silver_edge",
-	"item_ultimate_scepter"
+	"item_ultimate_scepter",
+	"item_ultimate_scepter_2",
+	"item_monkey_king_bar"
 };			
 
 X["builds"] = {

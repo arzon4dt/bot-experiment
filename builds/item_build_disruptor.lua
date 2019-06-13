@@ -14,7 +14,9 @@ X["items"] = {
 	"item_kaya",
 	"item_hurricane_pike",
 	"item_kaya_and_sange",
-	"item_sheepstick"
+	"item_sheepstick",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };		
 
 X["builds"] = {

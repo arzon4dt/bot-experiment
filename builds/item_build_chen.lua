@@ -14,7 +14,9 @@ X["items"] = {
 	"item_guardian_greaves",
 	"item_glimmer_cape",
 	"item_sheepstick",
-	"item_hurricane_pike"
+	"item_hurricane_pike",
+	"item_ultimate_scepter_2",
+	"item_shivas_guard"
 };	
 
 X["builds"] = {

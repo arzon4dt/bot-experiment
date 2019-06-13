@@ -13,7 +13,9 @@ X["items"] = {
 	"item_glimmer_cape",
 	"item_black_king_bar",
 	"item_ultimate_scepter",
-	"item_hurricane_pike"
+	"item_hurricane_pike",
+	"item_ultimate_scepter_2",
+	"item_shivas_guard"
 };			
 
 X["builds"] = {

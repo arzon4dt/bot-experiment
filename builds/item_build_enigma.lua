@@ -12,7 +12,9 @@ X["items"] = {
 	"item_black_king_bar",
 	"item_guardian_greaves",
 	"item_ultimate_scepter",
-	"item_sheepstick"
+	"item_sheepstick",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

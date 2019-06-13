@@ -14,6 +14,7 @@ X["items"] = {
 	"item_force_staff",
 	"item_glimmer_cape",
 	"item_holy_locket",
+	"item_ultimate_scepter_2",
 	"item_necronomicon_3",
 	"item_hurricane_pike"
 };

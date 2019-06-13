@@ -179,10 +179,13 @@ function ConsiderDisruption()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, (nCastRange+200)/2) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and
 		    not mutil.IsDisabled(true, npcTarget) 
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			local allies = npcTarget:GetNearbyHeroes(450, true, BOT_MODE_NONE);
+			if #allies <= 1 then
+				return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			end	
 		end
 	end
 	

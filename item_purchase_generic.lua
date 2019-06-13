@@ -380,11 +380,11 @@ function ItemPurchaseThink()
 							slotToSell = itemSlot;
 							break;
 						end
-					elseif item == "item_tpscroll" then
-						if bot:FindItemSlot("item_travel_boots") > 0  then
-							slotToSell = itemSlot;
-							break;
-						end
+					-- elseif item == "item_tpscroll" then
+						-- if bot:FindItemSlot("item_travel_boots") > 0  then
+							-- slotToSell = itemSlot;
+							-- break;
+						-- end
 					elseif item == "item_quelling_blade" then
 						if buildBFury == false then
 							slotToSell = itemSlot;
@@ -417,7 +417,10 @@ function ItemPurchaseThink()
 	end
 	
 	--Insert tp scroll to list item to buy and then change the buyTP flag so the bots don't reapeatedly add the tp scroll to list item to buy 
-	if buyTP == false and items.HasItem(bot, 'item_travel_boots') == false and items.HasItem(bot, 'item_travel_boots_2') == false and DotaTime() > 0 and bot:GetCourierValue() == 0 and bot:FindItemSlot('item_tpscroll') == -1 then
+	if buyTP == false 
+		-- and items.HasItem(bot, 'item_travel_boots') == false and items.HasItem(bot, 'item_travel_boots_2') == false 
+		and DotaTime() > 0 and bot:GetCourierValue() == 0 and bot:FindItemSlot('item_tpscroll') == -1 
+	then
 		bot.currentComponentToBuy = nil;	
 		bot.currListItemToBuy[#bot.currListItemToBuy+1] = 'item_tpscroll';
 		buyTP = true;
@@ -458,7 +461,7 @@ function ItemPurchaseThink()
 	
 	--Check if the bot already has the item formed from its components in their inventory (not stash)
 	if  #bot.currListItemToBuy == 0 and DotaTime() > lastInvCheck + 3.0 then
-	    if items.IsItemInHero(bot.currentItemToBuy) then
+	    if items.IsItemInHero(bot.currentItemToBuy) or ( bot.currentItemToBuy == 'item_ultimate_scepter_2' and  bot:HasScepter() ) then
 			bot.currentItemToBuy = nil; 
 			bot.itemToBuy[#bot.itemToBuy] = nil;
 		else

@@ -13,7 +13,9 @@ X["items"] = {
 	"item_sphere",
 	"item_orchid",
 	"item_bloodthorn",
-	"item_shivas_guard"
+	"item_shivas_guard",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

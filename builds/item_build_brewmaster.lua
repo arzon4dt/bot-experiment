@@ -12,7 +12,9 @@ X["items"] = {
 	"item_blink",
 	"item_ultimate_scepter",
 	"item_lotus_orb",
-	"item_shivas_guard"
+	"item_shivas_guard",
+	"item_ultimate_scepter_2",
+	"item_radiance"
 }; 
 
 X["builds"] = {

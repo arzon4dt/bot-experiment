@@ -16,10 +16,12 @@ function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
 
+local castNGDesire = 0;
 local castLSDesire = 0;
 local castLADesire = 0;
 local castOGDesire = 0;
 
+local abilityNG = nil;
 local abilityLS = nil;
 local abilityLA = nil;
 local abilityOG = nil;
@@ -33,11 +35,13 @@ function AbilityUsageThink()
 	-- Check if we're already using an ability
 	if mutil.CanNotUseAbility(npcBot) then return end
 
+	if abilityNG == nil then abilityNG = npcBot:GetAbilityByName( "treant_natures_guise" ) end
 	if abilityLS == nil then abilityLS = npcBot:GetAbilityByName( "treant_leech_seed" ) end
 	if abilityLA == nil then abilityLA = npcBot:GetAbilityByName( "treant_living_armor" ) end
 	if abilityOG == nil then abilityOG = npcBot:GetAbilityByName( "treant_overgrowth" ) end
 
 	-- Consider using each ability
+	castNGDesire, castNGTarget = ConsiderNatureGuise();
 	castLSDesire, castLSTarget = ConsiderLeechSeed();
 	castLADesire, castLATarget = ConsiderLivingArmor();
 	castOGDesire, castOGTarget = ConsiderOvergrowth();
@@ -46,6 +50,12 @@ function AbilityUsageThink()
 	if ( castOGDesire > castLSDesire and castOGDesire > castLADesire ) 
 	then
 		npcBot:Action_UseAbility( abilityOG );
+		return;
+	end
+	
+	if ( castNGDesire > 0 ) 
+	then
+		npcBot:Action_UseAbilityOnEntity( abilityNG, castNGTarget );
 		return;
 	end
 
@@ -60,6 +70,46 @@ function AbilityUsageThink()
 		npcBot:Action_UseAbilityOnEntity( abilityLA, castLATarget );
 		return;
 	end
+
+end
+
+function ConsiderNatureGuise()
+
+	-- Make sure it's castable
+	if ( not abilityNG:IsFullyCastable() or npcBot:HasModifier('modifier_treant_natures_guise_invis') == true ) then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+
+	-- Get some of its values
+	local nRadius = abilityNG:GetSpecialValueInt('radius');
+
+	local trees = npcBot:GetNearbyTrees(nRadius);
+
+	if #trees >= 1 then
+		if mutil.IsRetreating(npcBot) 
+		then
+			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
+				then
+					return BOT_ACTION_DESIRE_MODERATE, npcBot;
+				end
+			end
+		end
+		
+		-- If we're going after someone
+		if mutil.IsGoingOnSomeone(npcBot) 
+		then
+			local npcTarget = npcBot:GetTarget();
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 800)
+			then
+				return BOT_ACTION_DESIRE_MODERATE, npcBot;
+			end
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
 
 end
 

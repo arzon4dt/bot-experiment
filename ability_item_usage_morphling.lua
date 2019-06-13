@@ -42,6 +42,7 @@ local npcBot = nil;
 local skill1 = nil;
 local skill2 = nil;
 local skill3 = nil;
+local asMorphling = true;
 
 function AbilityUsageThink()
 
@@ -49,7 +50,15 @@ function AbilityUsageThink()
 	
 	if abilityRC == nil then abilityRC = npcBot:GetAbilityByName( "morphling_replicate" ) end
 	
-	if abilityRC:IsHidden() then
+	local ab1 = npcBot:GetAbilityInSlot(0);
+	
+	if ab1 ~= nil and ab1:GetName() == 'morphling_waveform' then
+		asMorphling = true;
+	else
+		asMorphling = false;
+	end	
+
+	if asMorphling == false then
 		if justMorph == false then
 			skill1 = npcBot:GetAbilityInSlot(0);
 			skill2 = npcBot:GetAbilityInSlot(1);
@@ -322,8 +331,8 @@ function ConsiderTimeWalk()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
-				local location = npcBot:GetXUnitsTowardsLocation( GetAncient(GetTeam()):GetLocation(), nCastRange );
-				return BOT_ACTION_DESIRE_MODERATE, location;
+				local loc = mutil.GetEscapeLoc();
+		    	return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 			end
 		end
 	end
@@ -354,7 +363,7 @@ function ConsiderMorphAgility()
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT  ) 
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1400, true, BOT_MODE_NONE );
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 then
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) or npcBot:WasRecentlyDamagedByAnyHero(2.5) == true then
 			return BOT_ACTION_DESIRE_NONE, 0;
 		end
 	end	

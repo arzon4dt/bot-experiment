@@ -12,6 +12,7 @@ X["items"] = {
 	"item_manta",
 	"item_heart",
 	"item_butterfly",
+	"item_ultimate_scepter_2",
 	"item_radiance"
 };			
 

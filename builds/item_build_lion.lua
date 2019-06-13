@@ -13,7 +13,9 @@ X["items"] = {
 	"item_blink",
 	"item_ultimate_scepter",
 	"item_hurricane_pike",
-	"item_sheepstick"
+	"item_sheepstick",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };			
 
 X["builds"] = {

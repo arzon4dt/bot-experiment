@@ -12,7 +12,9 @@ X["items"] = {
 	"item_force_staff",
 	"item_glimmer_cape",
 	"item_cyclone",
-	"item_ultimate_scepter"
+	"item_ultimate_scepter",
+	"item_ultimate_scepter_2",
+	"item_shivas_guard",
 };			
 
 X["builds"] = {

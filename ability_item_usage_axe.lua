@@ -61,8 +61,13 @@ function AbilityUsageThink()
 	
 	if ( castWDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityW, castWTarget );
-		return;
+		if npcBot:HasScepter() == true then
+			npcBot:Action_UseAbilityOnLocation( abilityW, castWTarget:GetLocation() );
+			return;
+		else
+			npcBot:Action_UseAbilityOnEntity( abilityW, castWTarget );
+			return;
+		end
 	end
 	
 end

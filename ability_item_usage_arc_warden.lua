@@ -19,11 +19,13 @@ end
 local castWADesire = 0;
 local castMFDesire = 0;
 local castWBDesire = 0;
+local castASSDesire = 0;
 local castPRDesire = 0;
 
 local abilityWA = nil;
 local abilityMF = nil;
 local abilityWB = nil;
+local abilityASS = nil;
 local abilityPR = nil;
 
 local npcBot = nil;
@@ -38,12 +40,14 @@ function AbilityUsageThink()
 	if abilityWA == nil then abilityWA = npcBot:GetAbilityByName( "arc_warden_spark_wraith" ) end
 	if abilityMF == nil then abilityMF = npcBot:GetAbilityByName( "arc_warden_magnetic_field" ) end
 	if abilityWB == nil then abilityWB = npcBot:GetAbilityByName( "arc_warden_tempest_double" ) end
+	if abilityASS == nil then abilityASS = npcBot:GetAbilityByName( "arc_warden_scepter" ) end
 	if abilityPR == nil then abilityPR = npcBot:GetAbilityByName( "arc_warden_flux" ) end
 
 	-- Consider using each ability
 	castPRDesire, castPRTarget = ConsiderFlux();
 	castWADesire, castWALocation = ConsiderSparkWraith();
 	castMFDesire, castMFLocation = ConsiderMagneticField();
+	castASSDesire, castASSLoc = ConsiderAghScepterSkill();
 	castWBDesire = ConsiderTempestDouble();
 
 	if ( castPRDesire > castWADesire ) 
@@ -62,6 +66,12 @@ function AbilityUsageThink()
 	if ( castMFDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnLocation( abilityMF, castMFLocation );
+		return;
+	end
+	
+	if ( castASSDesire > 0 ) 
+	then
+		npcBot:Action_UseAbility( abilityASS );
 		return;
 	end
 	
@@ -369,3 +379,13 @@ function ConsiderTempestDouble()
 	return BOT_ACTION_DESIRE_NONE;
 end
 
+function ConsiderAghScepterSkill()
+
+	if ( abilityASS:IsFullyCastable() == false or abilityASS:IsHidden() == true  ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+
+	return BOT_ACTION_DESIRE_HIGH;
+	
+end

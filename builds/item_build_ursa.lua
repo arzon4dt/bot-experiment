@@ -13,7 +13,9 @@ X["items"] = {
 	"item_blink",
 	"item_black_king_bar",
 	"item_abyssal_blade",
-	"item_ultimate_scepter"
+	"item_ultimate_scepter",
+	"item_ultimate_scepter_2",
+	"item_monkey_king_bar"
 };			
 
 X["builds"] = {

@@ -14,7 +14,9 @@ X["items"] = {
 	"item_sphere",
 	"item_bloodthorn",
 	"item_hurricane_pike",
-	"item_monkey_king_bar"
+	"item_monkey_king_bar",
+	"item_ultimate_scepter_2",
+	"item_mjollnir"
 };			
 
 X["builds"] = {

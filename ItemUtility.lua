@@ -182,7 +182,7 @@ ItemModule["item_heart"] = { "item_ring_of_tarrasque"; "item_vitality_booster"; 
 
 ItemModule["item_heavens_halberd"] = { "item_sange"; "item_talisman_of_evasion"}
 
-ItemModule["item_helm_of_the_dominator"] = { "item_headdress"; "item_gloves"; "item_ring_of_health" }
+ItemModule["item_helm_of_the_dominator"] = { "item_headdress"; "item_gloves"; "item_ring_of_health", "item_recipe_helm_of_the_dominator" }
 
 ItemModule["item_hood_of_defiance"] = { "item_ring_of_health"; "item_cloak"; "item_ring_of_regen" }
 
@@ -306,6 +306,8 @@ ItemModule["item_kaya_and_sange"] = { "item_sange"; "item_kaya" }
 ItemModule["item_yasha_and_kaya"] = { "item_yasha"; "item_kaya" }
 --item_holy_locket
 ItemModule["item_holy_locket"] = { "item_ring_of_tarrasque"; "item_cloak"; "item_energy_booster"; "item_recipe_holy_locket" }
+--Aghanims Scpeter Upgrade
+ItemModule["item_ultimate_scepter_2"] = { "item_ultimate_scepter"; "item_recipe_ultimate_scepter_2" }
 
 
 --Normalize some item names 

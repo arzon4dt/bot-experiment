@@ -12,7 +12,9 @@ X["items"] = {
 	"item_ultimate_scepter",
 	"item_shivas_guard",
 	"item_refresher",
-	"item_sheepstick"
+	"item_sheepstick",
+	"item_ultimate_scepter_2",
+	"item_octarine_core",
 };			
 
 X["builds"] = {

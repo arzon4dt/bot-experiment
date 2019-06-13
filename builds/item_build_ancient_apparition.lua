@@ -13,7 +13,9 @@ X["items"] = {
 	"item_force_staff",
 	"item_rod_of_atos",
 	"item_sheepstick",
-	"item_hurricane_pike"
+	"item_hurricane_pike",
+	"item_ultimate_scepter_2",
+	"item_octarine_core"
 };	
 
 X["builds"] = {

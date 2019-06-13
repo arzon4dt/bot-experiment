@@ -12,7 +12,8 @@ X["items"] = {
 	"item_manta",
 	"item_skadi",
 	"item_ultimate_scepter",
-	"item_heart"
+	"item_heart",
+	"item_ultimate_scepter_2"
 };			
 
 X["builds"] = {

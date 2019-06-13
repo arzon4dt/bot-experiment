@@ -51,7 +51,7 @@ function AbilityUsageThink()
 	if abilityHoG == nil then abilityHoG = npcBot:GetAbilityByName( "chen_hand_of_god" ) end
 
 	-- Consider using each ability
-	castFBDesire, castFBTarget = ConsiderFireblast();
+	-- castFBDesire, castFBTarget = ConsiderFireblast();
 	castUFBDesire, castUFBTarget = ConsiderUnrefinedFireblast();
 	--castACDesire, castACTarget = ConsiderAphoticShield();
 	castHPDesire, castHPTarget = ConsiderHolyPersuasion();

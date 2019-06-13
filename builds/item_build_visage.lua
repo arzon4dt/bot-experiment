@@ -14,7 +14,9 @@ X["items"] = {
 	"item_solar_crest",
 	"item_pipe",
 	"item_ultimate_scepter",
-	"item_shivas_guard"
+	"item_shivas_guard",
+	"item_ultimate_scepter_2",
+	"item_monkey_king_bar"
 };			
 
 X["builds"] = {

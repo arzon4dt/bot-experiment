@@ -14,7 +14,9 @@ X["items"] = {
 	"item_solar_crest",
 	"item_ultimate_scepter",
 	"item_cyclone",
-	"item_hurricane_pike"
+	"item_hurricane_pike",
+	"item_ultimate_scepter_2",
+	"item_monkey_king_bar"
 };			
 
 X["builds"] = {
