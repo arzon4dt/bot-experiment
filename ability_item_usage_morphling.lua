@@ -362,8 +362,8 @@ function ConsiderMorphAgility()
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT  ) 
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1400, true, BOT_MODE_NONE );
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) or npcBot:WasRecentlyDamagedByAnyHero(2.5) == true then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) or npcBot:WasRecentlyDamagedByAnyHero(3.0) == true then
 			return BOT_ACTION_DESIRE_NONE, 0;
 		end
 	end	

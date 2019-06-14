@@ -189,7 +189,7 @@ local function ConsiderR()
 	local nCastRange = 0;
 	local nCastPoint = abilities[3]:GetCastPoint();
 	local manaCost   = abilities[3]:GetManaCost();
-	local nRadius    = abilities[2]:GetSpecialValueInt( "aftershock_range" ) + 150;
+	local nRadius    = abilities[2]:GetSpecialValueInt( "aftershock_range" ) + 50;
 	
 	if nutils.IsInTeamFight(bot) and GetUnitCountWithinRadius(bot.data.enemies, nRadius) >= 2
 	then

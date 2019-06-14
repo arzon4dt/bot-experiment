@@ -3,7 +3,11 @@ local bnUtil = require(GetScriptDirectory() .. "/BotNameUtility");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
-	"npc_dota_hero_morphling"
+	"npc_dota_hero_morphling",
+	"npc_dota_hero_doom_bringer",
+	"npc_dota_hero_mars",
+	"npc_dota_hero_earthshaker",
+	"npc_dota_hero_chen",
 };
 
 local UnImplementedHeroes = {

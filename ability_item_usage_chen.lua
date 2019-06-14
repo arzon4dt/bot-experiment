@@ -51,7 +51,7 @@ function AbilityUsageThink()
 	if abilityHoG == nil then abilityHoG = npcBot:GetAbilityByName( "chen_hand_of_god" ) end
 
 	-- Consider using each ability
-	-- castFBDesire, castFBTarget = ConsiderFireblast();
+	castFBDesire, castFBTarget = ConsiderFireblast();
 	castUFBDesire, castUFBTarget = ConsiderUnrefinedFireblast();
 	--castACDesire, castACTarget = ConsiderAphoticShield();
 	castHPDesire, castHPTarget = ConsiderHolyPersuasion();
@@ -185,35 +185,79 @@ function ConsiderFireblast()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
-
-	-- Get some of its values
-	local nCastRange = abilityFB:GetCastRange();
-	-- local nDamage = abilityFB:GetSpecialValueInt("damage_max");
-	
-	-- If we're in a teamfight, use it on the scariest enemy
-	
-	local lowHpAlly = nil;
-	local nLowestHealth = 10000;
-
-	local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE  );
-	for _,npcAlly in pairs( tableNearbyAllies )
-	do
-		if ( mutil.CanCastOnNonMagicImmune(npcAlly) )
-		then
-			local nAllyHP = npcAlly:GetHealth();
-			if  nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 and npcAlly:WasRecentlyDamagedByAnyHero(3.0)  
-			then
-				nLowestHealth = nAllyHP;
-				lowHpAlly = npcAlly;
+	local numPlayer =  GetTeamPlayers(GetTeam());
+	if  mutil.IsDefending(npcBot)
+	then
+		local nearbyTower = npcBot:GetNearbyTowers(1000, false) 
+		if nearbyTower[1] ~= nil then
+			local maxDist = 0;
+			local target = nil;
+			for i = 1, #numPlayer
+			do
+				local player = GetTeamMember(i);
+				if player ~= nil and player:IsAlive() and player:GetActiveMode() ~= BOT_MODE_RETREAT then
+					local dist = GetUnitToUnitDistance(nearbyTower[1], player);
+					local health = player:GetHealth()/player:GetMaxHealth();
+					if IsPlayerBot(player:GetPlayerID()) and dist > maxDist and dist > 4000 and health >= 0.25 then
+						maxDist = dist;
+						target = GetTeamMember(i);
+					end
+				end
+			end
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_MODERATE, target;
 			end
 		end
 	end
-
-	if ( lowHpAlly ~= nil )
+	
+	if mutil.IsPushing(npcBot)
 	then
-		return BOT_ACTION_DESIRE_MODERATE, lowHpAlly;
+		local nearbyTower = npcBot:GetNearbyTowers(1000, true) 
+		if nearbyTower[1] ~= nil then
+			local maxDist = 0;
+			local target = nil;
+			for i = 1, #numPlayer
+			do
+				local player = GetTeamMember(i);
+				if player ~= nil and player:IsAlive() and player:GetActiveMode() ~= BOT_MODE_RETREAT then
+					local dist = GetUnitToUnitDistance(nearbyTower[1], player);
+					local health = player:GetHealth()/player:GetMaxHealth();
+					if IsPlayerBot(player:GetPlayerID()) and dist > maxDist and dist > 4000 and health >= 0.25  then
+						maxDist = dist;
+						target = GetTeamMember(i);
+					end
+				end
+			end
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_MODERATE, target;
+			end
+		end
 	end
 	
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if ( npcTarget ~= nil  and npcTarget:IsHero() and GetUnitToUnitDistance( npcTarget, npcBot ) < 1600  ) 
+		then	
+			local maxDist = 0;
+			local target = nil;
+			for i = 1, #numPlayer
+			do
+				local player = GetTeamMember(i);
+				if player ~= nil and player:IsAlive() and player:GetActiveMode() ~= BOT_MODE_RETREAT then
+					local dist = GetUnitToUnitDistance(player, npcBot);
+					local health = player:GetHealth()/player:GetMaxHealth();
+					if IsPlayerBot(player:GetPlayerID()) and dist > maxDist and dist > 4000 and health >= 0.25 then
+						maxDist = dist;
+						target = GetTeamMember(i);
+					end
+				end
+			end
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_MODERATE, target;
+			end
+		end
+	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 
