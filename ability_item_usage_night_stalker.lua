@@ -49,7 +49,7 @@ function AbilityUsageThink()
 
 	if ( castCH1Desire > 0 ) 
 	then
-		if npcBot:HasScepter() then
+		if npcBot:HasScepter() == true then
 			npcBot:Action_UseAbility( abilityCH1 );
 			return;
 		else
@@ -242,7 +242,7 @@ function ConsiderCorrosiveHaze1()
 	local nCastRange = abilityCH1:GetCastRange();
 	local hasScepter = npcBot:HasScepter();
 
-	if hasScepter == true then
+	if hasScepter == false then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
@@ -311,7 +311,7 @@ function ConsiderCorrosiveHaze1()
 			end
 		end
 	else
-		local nCastRange = abilityCH1:GetSpecialValueInt('radius_scepter');
+		local nCastRange = abilityCH1:GetSpecialValueInt('radius_scepter') - 200;
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do

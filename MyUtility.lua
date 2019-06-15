@@ -748,4 +748,8 @@ function U.CanBeDominatedCreeps(name)
 		 or name == "npc_dota_neutral_satyr_trickster"	
 end
 
+function U.CheckFlag(bitfield, flag)
+    return ((bitfield/flag) % 2) >= 1;
+end
+
 return U;

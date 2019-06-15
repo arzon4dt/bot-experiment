@@ -83,10 +83,10 @@ function GetDesire()
 		end
 	end]]--
 
-	--[[local pg = wardUtils.GetHumanPing();
-	if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
-		print(tostring(pg.location)..":Vis:"..tostring(IsLocationVisible(pg.location))..":Pas:"..tostring(IsLocationPassable(pg.location)));
-	end]]--
+	-- local pg = wardUtils.GetHumanPing();
+	-- if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
+		-- print(tostring(pg.location)..":Vis:"..tostring(IsLocationVisible(pg.location))..":Pas:"..tostring(IsLocationPassable(pg.location)).."HLvl:"..tostring(GetHeightLevel(pg.location)));
+	-- end
 
 	--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "ward") then
 		bot:ActionImmediate_Chat("Catch this in mode_ward_generic", false);

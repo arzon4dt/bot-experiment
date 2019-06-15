@@ -55,7 +55,7 @@ function AbilityUsageThink()
 	
 	if ( castNGDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityNG, castNGTarget );
+		npcBot:Action_UseAbility( abilityNG );
 		return;
 	end
 
@@ -67,7 +67,12 @@ function AbilityUsageThink()
 	
 	if ( castLADesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityLA, castLATarget );
+		local typeAOE = mutil.CheckFlag(abilityLA:GetBehavior(), ABILITY_BEHAVIOR_POINT);
+		if typeAOE == true then
+			npcBot:Action_UseAbilityOnLocation( abilityLA, castLATarget:GetLocation() );
+		else
+			npcBot:Action_UseAbilityOnEntity( abilityLA, castLATarget );
+		end
 		return;
 	end
 
@@ -91,7 +96,7 @@ function ConsiderNatureGuise()
 			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 			do
-				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
+				if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) 
 				then
 					return BOT_ACTION_DESIRE_MODERATE, npcBot;
 				end

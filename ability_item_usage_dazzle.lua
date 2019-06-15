@@ -56,7 +56,12 @@ function AbilityUsageThink()
 	
 	if ( castWDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityW, castWTarget );
+		local typeAOE = mutil.CheckFlag(abilityW:GetBehavior(), ABILITY_BEHAVIOR_POINT);
+		if typeAOE == true then
+			npcBot:Action_UseAbilityOnLocation( abilityW, castWTarget:GetLocation() );
+		else
+			npcBot:Action_UseAbilityOnEntity( abilityW, castWTarget );
+		end
 		return;
 	end
 	

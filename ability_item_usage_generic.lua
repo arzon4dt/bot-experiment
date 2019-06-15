@@ -625,9 +625,9 @@ function CanJuke()
 		local info = GetHeroLastSeenInfo(enemyPids[i])
 		if info ~= nil then
 			local dInfo = info[1]; 
-			if dInfo ~= nil and dInfo.time_since_seen < 2.0  
-				and GetUnitToLocationDistance(bot,dInfo.location) < 1300 
-				and GetHeightLevel(dInfo.location) <= heroHG  
+			if dInfo ~= nil and dInfo.time_since_seen < 2.5  
+				and GetUnitToLocationDistance(bot,dInfo.location) < 1500 
+				and GetHeightLevel(dInfo.location) <= heroHG + 1   
 			then
 				return false;
 			end
@@ -730,7 +730,7 @@ function ShouldTP()
 		end
 	elseif mode == BOT_MODE_RETREAT and modDesire >= BOT_MODE_DESIRE_HIGH 
 	then
-		if bot:GetHealth() < 0.15*bot:GetMaxHealth() and bot:WasRecentlyDamagedByAnyHero(1.0) and enemies == 0 then
+		if bot:GetHealth() < 0.15*bot:GetMaxHealth() and bot:WasRecentlyDamagedByAnyHero(2.0) and enemies == 0 then
 			tpLoc = mutil.GetTeamFountain();
 		elseif bot:GetHealth() < 0.25*bot:GetMaxHealth() and bot:WasRecentlyDamagedByAnyHero(3.0) and CanJuke() == true then
 			print(bot:GetUnitName().." JUKE TP")

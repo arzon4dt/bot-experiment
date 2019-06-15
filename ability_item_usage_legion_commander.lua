@@ -58,7 +58,12 @@ function AbilityUsageThink()
 	
 	if ( castPTADesire > castDLDesire and  castPTADesire > castOODesire) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityPTA, castPTATarget );
+		local typeAOE = mutil.CheckFlag(abilityPTA:GetBehavior(), ABILITY_BEHAVIOR_POINT);
+		if typeAOE == true then
+			npcBot:Action_UseAbilityOnLocation( abilityPTA, castPTATarget:GetLocation() );
+		else
+			npcBot:Action_UseAbilityOnEntity( abilityPTA, castPTATarget );
+		end
 		return;
 	end
 
