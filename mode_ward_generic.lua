@@ -2,17 +2,21 @@ if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot(
 	return;
 end
 
+local schedule = require(GetScriptDirectory() ..  "/utils/schedule");
+local delay_by_difficulty = require(GetScriptDirectory() ..  "/utils/delay_by_difficulty");
+
 local wardUtils = require(GetScriptDirectory() ..  "/WardUtility")
 local role = require(GetScriptDirectory() .. "/RoleUtility");
 local bot = GetBot();
 local AvailableSpots = {};
 local nWardCastRange = 500;
-local wt = nil;
-local itemWard = nil;
-local targetLoc = nil;
-local smoke = nil;
-local wardCastTime = -90;
-local swapTime = -90;
+local wt;
+local itemWard;
+local targetLoc;
+local smoke;
+local itemSwapCooldown = 6.0;
+local gameStartTime = -90;
+local swapTime = gameStartTime;
 
 bot.ward = false;
 bot.steal = false;
@@ -92,7 +96,19 @@ function GetDesire()
 		bot:ActionImmediate_Chat("Catch this in mode_ward_generic", false);
 		bot.lastPlayerChat = nil;
 	end]]--
-	
+
+	itemWard = wardUtils.GetItemWard(bot);
+
+	-- swap ward with most expensive item if swap is scheduled
+	if itemWard ~= nil then
+		local wardSlot = bot:FindItemSlot(itemWard:GetName());
+		if bot:GetItemSlotType(wardSlot) == ITEM_SLOT_TYPE_MAIN then
+			local scheduledSwapTime = schedule.getTime(bot:GetUnitName() .. '_swap_ward_with_backpack_item');
+			if scheduledSwapTime ~= nil and DotaTime() > scheduledSwapTime and SwapWithMostExpensiveBackpackedItem() == true then
+				schedule.remove(bot:GetUnitName() .. '_swap_ward_with_backpack_item');
+			end
+		end
+	end
 
 	if bot:IsChanneling() or bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or not IsSuitableToWard() 
 	   or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE 
@@ -117,9 +133,7 @@ function GetDesire()
 	else	
 		bot.steal = false;
 	end
-	
-	itemWard = wardUtils.GetItemWard(bot);
-	
+
 	if itemWard ~= nil  then
 		
 		pinged, wt = wardUtils.IsPingedByHumanPlayer(bot);
@@ -142,13 +156,15 @@ function GetDesire()
 		
 		AvailableSpots = wardUtils.GetAvailableSpot(bot);
 		targetLoc, targetDist = wardUtils.GetClosestSpot(bot, AvailableSpots);
-		if targetLoc ~= nil and DotaTime() > wardCastTime + 1.0 then
+
+		if targetLoc ~= nil then
 			bot.ward = true;
 			return RemapValClamped(targetDist, 6000, 0, BOT_MODE_DESIRE_MODERATE, BOT_MODE_DESIRE_VERYHIGH);
 		end
 	else
 		bot.lastPlayerChat = nil;
 	end
+
 	return BOT_MODE_DESIRE_NONE;
 end
 
@@ -173,18 +189,9 @@ function OnEnd()
 	bot.steal = false;
 	itemWard = nil;
 	wt = nil;
-	local wardSlot = bot:FindItemSlot('item_ward_observer');
-	if wardSlot >=0 and wardSlot <= 5 then
-		local mostCostItem = FindMostItemSlot();
-		if mostCostItem ~= -1 then
-			bot:ActionImmediate_SwapItems( wardSlot, mostCostItem );
-			return
-		end
-	end
 end
 
 function Think()
-
 	if  GetGameState()~=GAME_STATE_PRE_GAME and GetGameState()~= GAME_STATE_GAME_IN_PROGRESS then
 		return;
 	end
@@ -193,22 +200,47 @@ function Think()
 		bot:Action_UseAbilityOnEntity(itemWard, wt);
 		return
 	end
-	
+
 	if bot.ward then
 		if targetDist <= nWardCastRange then
-			if  DotaTime() > swapTime + 7.0 then
-				bot:Action_UseAbilityOnLocation(itemWard, targetLoc);
-				wardCastTime = DotaTime();	
-				return
-			else
-				if targetLoc.x == Vector(-2948.000000, 769.000000, 0.000000) then
-					bot:Action_MoveToLocation(vNonStuck+RandomVector(300));
+			if swapTime > 0 then
+				if DotaTime() > swapTime + itemSwapCooldown + 0.000001 then
+					bot:Action_UseAbilityOnLocation(itemWard, targetLoc);
+
+					itemWard = wardUtils.GetItemWard(bot);
+
+					if itemWard ~= nil  then
+						schedule.add(
+							bot:GetUnitName() .. '_swap_ward_with_backpack_item',
+							DotaTime() + delay_by_difficulty.getMaxValue(bot:GetDifficulty())
+						);
+					end
 					return
-				else	
-					bot:Action_MoveToLocation(targetLoc+RandomVector(300));
-					return
+				else
+					if targetLoc.x == Vector(-2948.000000, 769.000000, 0.000000) then
+						bot:Action_MoveToLocation(vNonStuck+RandomVector(300));
+						return
+					else
+						bot:Action_MoveToLocation(targetLoc+RandomVector(300));
+						return
+					end
 				end
+			else
+				bot:Action_UseAbilityOnLocation(itemWard, targetLoc);
+
+				itemWard = wardUtils.GetItemWard(bot);
+
+				if itemWard ~= nil  then
+					schedule.add(
+						bot:GetUnitName() .. '_swap_ward_with_backpack_item',
+						DotaTime() + delay_by_difficulty.getMaxValue(bot:GetDifficulty())
+					);
+				end
+
+				return
 			end
+
+
 		else
 			if targetLoc == Vector(-2948.000000, 769.000000, 0.000000) then
 				bot:Action_MoveToLocation(vNonStuck);
@@ -312,7 +344,7 @@ function FindLeastItemSlot()
 	return idx;
 end
 
-function FindMostItemSlot()
+function FindMostExpensiveItemSlotInBackpack()
 	local maxCost = 0;
 	local idx = -1;
 	for i=6,8 do
@@ -370,3 +402,17 @@ function IsSafelaneCarry()
 	return role.CanBeSafeLaneCarry(bot:GetUnitName()) and ( (GetTeam()==TEAM_DIRE and bot:GetAssignedLane()==LANE_TOP) or (GetTeam()==TEAM_RADIANT and bot:GetAssignedLane()==LANE_BOT)  )	
 end
 
+function SwapWithMostExpensiveBackpackedItem()
+	local wardSlot = bot:FindItemSlot('item_ward_observer');
+	local isWardInInventory = wardSlot >=0 and wardSlot <= 5;
+
+	if isWardInInventory then
+		local mostExpensiveItemSlotInBackpack = FindMostExpensiveItemSlotInBackpack();
+		if mostExpensiveItemSlotInBackpack ~= -1 then
+			bot:ActionImmediate_SwapItems(wardSlot, mostExpensiveItemSlotInBackpack);
+			return true
+		end
+	end
+
+	return false
+end
