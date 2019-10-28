@@ -35,7 +35,7 @@ function  MinionThink(  hMinionUnit )
 			-- hMinionUnit:Action_AttackUnit(target, true);
 			-- return
 		-- end
-		return;
+		return true;
 	end
 		
 end

@@ -95,6 +95,7 @@ function ConsiderDevour()
 	-- Get some of its values
 	local nCastRange = abilityDV:GetCastRange();
 	local canEatAncient = false;
+	local clvl = abilityDV:GetSpecialValueInt('creep_level');
 	
 	if devourAnciennt ~= nil and devourAnciennt:IsTrained() then
 		canEatAncient = true;
@@ -106,7 +107,7 @@ function ConsiderDevour()
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nCastRange+200, true );
 		for _,npcCreep in pairs( tableNearbyEnemyCreeps )
 		do
-			if ( mutil.CanCastOnNonMagicImmune(npcCreep) ) then
+			if ( mutil.CanCastOnNonMagicImmune(npcCreep) and npcCreep:GetLevel() <= clvl ) then
 				return BOT_ACTION_DESIRE_HIGH, npcCreep;
 			end
 		end

@@ -2,6 +2,7 @@ if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot(
 	return;
 end
 
+local utils = require(GetScriptDirectory() ..  "/util")
 local wardUtils = require(GetScriptDirectory() ..  "/WardUtility")
 local role = require(GetScriptDirectory() .. "/RoleUtility");
 local bot = GetBot();
@@ -13,6 +14,7 @@ local targetLoc = nil;
 local smoke = nil;
 local wardCastTime = -90;
 local swapTime = -90;
+local enemyPids = nil;
 
 bot.ward = false;
 bot.steal = false;
@@ -142,7 +144,7 @@ function GetDesire()
 		
 		AvailableSpots = wardUtils.GetAvailableSpot(bot);
 		targetLoc, targetDist = wardUtils.GetClosestSpot(bot, AvailableSpots);
-		if targetLoc ~= nil and DotaTime() > wardCastTime + 1.0 then
+		if targetLoc ~= nil and DotaTime() > wardCastTime + 1.0 and IsEnemyCloserToWardLoc(targetLoc, targetDist) == false then
 			bot.ward = true;
 			return RemapValClamped(targetDist, 6000, 0, BOT_MODE_DESIRE_MODERATE, BOT_MODE_DESIRE_VERYHIGH);
 		end
@@ -368,5 +370,22 @@ end
 
 function IsSafelaneCarry()
 	return role.CanBeSafeLaneCarry(bot:GetUnitName()) and ( (GetTeam()==TEAM_DIRE and bot:GetAssignedLane()==LANE_TOP) or (GetTeam()==TEAM_RADIANT and bot:GetAssignedLane()==LANE_BOT)  )	
+end
+
+function IsEnemyCloserToWardLoc(wardLoc, botDist)
+	if enemyPids == nil then
+		enemyPids = GetTeamPlayers(GetOpposingTeam())
+	end	
+	for i = 1, #enemyPids do
+		local info = GetHeroLastSeenInfo(enemyPids[i])
+		if info ~= nil then
+			local dInfo = info[1]; 
+			if dInfo ~= nil and dInfo.time_since_seen < 3.0  and utils.GetDistance(dInfo.location, wardLoc) <  botDist
+			then	
+				return true;
+			end
+		end	
+	end
+	return false;
 end
 

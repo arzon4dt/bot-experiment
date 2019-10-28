@@ -265,6 +265,10 @@ function CourierUsageThink()
 	end
 	
 	local npcCourier = GetCourier(0);	
+	-- local itm = npcCourier:GetItemInSlot(1);
+	-- if itm ~= nil then
+		-- print(itm:GetName());
+	-- end
 	local cState = GetCourierState( npcCourier );
 
 	local courierPHP = npcCourier:GetHealth() / npcCourier:GetMaxHealth(); 
@@ -349,7 +353,7 @@ function CourierUsageThink()
 		end
 		
 		--MAKE COURIER GOES TO SECRET SHOP
-		if  bot:IsAlive() and bot.SecretShop and npcCourier:DistanceFromFountain() < 7000 and DotaTime() > courierTime + 1.0 then
+		if  bot:IsAlive() and bot.SecretShop and npcCourier:DistanceFromFountain() < 7000 and IsInvFull(npcCourier) == false and DotaTime() > courierTime + 1.0 then
 			--bot:ActionImmediate_Chat( "Using Courier for secret shop.", true );
 			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_SECRET_SHOP )
 			npcCourier.latestUser = bot;
@@ -957,20 +961,20 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	-- local pb=IsItemAvailable("item_phase_boots");
-	-- if pb~=nil and pb:IsFullyCastable() 
-	-- then
-	-- 	if ( mode == BOT_MODE_ATTACK or
-	-- 		 mode == BOT_MODE_RETREAT or
-	-- 		 mode == BOT_MODE_ROAM or
-	-- 		 mode == BOT_MODE_TEAM_ROAM or
-	-- 		 mode == BOT_MODE_GANK or
-	-- 		 mode == BOT_MODE_DEFEND_ALLY )
-	-- 	then
-	-- 		bot:Action_UseAbility(pb);
-	-- 		return;
-	-- 	end	
-	-- end
+	local pb=IsItemAvailable("item_phase_boots");
+	if pb~=nil and pb:IsFullyCastable() 
+	then
+		if ( mode == BOT_MODE_ATTACK or
+			 ( mode == BOT_MODE_RETREAT and bot:IsInvisible() == false ) or
+			 mode == BOT_MODE_ROAM or
+			 mode == BOT_MODE_TEAM_ROAM or
+			 mode == BOT_MODE_GANK or
+			 mode == BOT_MODE_DEFEND_ALLY )
+		then
+			bot:Action_UseAbility(pb);
+			return;
+		end	
+	end
 	
 	local bt=IsItemAvailable("item_bloodthorn");
 	if bt~=nil and bt:IsFullyCastable() 

@@ -2,6 +2,7 @@ if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot(
 	return;
 end
 
+local utils = require(GetScriptDirectory() ..  "/util")
 local role = require(GetScriptDirectory() .. "/RoleUtility");
 local hero_roles = role["hero_roles"];
 local bot = GetBot();
@@ -13,6 +14,7 @@ local ProxDist = 1500;
 local teamPlayers = nil;
 local PingTimeGap = 10;
 local bottle = nil;
+local enemyPids = nil
 
 local ListRune = {
 	RUNE_BOUNTY_1,
@@ -60,7 +62,7 @@ function GetDesire()
 	end	
 	
 	closestRune, closestDist = GetBotClosestRune();
-	if closestRune ~= -1 then
+	if closestRune ~= -1 and IsEnemyCloserToRuneLoc(closestRune, closestDist) == false then
 		if closestRune == RUNE_BOUNTY_1 or closestRune == RUNE_BOUNTY_2 or closestRune == RUNE_BOUNTY_3 or closestRune == RUNE_BOUNTY_4 then
 			runeStatus = GetRuneStatus( closestRune );
 			if runeStatus == RUNE_STATUS_AVAILABLE then
@@ -286,6 +288,23 @@ function IsIBecameTheTarget(units)
 		if u:GetAttackTarget() == bot then
 			return true;
 		end
+	end
+	return false;
+end
+
+function IsEnemyCloserToRuneLoc(iRune, botDist)
+	if enemyPids == nil then
+		enemyPids = GetTeamPlayers(GetOpposingTeam())
+	end	
+	for i = 1, #enemyPids do
+		local info = GetHeroLastSeenInfo(enemyPids[i])
+		if info ~= nil then
+			local dInfo = info[1]; 
+			if dInfo ~= nil and dInfo.time_since_seen < 2.0  and utils.GetDistance(dInfo.location, GetRuneSpawnLocation(iRune)) <  botDist
+			then	
+				return true;
+			end
+		end	
 	end
 	return false;
 end

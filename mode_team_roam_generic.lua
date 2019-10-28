@@ -274,7 +274,7 @@ function GetDesire()
 	elseif bot:GetUnitName() == "npc_dota_hero_doom_bringer" then
 		local lCreeps = bot:GetNearbyLaneCreeps(1300, true);
 		if cAbility == nil then cAbility = bot:GetAbilityByName('doom_bringer_devour') end;
-		if DotaTime() > 30 and #lCreeps == 0 and cAbility:IsFullyCastable() then
+		if DotaTime() > 60 and #lCreeps == 0 and cAbility:IsFullyCastable() then
 			if #camps == 0 then camps = GetNeutralSpawners(); end
 			return BOT_MODE_DESIRE_MODERATE+0.05;	
 		end	
@@ -549,11 +549,12 @@ function Think()
 	elseif bot:GetUnitName() == "npc_dota_hero_doom_bringer" then
 		if bot:IsUsingAbility() or bot:IsCastingAbility() or bot:IsChanneling() or cAbility:IsInAbilityPhase() then return end
 		local closestC, i, dist = GetClosestCamp();
+		local clvl = cAbility:GetSpecialValueInt('creep_level');
 		if dist > 300 then 
 			bot:Action_MoveToLocation(closestC.location);
 			return
 		elseif dist <= 300 then
-			local target = GetDominatedTarget();
+			local target = GetDevouredTarget(clvl);
 			if target ~= nil then
 				bot:Action_UseAbilityOnEntity(cAbility, target);
 				return
@@ -616,6 +617,26 @@ function GetDominatedTarget()
 			break;
 		end
 	end	
+	return target;
+end
+
+function GetDevouredTarget(clvl)
+	local target = nil;
+	local neutrals = bot:GetNearbyNeutralCreeps(500);
+	for _,u in pairs(neutrals) do
+		if mutil.CanBeDominatedCreeps(u:GetUnitName()) and u:GetLevel() <= clvl then
+			target = u;
+			break;
+		end
+	end	
+	if target == nil then
+		for _,u in pairs(neutrals) do
+			if u:GetLevel() <= clvl then
+				target = u;
+				break;
+			end
+		end	
+	end
 	return target;
 end
 
