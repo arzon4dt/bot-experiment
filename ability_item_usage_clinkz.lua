@@ -35,7 +35,7 @@ function AbilityUsageThink()
 	-- Check if we're already using an ability
 	if mutil.CanNotUseAbility(npcBot) then return end
 
-	if abilityST == nil then abilityST = npcBot:GetAbilityByName( "clinkz_strafe" ) end
+	if abilityST == nil then abilityST = npcBot:GetAbilityByName( "clinkz_death_pact" ) end
 	if abilitySA == nil then abilitySA = npcBot:GetAbilityByName( "clinkz_searing_arrows" ) end
 	if abilityWW == nil then abilityWW = npcBot:GetAbilityByName( "clinkz_wind_walk" ) end
 	if abilityDP == nil then abilityDP = npcBot:GetAbilityByName( "clinkz_burning_army" ) end
@@ -51,7 +51,7 @@ function AbilityUsageThink()
 	
 	if castSTDesire > 0
 	then
-		npcBot:Action_UseAbility(abilityST);
+		npcBot:Action_UseAbilityOnEntity(abilityST, castSTTarget);
 		return;
 	end
 	
@@ -103,34 +103,62 @@ function ConsiderStarfe()
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
-	local attackRange = npcBot:GetAttackRange()
+	local nCastRange = abilityST:GetCastRange()
+	local creepLvl = abilityST:GetSpecialValueInt('neutral_level');
 	
-	if mutil.IsPushing(npcBot)
+	if npcBot:GetActiveMode() == BOT_MODE_LANING 
 	then
-		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( attackRange, true );
-		if tableNearbyEnemyTowers[1] ~= nil 
-			and not tableNearbyEnemyTowers[1]:IsInvulnerable() 
-			and GetUnitToUnitDistance(  tableNearbyEnemyTowers[1], npcBot  ) < attackRange
-		then	
-			return BOT_ACTION_DESIRE_MODERATE;
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
+		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
+			for _,creep in pairs(tableNearbyEnemyCreeps)
+			do
+				if creep:GetLevel() <= creepLvl then
+					return BOT_ACTION_DESIRE_LOW, creep;
+				end
+			end
+		end
+	end
+	
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
+		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
+			for _,creep in pairs(tableNearbyEnemyCreeps)
+			do
+				if creep:GetLevel() <= creepLvl then
+					return BOT_ACTION_DESIRE_LOW, creep;
+				end
+			end
 		end
 	end
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
-		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, attackRange)  )
-		then
-			return BOT_ACTION_DESIRE_LOW;
+		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
+		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
+			for _,creep in pairs(tableNearbyEnemyCreeps)
+			do
+				if creep:GetLevel() <= creepLvl then
+					return BOT_ACTION_DESIRE_LOW, creep;
+				end
+			end
 		end
 	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, attackRange)
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 2500)
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
+			if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
+				for _,creep in pairs(tableNearbyEnemyCreeps)
+				do
+					if creep:GetLevel() <= creepLvl then
+						return BOT_ACTION_DESIRE_LOW, creep;
+					end
+				end
+			end
 		end
 	end
 

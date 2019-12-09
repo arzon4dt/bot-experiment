@@ -57,7 +57,12 @@ function AbilityUsageThink()
 	end
 	
 	if castEDesire > 0 then
-		bot:Action_UseAbilityOnEntity(abilities[3], targetE);		
+		local typeAOE = mutils.CheckFlag(abilities[3]:GetBehavior(), ABILITY_BEHAVIOR_POINT);
+		if typeAOE == true then
+			bot:Action_UseAbilityOnLocation( abilities[3], targetE:GetLocation() );
+		else
+			bot:Action_UseAbilityOnEntity( abilities[3], targetE );
+		end	
 		return
 	end
 	

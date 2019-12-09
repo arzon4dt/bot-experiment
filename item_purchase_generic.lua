@@ -95,9 +95,9 @@ if DotaTime() < 0 then
 	if bot:GetAttackRange() < 320 and unitName ~= 'npc_dota_hero_templar_assassin' and unitName ~= 'npc_dota_hero_tidehunter' then
 		if role.IsCarry(unitName) then
 			bot.itemToBuy[#bot.itemToBuy+1] = 'item_quelling_blade';
-			bot.itemToBuy[#bot.itemToBuy+1] = 'item_stout_shield';
-		else
-			bot.itemToBuy[#bot.itemToBuy+1] = 'item_stout_shield';
+			-- bot.itemToBuy[#bot.itemToBuy+1] = 'item_stout_shield';
+		-- else
+			-- bot.itemToBuy[#bot.itemToBuy+1] = 'item_stout_shield';
 		end
 	end
 	bot.itemToBuy[#bot.itemToBuy+1] = 'item_flask';
@@ -108,6 +108,8 @@ end
 ---Update the status to prevent bots selling stout shield and queling blade
 local buildBFury = false;
 local buildVanguard = false;
+local buildHoly = false;
+
 for i=1, math.ceil(#bot.itemToBuy/2) do
 	if bot.itemToBuy[i] == "item_bfury" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_bfury" then
 		buildBFury = true;
@@ -117,6 +119,9 @@ for i=1, math.ceil(#bot.itemToBuy/2) do
 	or bot.itemToBuy[i] == "item_abyssal_blade" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_abyssal_blade"
 	then
 		buildVanguard = true;
+	end
+	if bot.itemToBuy[i] == "item_holy_locket" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_holy_locket" then
+		buildHoly = true;
 	end
 end
 
@@ -179,8 +184,8 @@ local function GeneralPurchase()
 	--buy the item if we have the gold
 	if ( bot:GetGold() >= cost ) then
 		
-		if courier == nil then
-			courier = GetCourier(0);
+		if courier == nil and bot.courierAssigned == true then
+			courier = GetCourier(bot.courierID);
 		end
 		
 		--purchase done by courier for secret shop item
@@ -200,16 +205,18 @@ local function GeneralPurchase()
 		local dSideShop   = bot:DistanceFromSideShop();
 		
 		--Logic to decide in which shop bot have to purchase the item
-		if CanPurchaseFromSecret and CanPurchaseFromSide == false and bot:DistanceFromSecretShop() > 0 then
+		if CanPurchaseFromSecret and bot:DistanceFromSecretShop() > 0 then
 			bot.SecretShop = true;
-		elseif CanPurchaseFromSecret and CanPurchaseFromSide and dSideShop < dSecretShop and dSideShop > 0 and dSideShop <= 2500 then
-			bot.SideShop = true;
-		elseif CanPurchaseFromSecret and CanPurchaseFromSide and dSideShop > dSecretShop and dSecretShop > 0 then
-			bot.SecretShop = true;
-		elseif CanPurchaseFromSecret and CanPurchaseFromSide and dSideShop > 2500 and dSecretShop > 0 then
-			bot.SecretShop = true;
-		elseif CanPurchaseFromSide and CanPurchaseFromSecret == false and bot:DistanceFromSideShop() > 0 and bot:DistanceFromSideShop() <= 2500 then
-			bot.SideShop = true;
+		-- if CanPurchaseFromSecret and CanPurchaseFromSide == false and bot:DistanceFromSecretShop() > 0 then
+			-- bot.SecretShop = true;
+		-- elseif CanPurchaseFromSecret and CanPurchaseFromSide and dSideShop < dSecretShop and dSideShop > 0 and dSideShop <= 2500 then
+			-- bot.SideShop = true;
+		-- elseif CanPurchaseFromSecret and CanPurchaseFromSide and dSideShop > dSecretShop and dSecretShop > 0 then
+			-- bot.SecretShop = true;
+		-- elseif CanPurchaseFromSecret and CanPurchaseFromSide and dSideShop > 2500 and dSecretShop > 0 then
+			-- bot.SecretShop = true;
+		-- elseif CanPurchaseFromSide and CanPurchaseFromSecret == false and bot:DistanceFromSideShop() > 0 and bot:DistanceFromSideShop() <= 2500 then
+			-- bot.SideShop = true;
 		else
 			if bot:ActionImmediate_PurchaseItem( bot.currentComponentToBuy ) == PURCHASE_ITEM_SUCCESS then
 				bot.currentComponentToBuy = nil;
@@ -278,7 +285,7 @@ local buyBottle = false;
 
 function ItemPurchaseThink()  
 	
-	if ( GetGameState() ~= GAME_STATE_PRE_GAME and GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS )
+	if ( GetGameState() ~= GAME_STATE_PRE_GAME and GetGameState() ~= GAME_STATE_GAME_IN_PROGRESS ) 
 	then
 		return;
 	end
@@ -319,10 +326,11 @@ function ItemPurchaseThink()
 	
 	--purchase flying courier and support item
 	if bot.theRole == 'support' then
-		if DotaTime() < 0 and GetItemStockCount( "item_courier" ) > 0
-		then
-			bot:ActionImmediate_PurchaseItem( 'item_courier' );
-		elseif DotaTime() < 0 and bot:GetGold() >= GetItemCost( "item_smoke_of_deceit" ) 
+		-- if DotaTime() < 0 and GetItemStockCount( "item_courier" ) > 0
+		-- then
+			-- bot:ActionImmediate_PurchaseItem( 'item_courier' );
+		-- else
+		if DotaTime() < 0 and bot:GetGold() >= GetItemCost( "item_smoke_of_deceit" ) 
 			and GetItemStockCount( "item_smoke_of_deceit" ) > 1 and items.GetEmptyInventoryAmount(bot) >= 4 
 		then
 			bot:ActionImmediate_PurchaseItem("item_smoke_of_deceit"); 	
@@ -345,9 +353,9 @@ function ItemPurchaseThink()
 	end
 	
 	--purchase courier when no support in team
-	if DotaTime() < 0 and role['supportExist'] == false and GetItemStockCount( "item_courier" ) > 0 then 
-		bot:ActionImmediate_PurchaseItem( 'item_courier' );
-	end
+	-- if DotaTime() < 0 and role['supportExist'] == false and GetItemStockCount( "item_courier" ) > 0 then 
+		-- bot:ActionImmediate_PurchaseItem( 'item_courier' );
+	-- end
 	
 	--purchase raindrop
 	if buyRD == false and buyBootsStatus == true and GetItemStockCount( "item_infused_raindrop" ) > 0 and bot:GetGold() >= GetItemCost( "item_infused_raindrop" ) and items.HasItem(bot, 'item_boots')
@@ -385,6 +393,11 @@ function ItemPurchaseThink()
 							-- slotToSell = itemSlot;
 							-- break;
 						-- end
+					elseif item == "item_magic_wand" then
+						if buildHoly == false  then
+							slotToSell = itemSlot;
+							break;
+						end	
 					elseif item == "item_quelling_blade" then
 						if buildBFury == false then
 							slotToSell = itemSlot;

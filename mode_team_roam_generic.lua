@@ -66,6 +66,7 @@ function GetDesire()
 		print(unit:GetUnitName()..":"..tostring(unit:GetBaseMovementSpeed())..":"..tostring(unit:GetBaseDamage())..":"..tostring(unit:GetAttackPoint()))
 	end]]--
 	
+	
 	if bot:GetUnitName() == "npc_dota_hero_earthshaker" 
 		--or bot:GetUnitName() == "npc_dota_hero_abaddon" 
 		--or bot:GetUnitName() == "npc_dota_hero_abyssal_underlord" 
@@ -250,6 +251,12 @@ function GetDesire()
 		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
 			return BOT_MODE_DESIRE_ABSOLUTE;
 		end		
+	elseif bot:GetUnitName() == "npc_dota_hero_drow_ranger" then
+		if cAbility == nil then cAbility = bot:GetAbilityByName( "drow_ranger_multishot" ) end;
+		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
+			print("Drow team rome");
+			return BOT_MODE_DESIRE_ABSOLUTE;
+		end			
 	elseif bot:GetUnitName() == "npc_dota_hero_batrider" and bot:HasModifier('modifier_batrider_flaming_lasso_self') then
 		return BOT_MODE_DESIRE_ABSOLUTE;
 	elseif bot:GetUnitName() == "npc_dota_hero_chen" then
@@ -482,6 +489,7 @@ function Think()
 		or  bot:GetUnitName() == "npc_dota_hero_tinker" 
 		or  bot:GetUnitName() == "npc_dota_hero_enigma" 
 		or  bot:GetUnitName() == "npc_dota_hero_lich" 
+		or  bot:GetUnitName() == "npc_dota_hero_drow_ranger" 
 	then
 		return;	
 	elseif bot:GetUnitName() == "npc_dota_hero_magnataur" then

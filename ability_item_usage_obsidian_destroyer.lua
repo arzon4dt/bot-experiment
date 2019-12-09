@@ -230,8 +230,8 @@ function ConsiderStaticStorm()
 	local nRadius = abilitySS:GetSpecialValueInt( "radius" );
 	local nCastRange = abilitySS:GetCastRange();
 	local nCastPoint = abilitySS:GetCastPoint( );
-	local MyIntVal = npcBot:GetAttributeValue(ATTRIBUTE_INTELLECT); 
-	local nMultiplier = abilitySS:GetSpecialValueInt( "damage_multiplier" );
+	local MyIntVal = npcBot:GetMana();
+	local nMultiplier = abilitySS:GetSpecialValueFloat( "damage_multiplier" );
 
 	--------------------------------------
 	-- Mode based usage
@@ -255,10 +255,10 @@ function ConsiderStaticStorm()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange+(nRadius/2), true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			local EnemyInt = npcEnemy:GetAttributeValue(ATTRIBUTE_INTELLECT);
+			local EnemyInt = npcEnemy:GetMana();
 			local diff = MyIntVal - EnemyInt;
 			local nDamage = nMultiplier * diff;
-			if ( diff > 0 and mutil.CanKillTarget(npcEnemy,nDamage, DAMAGE_TYPE_MAGICAL ) ) 
+			if ( diff > 0 and ( nDamage >= ( 0.45 + (0.05*(npcEnemy:GetLevel()/5)) ) * npcEnemy:GetMaxHealth() or  mutil.CanKillTarget(npcEnemy, nDamage, DAMAGE_TYPE_MAGICAL ) ) ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
 			end
@@ -269,12 +269,12 @@ function ConsiderStaticStorm()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)  
+		if mutil.IsValidTarget(npcTarget) and npcTarget:GetHealth() > 150 and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)  
 		then
-			local EnemyInt = npcTarget:GetAttributeValue(ATTRIBUTE_INTELLECT);
+			local EnemyInt = npcTarget:GetMana();
 			local diff = MyIntVal - EnemyInt;
 			local nDamage = nMultiplier * diff;
-			if ( diff > 0 and mutil.CanKillTarget(npcTarget,nDamage, DAMAGE_TYPE_MAGICAL ) ) 
+			if ( diff > 0 and ( nDamage >= ( 0.45 + (0.05*(npcTarget:GetLevel()/5)) ) * npcTarget:GetMaxHealth() or  mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL ) ) ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 			end

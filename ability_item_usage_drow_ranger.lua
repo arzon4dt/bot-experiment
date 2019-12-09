@@ -31,15 +31,15 @@ function AbilityUsageThink()
 	
 	if abilityQ == nil then abilityQ = npcBot:GetAbilityByName( "drow_ranger_frost_arrows" ) end
 	if abilityW == nil then abilityW = npcBot:GetAbilityByName( "drow_ranger_wave_of_silence" ) end
-	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "drow_ranger_trueshot" ) end
+	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "drow_ranger_multishot" ) end
 
 	ConsiderQ();
 	castWDesire, castWLoc    = ConsiderW();
-	castEDesire              = ConsiderE();
+	castEDesire, castELoc    = ConsiderE();
 	
 	if ( castEDesire > 0 ) 
 	then
-		npcBot:Action_UseAbility( abilityE );
+		npcBot:Action_UseAbilityOnLocation( abilityE, castELoc );
 		return;
 	end
 	
@@ -140,6 +140,47 @@ function ConsiderE()
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
-	return BOT_ACTION_DESIRE_HIGH;
+	-- Get some of its values
+	local nRadius      = abilityW:GetSpecialValueInt('arrow_width');
+	local nCastRange   = npcBot:GetAttackRange();
+	local nCastPoint   = abilityW:GetCastPoint( );
+	local nManaCost    = abilityW:GetManaCost( );
+	local nAttackRange = npcBot:GetAttackRange( );
+
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+	
+	if npcBot:GetActiveMode() == BOT_MODE_LANING then
+		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		if ( locationAoE.count >= 2 ) then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		end
+	end
+	
+	if mutil.IsInTeamFight(npcBot, 1200)
+	then
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		end
+	end
+
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nAttackRange) 
+		then
+			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
+		end
+	end
+	
+	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange, 2.0);
+	
+	if skThere then
+		return BOT_ACTION_DESIRE_MODERATE, skLoc;
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
 
 end

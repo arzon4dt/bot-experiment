@@ -37,11 +37,9 @@ if build == "NOT IMPLEMENTED" then
 end
 
 local role = require(GetScriptDirectory() .. "/RoleUtility");
-local mutil = require(GetScriptDirectory() ..  "/MyUtility");
-local utils = require(GetScriptDirectory() ..  "/util");
-local eUtils = require(GetScriptDirectory() ..  "/EnemyUtility");
-local courierUtils = require(GetScriptDirectory() ..  "/CourierUtility");
-
+local mutil = require(GetScriptDirectory() ..  "/MyUtility")
+local utils = require(GetScriptDirectory() ..  "/util")
+local eUtils = require(GetScriptDirectory() ..  "/EnemyUtility")
 
 local IdleTime = 0;
 local AllowedIddle = 15;
@@ -98,10 +96,7 @@ function AbilityLevelUpThink()
 	UseGlyph()
 	
 	local botLoc = bot:GetLocation();
-	-- if bot:GetUnitName() == "npc_dota_hero_monkey_king" then
-		-- print(tostring(bot:GetCurrentActionType()==BOT_ACTION_TYPE_MOVE_TO)..tostring(IsLocationPassable(bot:GetLocation())))
-	-- end
-	if bot:IsAlive() and bot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and IsLocationPassable(botLoc) == false then
+	if bot:IsAlive() and bot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and not IsLocationPassable(botLoc) then
 		if bot.stuckLoc == nil then
 			bot.stuckLoc = botLoc
 			bot.stuckTime = DotaTime();
@@ -114,8 +109,7 @@ function AbilityLevelUpThink()
 		bot.stuckLoc = nil;
 	end
 	
-	
-	if bot:GetAbilityPoints() > 0 and bot:GetLevel() <= 25 then
+	if bot:GetAbilityPoints() > 0 then
 		local lastIdx = #bot.abilities;
 		local ability = bot:GetAbilityByName(bot.abilities[lastIdx]);
 		if ability ~= nil and ability:CanAbilityBeUpgraded() and ability:GetLevel() < ability:GetMaxLevel() then
@@ -264,191 +258,133 @@ local cState = -1;
 bot.SShopUser = false;
 local returnTime = -90;
 local apiAvailable = false;
-
-bot.courierID = 0;
-bot.courierAssigned = false;
--- local calibrateTime = DotaTime();
-local checkCourier = false;
-local define_courier = false;
-local cr = nil;
-local tm =  GetTeam();
-local pIDs = GetTeamPlayers(tm);
 function CourierUsageThink()
 
 	if GetGameMode() == 23 or bot:IsInvulnerable() or not bot:IsHero() or bot:IsIllusion() or bot:HasModifier("modifier_arc_warden_tempest_double") or GetNumCouriers() == 0 then
 		return;
 	end
 	
-	-- if GetTeam() == TEAM_RADIANT then
-		-- print(bot:GetUnitName().."----"..tostring(bot:GetPlayerID()));
-		-- for i = 1, #pIDs do
-			-- print(GetSelectedHeroName(pIDs[i])..":"..pIDs[i])
-		-- end
+	local npcCourier = GetCourier(0);	
+	-- local itm = npcCourier:GetItemInSlot(1);
+	-- if itm ~= nil then
+		-- print(itm:GetName());
 	-- end
-	-- for i=1, #pIDs do
-		-- if IsPlayerBot(pIDs[i]) == true then
-			-- local mbr = GetTeamMember(i);
-			-- if bot == mbr then
-				-- bot.courierID = i - 1;
-				-- bot.courierAssigned = true;
-			-- end
-		-- end
-	-- end
-	
-	if courierUtils.pIDInc < #pIDs + 1 and DotaTime() > -60 then
-		if IsPlayerBot(pIDs[courierUtils.pIDInc]) == true then
-			local currID = pIDs[courierUtils.pIDInc];
-				if bot:GetPlayerID() == currID  then
-					if checkCourier == true and DotaTime() > courierUtils.calibrateTime + 5  then
-						local cst = GetCourierState(cr);
-						-- print(bot:GetUnitName());
-						if cst == COURIER_STATE_MOVING then
-							courierUtils.pIDInc = courierUtils.pIDInc + 1;
-							print(bot:GetUnitName().." : Courier Successfully Assigned ."..tostring(cr));
-							checkCourier = false;
-							bot.courierAssigned = true;
-							courierUtils.calibrateTime = DotaTime();
-							bot:ActionImmediate_Courier( cr, COURIER_ACTION_RETURN_STASH_ITEMS );	
-							return;
-						else
-							-- print("Failed to Assign Courier.");
-							bot.courierID = bot.courierID + 1;
-							checkCourier = false;
-							courierUtils.calibrateTime = DotaTime();
-						end
-					elseif checkCourier == false then
-						cr = GetCourier(bot.courierID);
-						bot:ActionImmediate_Courier( cr, COURIER_ACTION_SECRET_SHOP );
-						checkCourier = true;
-					end
-				end
-		else
-			courierUtils.pIDInc = courierUtils.pIDInc + 1;
-		end
-	end	
-	
-	if bot.courierAssigned == true then
-	-- if bot:GetCourierValue( ) > 0 then
-	
-		-- print(bot:GetUnitName()..":"..tostring(bot:GetCourierValue( )));
-	-- end
-		local npcCourier = GetCourier(bot.courierID);	
-		-- local itm = npcCourier:GetItemInSlot(1);
-		-- if itm ~= nil then
-			-- print(itm:GetName());
-		-- end
-		local cState = GetCourierState( npcCourier );
+	local cState = GetCourierState( npcCourier );
 
-		local courierPHP = npcCourier:GetHealth() / npcCourier:GetMaxHealth(); 
-		
-		if cState == COURIER_STATE_DEAD then
-			npcCourier.latestUser = nil;
-			return
-		end
-		
-		if IsFlyingCourier(npcCourier) then
-			local burst = npcCourier:GetAbilityByName('courier_shield');
-			if IsTargetedByUnit(npcCourier) then
-				if burst:IsFullyCastable() and apiAvailable == true 
-				then
-					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_BURST );
-					return
-				elseif DotaTime() > returnTime + 7.0
-					   --and not burst:IsFullyCastable() and not npcCourier:HasModifier('modifier_courier_shield') 
-				then
-					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
-					returnTime = DotaTime();
-					return
-				end
-			end
-		else	
-			if IsTargetedByUnit(npcCourier) then
-				if DotaTime() - returnTime > 7.0 then
-					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
-					returnTime = DotaTime();
-					return
-				end
-			end
-		end
-		
-		if ( IsCourierAvailable() and cState ~= COURIER_STATE_IDLE )  then
-			npcCourier.latestUser = "temp";
-		end
-		
-		if bot.SShopUser and ( not bot:IsAlive() or bot:GetActiveMode() == BOT_MODE_SECRET_SHOP or not bot.SecretShop  ) then
-			--bot:ActionImmediate_Chat( "Releasing the courier to anticipate secret shop stuck", true );
-			npcCourier.latestUser = "temp";
-			bot.SShopUser = false;
-			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
-			return
-		end
-		
-		if cState == COURIER_STATE_AT_BASE or cState == COURIER_STATE_IDLE or cState == COURIER_STATE_RETURNING_TO_BASE  then 
-			if courierPHP < 1.0 then
-				return;
-			end
-			
-			--RETURN COURIER TO BASE WHEN IDLE 
-			if cState == COURIER_STATE_IDLE then
-				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
+	local courierPHP = npcCourier:GetHealth() / npcCourier:GetMaxHealth(); 
+	
+	if cState == COURIER_STATE_DEAD then
+		npcCourier.latestUser = nil;
+		return
+	end
+	
+	if IsFlyingCourier(npcCourier) then
+		local burst = npcCourier:GetAbilityByName('courier_shield');
+		if IsTargetedByUnit(npcCourier) then
+			if burst:IsFullyCastable() and apiAvailable == true 
+			then
+				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_BURST );
+				return
+			elseif DotaTime() > returnTime + 7.0
+			       --and not burst:IsFullyCastable() and not npcCourier:HasModifier('modifier_courier_shield') 
+			then
+				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+				returnTime = DotaTime();
 				return
 			end
-			
-			--TAKE ITEM FROM STASH
-			if  cState == COURIER_STATE_AT_BASE then
-				local nCSlot = GetCourierEmptySlot(npcCourier);
-					if bot:IsAlive() 
+		end
+	else	
+		if IsTargetedByUnit(npcCourier) then
+			if DotaTime() - returnTime > 7.0 then
+				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+				returnTime = DotaTime();
+				return
+			end
+		end
+	end
+	
+	if ( IsCourierAvailable() and cState ~= COURIER_STATE_IDLE )  then
+		npcCourier.latestUser = "temp";
+	end
+	
+	--FREE UP THE COURIER FOR HUMAN PLAYER
+	if cState == COURIER_STATE_MOVING or IsHumanHaveItemInCourier() then
+		npcCourier.latestUser = nil;
+	end
+	
+	if bot.SShopUser and ( not bot:IsAlive() or bot:GetActiveMode() == BOT_MODE_SECRET_SHOP or not bot.SecretShop  ) then
+		--bot:ActionImmediate_Chat( "Releasing the courier to anticipate secret shop stuck", true );
+		npcCourier.latestUser = "temp";
+		bot.SShopUser = false;
+		bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+		return
+	end
+	
+	if npcCourier.latestUser ~= nil and ( IsCourierAvailable() or cState == COURIER_STATE_RETURNING_TO_BASE ) and DotaTime() - returnTime > 7.0  then 
+		
+		if cState == COURIER_STATE_AT_BASE and courierPHP < 1.0 then
+			return;
+		end
+		
+		--RETURN COURIER TO BASE WHEN IDLE 
+		if cState == COURIER_STATE_IDLE then
+			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+			return
+		end
+		
+		--TAKE ITEM FROM STASH
+		if  cState == COURIER_STATE_AT_BASE then
+			local nCSlot = GetCourierEmptySlot(npcCourier);
+			local numPlayer =  GetTeamPlayers(GetTeam());
+			for i = 1, #numPlayer
+			do
+				local member =  GetTeamMember(i);
+				if member ~= nil and IsPlayerBot(numPlayer[i]) and member:IsAlive() 
+				then
+					local nMSlot = GetNumStashItem(member);
+					if nMSlot > 0 and nMSlot <= nCSlot 
 					then
-						local nMSlot = GetNumStashItem(bot);
-						if nMSlot > 0 and nMSlot <= nCSlot 
-						then
-							-- print("Transfer Item");
-							bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TAKE_STASH_ITEMS );
-							nCSlot = nCSlot - nMSlot ;
-							courierTime = DotaTime();
-							return;
-						end
+						member:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TAKE_STASH_ITEMS );
+						nCSlot = nCSlot - nMSlot ;
+						courierTime = DotaTime();
 					end
+				end
 			end
-			
-			--MAKE COURIER GOES TO SECRET SHOP
-			if  bot:IsAlive() and bot.SecretShop and npcCourier:DistanceFromFountain() < 7000 and IsInvFull(npcCourier) == false and DotaTime() > courierTime + 1.0 then
-				--bot:ActionImmediate_Chat( "Using Courier for secret shop.", true );
-				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_SECRET_SHOP )
-				npcCourier.latestUser = bot;
-				bot.SShopUser = true;
-				UpdateSShopUserStatus(bot);
-				courierTime = DotaTime();
-				-- print("Transfer Secret Shop");
-				return
-			end
-			
-			--TRANSFER ITEM IN COURIER
-			if bot:IsAlive() and bot:GetCourierValue( ) > 0 
-			then
-				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TRANSFER_ITEMS )
-				npcCourier.latestUser = bot;
-				courierTime = DotaTime();
-				-- print("Transfer Item 2");
-				return
-			end
-			
-			--RETURN STASH ITEM WHEN DEATH
-			if  not bot:IsAlive() and cState == COURIER_STATE_DELIVERING_ITEMS  
-				and bot:GetCourierValue( ) > 0 and DotaTime() > courierTime + 1.0
-			then
-				bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
-				npcCourier.latestUser = bot;
-				courierTime = DotaTime();
-				-- print("Return Item");
-				return
-			end
-			
-		
 		end
+		
+		--MAKE COURIER GOES TO SECRET SHOP
+		if  bot:IsAlive() and bot.SecretShop and npcCourier:DistanceFromFountain() < 7000 and IsInvFull(npcCourier) == false and DotaTime() > courierTime + 1.0 then
+			--bot:ActionImmediate_Chat( "Using Courier for secret shop.", true );
+			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_SECRET_SHOP )
+			npcCourier.latestUser = bot;
+			bot.SShopUser = true;
+			UpdateSShopUserStatus(bot);
+			courierTime = DotaTime();
+			return
+		end
+		
+		--TRANSFER ITEM IN COURIER
+		if bot:IsAlive() and bot:GetCourierValue( ) > 0 and IsTheClosestToCourier(bot, npcCourier)
+		   and ( npcCourier:DistanceFromFountain() < 7000 or GetUnitToUnitDistance(bot, npcCourier) < 1300 ) and DotaTime() > courierTime + 1.0
+		then
+			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_TRANSFER_ITEMS )
+			npcCourier.latestUser = bot;
+			courierTime = DotaTime();
+			return
+		end
+		
+		--RETURN STASH ITEM WHEN DEATH
+		if  not bot:IsAlive() and cState == COURIER_STATE_DELIVERING_ITEMS  
+			and bot:GetCourierValue( ) > 0 and DotaTime() > courierTime + 1.0
+		then
+			bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
+			npcCourier.latestUser = bot;
+			courierTime = DotaTime();
+			return
+		end
+		
 	
-	end	
-	
+	end
 end
 
 function IsHumanHaveItemInCourier()
@@ -726,16 +662,12 @@ end
 local tpThreshold = 4500;
 
 function ShouldTP()
-    local stuckTP = false;
 	local tpLoc = nil;
 	local mode = bot:GetActiveMode();
 	local modDesire = bot:GetActiveModeDesire();
 	local botLoc = bot:GetLocation();
 	local enemies = GetNumHeroWithinRange(1600);
-	if mutil.IsStuck(bot) and enemies == 0 then
-		bot:ActionImmediate_Chat("I'm using tp while stuck.", true);
-		tpLoc = GetAncient(GetTeam()):GetLocation()
-	elseif mode == BOT_MODE_LANING and enemies == 0 then
+	if mode == BOT_MODE_LANING and enemies == 0 then
 		local assignedLane = bot:GetAssignedLane();
 		if assignedLane == LANE_TOP  then
 			local botAmount = GetAmountAlongLane(LANE_TOP, botLoc)
@@ -813,8 +745,11 @@ function ShouldTP()
 		if #allies <= 1 then
 			tpLoc = mutil.GetTeamFountain();
 		end
+	elseif mutil.IsStuck(bot) and enemies == 0 then
+		bot:ActionImmediate_Chat("I'm using tp while stuck.", true);
+		tpLoc = GetAncient(GetTeam()):GetLocation()
 	end	
-	if ( stuckTP == true and tpLoc ~= nil ) or ( stuckTP == false and tpLoc ~= nil and GetUnitToLocationDistance(bot, tpLoc) > 2000 ) then
+	if tpLoc ~= nil and GetUnitToLocationDistance(bot, tpLoc) > 2000 then
 		return true, tpLoc;
 	end
 	return false, nil;
@@ -832,7 +767,7 @@ function UnImplementedItemUsage()
 	local npcTarget = bot:GetTarget();
 	local mode = bot:GetActiveMode();
 	
-	local tps = bot:GetItemInSlot(16);
+	local tps = bot:GetItemInSlot(15);
 	if tps ~= nil and tps:IsFullyCastable() then
 		local tpLoc = nil
 		local shouldTP = false
@@ -860,27 +795,14 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	-- local bas = IsItemAvailable("item_ring_of_basilius");
-	-- if bas~=nil and bas:IsFullyCastable() then
-		-- if mode == BOT_MODE_LANING and not bas:GetToggleState() then
-			-- bot:Action_UseAbility(bas);
-			-- return
-		-- elseif mode ~= BOT_MODE_LANING and bas:GetToggleState() then
-			-- bot:Action_UseAbility(bas);
-			-- return
-		-- end
-	-- end
-	
-	local hl=IsItemAvailable("item_holy_locket");
-	if hl~=nil and hl:IsFullyCastable() then
-		if ( mode == BOT_MODE_RETREAT and 
-			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
-			bot:DistanceFromFountain() > 0 and
-			( bot:GetHealth() / bot:GetMaxHealth() ) < 0.15 ) and
-			hl:GetCurrentCharges() > 10
-		then
-			bot:Action_UseAbility(hl);
-			return;
+	local bas = IsItemAvailable("item_ring_of_basilius");
+	if bas~=nil and bas:IsFullyCastable() then
+		if mode == BOT_MODE_LANING and not bas:GetToggleState() then
+			bot:Action_UseAbility(bas);
+			return
+		elseif mode ~= BOT_MODE_LANING and bas:GetToggleState() then
+			bot:Action_UseAbility(bas);
+			return
 		end
 	end
 	
@@ -946,7 +868,7 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	local tpt=IsItemAvailable("item_tpscroll");
+	--[[local tpt=IsItemAvailable("item_tpscroll");
 	if tpt~=nil and tpt:IsFullyCastable() then
 		if mutil.IsStuck(bot)
 		then
@@ -954,7 +876,7 @@ function UnImplementedItemUsage()
 			bot:Action_UseAbilityOnLocation(tpt, GetAncient(GetTeam()):GetLocation());
 			return;
 		end
-	end
+	end]]--
 	
 	local its=IsItemAvailable("item_tango_single");
 	if its~=nil and its:IsFullyCastable() and bot:DistanceFromFountain() > 1000 then

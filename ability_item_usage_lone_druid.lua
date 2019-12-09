@@ -45,27 +45,27 @@ function AbilityUsageThink()
 	if abilityOP == nil then abilityOP = npcBot:GetAbilityByName( "lone_druid_spirit_link" ) end
 	if abilityES == nil then abilityES = npcBot:GetAbilityByName( "lone_druid_savage_roar" ) end
 	if abilityTF == nil then abilityTF = npcBot:GetAbilityByName( "lone_druid_true_form" ) end
-	if abilityDF == nil then abilityDF = npcBot:GetAbilityByName( "lone_druid_true_form_druid" ) end
-	if abilityBC == nil then abilityBC = npcBot:GetAbilityByName( "lone_druid_true_form_battle_cry" ) end
+	-- if abilityDF == nil then abilityDF = npcBot:GetAbilityByName( "lone_druid_true_form_druid" ) end
+	-- if abilityBC == nil then abilityBC = npcBot:GetAbilityByName( "lone_druid_true_form_battle_cry" ) end
 	
 	-- Consider using each ability
 	castFGDesire, castFGTarget = ConsiderFleshGolem();
-	castOPDesire = ConsiderOverpower();
+	-- castOPDesire = ConsiderOverpower();
 	castESDesire = ConsiderEarthshock();
 	castTFDesire = ConsiderTrueForm();
-	castDFDesire = ConsiderDruidForm();
-	castBCDesire = ConsiderBattleCry();
+	-- castDFDesire = ConsiderDruidForm();
+	-- castBCDesire = ConsiderBattleCry();
 	
 	if ( castFGDesire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityFG );
 		return;
 	end
-	if ( castOPDesire > 0 ) 
-	then
-		npcBot:Action_UseAbility( abilityOP );
-		return;
-	end
+	-- if ( castOPDesire > 0 ) 
+	-- then
+		-- npcBot:Action_UseAbility( abilityOP );
+		-- return;
+	-- end
 	if ( castESDesire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityES );
@@ -76,16 +76,16 @@ function AbilityUsageThink()
 		npcBot:Action_UseAbility( abilityTF );
 		return;
 	end
-	if ( castDFDesire > 0 ) 
-	then
-		npcBot:Action_UseAbility( abilityDF );
-		return;
-	end
-	if ( castBCDesire > 0 ) 
-	then
-		npcBot:Action_UseAbility( abilityBC );
-		return;
-	end
+	-- if ( castDFDesire > 0 ) 
+	-- then
+		-- npcBot:Action_UseAbility( abilityDF );
+		-- return;
+	-- end
+	-- if ( castBCDesire > 0 ) 
+	-- then
+		-- npcBot:Action_UseAbility( abilityBC );
+		-- return;
+	-- end
 	
 end
 
@@ -220,7 +220,7 @@ function ConsiderTrueForm()
 	if mutil.IsRetreating(npcBot)
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes <= 2 and npcBot:WasRecentlyDamagedByAnyHero(1) and abilityBC:IsHidden() then
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes <= 2 and npcBot:WasRecentlyDamagedByAnyHero(1) then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
@@ -228,8 +228,7 @@ function ConsiderTrueForm()
 	if mutil.IsPushing(npcBot) 
 	then
 		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 800, true );
-		if tableNearbyEnemyTowers[1] ~= nil and mutil.IsInRange(tableNearbyEnemyTowers[1], npcBot, 1000) and 
-			abilityBC:IsFullyCastable() and abilityBC:IsHidden()
+		if tableNearbyEnemyTowers[1] ~= nil and mutil.IsInRange(tableNearbyEnemyTowers[1], npcBot, 1000) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -238,7 +237,7 @@ function ConsiderTrueForm()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1000) and abilityBC:IsFullyCastable() and abilityBC:IsHidden()  ) 
+		if ( mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1000)  ) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end

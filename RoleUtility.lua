@@ -1311,6 +1311,18 @@ X["hero_roles"] = {
 		['support'] = 2,
 		['pusher'] = 0
 	},
+	
+	["npc_dota_hero_snapfire"] = {
+		['carry'] = 0,
+		['disabler'] = 2,
+		['durable'] = 0,
+		['escape'] = 1,
+		['initiator'] = 0,
+		['jungler'] = 0,
+		['nuker'] = 3,
+		['support'] = 3,
+		['pusher'] = 0
+	},
 
 	["npc_dota_hero_storm_spirit"] = {
 		['carry'] = 2,
@@ -1358,6 +1370,18 @@ X["hero_roles"] = {
 		['nuker'] = 2,
 		['support'] = 1,
 		['pusher'] = 1
+	},
+	
+	["npc_dota_hero_void_spirit"] = {
+		['carry'] = 2,
+		['disabler'] = 1,
+		['durable'] = 0,
+		['escape'] = 3,
+		['initiator'] = 1,
+		['jungler'] = 0,
+		['nuker'] = 1,
+		['support'] = 0,
+		['pusher'] = 0
 	},
 
 	["npc_dota_hero_warlock"] = {
@@ -1441,6 +1465,7 @@ X["bottle"] = {
 	["npc_dota_hero_dragon_knight"] = 1;
 	["npc_dota_hero_pugna"] = 1;
 	["npc_dota_hero_naga_siren"] = 1;
+	["npc_dota_hero_void_spirit"] = 1;
 }
 
 X["phase_boots"] = {
@@ -1606,7 +1631,8 @@ X['mid'] = {
 	'npc_dota_hero_tinker',
 	'npc_dota_hero_tiny',
 	'npc_dota_hero_viper',
-	'npc_dota_hero_zuus'
+	'npc_dota_hero_void_spirit',
+	'npc_dota_hero_zuus',
 }
 
 X['safe'] = {
@@ -1663,6 +1689,7 @@ X['supp'] = {
 	'npc_dota_hero_shadow_shaman',
 	'npc_dota_hero_silencer',
 	'npc_dota_hero_skywrath_mage',
+	'npc_dota_hero_snapfire',
 	'npc_dota_hero_techies',
 	'npc_dota_hero_treant',
 	'npc_dota_hero_undying',
@@ -1671,7 +1698,7 @@ X['supp'] = {
 	'npc_dota_hero_warlock',
 	'npc_dota_hero_winter_wyvern',
 	'npc_dota_hero_wisp',
-	'npc_dota_hero_witch_doctor'
+	'npc_dota_hero_witch_doctor',
 }
 
 

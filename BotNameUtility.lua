@@ -207,14 +207,14 @@ local dota2team = {
 		['sponsorship'] = 'G2A';
 	},
 	[18] = {
-		['name'] = "BOOM Esports";
-		['alias'] = "BOOM";
+		['name'] = "Nigma";
+		['alias'] = "Nigma";
 		['players'] = {
-			'Dreamocel',
-			'Mikoto',
-			'Fbz',
-			'inYourdreaM',
-			'Khezcute'
+			'Miracle-',
+			'w33',
+			'MinD_ContRoL',
+			'GH',
+			'KuroKy'
 		};
 		['sponsorship'] = 'G2A';
 	},

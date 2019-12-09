@@ -32,6 +32,7 @@ local castWDesire  = 0;
 local castEDesire  = 0;
 local castE2Desire = 0;
 local castRDesire  = 0;
+local nmCastTime = 0;
 
 function AbilityUsageThink()
 	
@@ -45,7 +46,7 @@ function AbilityUsageThink()
 	
 	ItemGC = mutil.GetComboItem(npcBot, 'item_glimmer_cape')
 	
-	castQDesire, castQTarget = ConsiderQ();
+	--castQDesire, castQTarget = ConsiderQ();
 	castWDesire, castWTarget = ConsiderW();
 	castEDesire, castETarget = ConsiderE();
 	castE2Desire             = ConsiderE2();
@@ -64,6 +65,7 @@ function AbilityUsageThink()
 
 	if ( castEDesire > 0 ) 
 	then
+	    nmCastTime = DotaTime();
 		npcBot:Action_UseAbilityOnEntity( abilityE, castETarget );
 		return;
 	end
@@ -285,7 +287,7 @@ end
 function ConsiderE2()
 	
 	-- Make sure it's castable
-	if ( not abilityE2:IsFullyCastable() or abilityE2:IsHidden() ) then 
+	if ( not abilityE2:IsFullyCastable() or abilityE2:IsHidden() or DotaTime() < nmCastTime + 1.5 ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 

@@ -31,11 +31,13 @@ local Combo3 = 0;
 local castTODesire = 0;
 local castXSDesire = 0;
 local castGSDesire = 0;
+local castTSDesire = 0;
 
 local abilityTO = "";
 local abilityXS = "";
 local abilityRT = "";
 local abilityGS = "";
+local abilityTS = "";
 local npcBot = nil;
 
 function AbilityUsageThink()
@@ -54,6 +56,7 @@ function AbilityUsageThink()
 	if abilityXS == "" then abilityXS = npcBot:GetAbilityByName( "kunkka_x_marks_the_spot" ); end
 	if abilityRT == "" then abilityRT = npcBot:GetAbilityByName( "kunkka_return" ); end
 	if abilityGS == "" then abilityGS = npcBot:GetAbilityByName( "kunkka_ghostship" ); end
+	if abilityTS == "" then abilityTS = npcBot:GetAbilityByName( "kunkka_torrent_storm" ); end
 	
 	Combo1, Combo1Target, Combo1Loc = ConsiderCombo1();
 	Combo2, Combo2Target, Combo2Loc = ConsiderCombo2();
@@ -61,6 +64,7 @@ function AbilityUsageThink()
 	castTODesire, castTOLoc = ConsiderTorrent()
 	castXSDesire, castXSTarget = ConsiderXMark()
 	castGSDesire, castGSLoc = ConsiderGhostShip()
+	castTSDesire = ConsiderTorrentStorm()
 	
 	if not abilityRT:IsHidden() and 
 		( 
@@ -114,6 +118,11 @@ function AbilityUsageThink()
 	
 	if castGSDesire > 0 then
 		npcBot:Action_UseAbilityOnLocation(abilityGS,  castGSLoc);
+		return;
+	end
+	
+	if castTSDesire > 0 then
+		npcBot:Action_UseAbility(abilityTS);
 		return;
 	end
 	
@@ -359,4 +368,54 @@ function ConsiderGhostShip()
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, nil;
+end
+
+function ConsiderTorrentStorm()
+
+	-- Make sure it's castable
+	if ( abilityTS:IsFullyCastable() == false or npcBot:HasScepter() == false ) then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	-- Get some of its values
+	local nRadius    = abilityTS:GetSpecialValueInt( "torrent_max_distance" );
+	local nCastPoint = abilityTS:GetCastPoint( );
+	local nManaCost  = abilityTS:GetManaCost( );
+
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if mutil.IsRetreating(npcBot) 
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy)  ) 
+			then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
+		end
+	end
+	
+	if mutil.IsInTeamFight(npcBot, 1200)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius - 200, true, BOT_MODE_NONE );
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_HIGH;
+		end
+	end
+	
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius-200)
+		then
+			local enemies = npcTarget:GetNearbyHeroes(nRadius/2, false, BOT_MODE_NONE);
+			if #enemies >= 2 then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
 end

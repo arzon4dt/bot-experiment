@@ -30,6 +30,7 @@ local casthookDesire = 0;
 local castflareDesire = 0;
 local castBlinkInitDesire = 0; 
 local castForceEnemyDesire = 0;
+local castOverclockDesire = 0;
 function AbilityUsageThink()
 	local npcBot = GetBot();
 		
@@ -40,6 +41,7 @@ function AbilityUsageThink()
 	abilityCogs = npcBot:GetAbilityByName( "rattletrap_power_cogs" );
 	abilityHook = npcBot:GetAbilityByName( "rattletrap_hookshot" );
 	abilityFlare = npcBot:GetAbilityByName( "rattletrap_rocket_flare" );
+	abilityOverclock = npcBot:GetAbilityByName( "rattletrap_overclocking" );
 	itemForce = "item_force_staff";
 	itemBlink = "item_blink";
 	for i=0, 5 do
@@ -62,6 +64,7 @@ function AbilityUsageThink()
 	castFlareDesire, castFlareTarget = ConsiderFlare();
 	castBlinkInitDesire, castBlinkInitTarget = ConsiderBlinkInit();
 	castForceEnemyDesire, castForceEnemyTarget = ConsiderForceEnemy();
+	--castOverclockDesire = ConsiderOverclock();
 
 	local highestDesire = castCogsDesire;
 	local desiredSkill = 1;
@@ -111,6 +114,10 @@ function AbilityUsageThink()
     elseif desiredSkill == 7 then 
 		performForceEnemy( castForceEnemyTarget );
 	end	
+	
+	if castOverclockDesire > 0 then
+		npcBot:Action_UseAbility( abilityOverclock );
+	end
 
 end
 
@@ -394,6 +401,88 @@ function ConsiderCogs()
 	
 	return BOT_ACTION_DESIRE_NONE;
 
+end
+
+function ConsiderOverclock()
+
+	local npcBot = GetBot();
+
+	-- Make sure it's castable
+	if ( not abilityOverclock:IsFullyCastable() ) or npcBot:HasScepter() == false then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+
+	-- If we want to cast priorities at all, bail
+	--if ( castPhaseDesire > 0 or castCoilDesire > 50) then
+	--	return BOT_ACTION_DESIRE_NONE;
+	--end
+
+	-- Get some of its values
+	local nRadius = abilityBA:GetSpecialValueInt( "radius" );
+	local nDamage = 10 * abilityBA:GetAbilityDamage();
+
+	--------------------------------------
+	-- Mode based usage
+	--------------------------------------
+
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+		for _,npcTarget in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcTarget, 2.0 ) ) 
+			then
+				if ( CanCastBAOnTarget( npcTarget ) ) 
+				then
+				--print("retreat Net")
+					return BOT_ACTION_DESIRE_MODERATE
+				end
+			end
+		end
+	end
+
+	-- If we're going after someone
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROAM or
+		 npcBot:GetActiveMode() == BOT_MODE_ATTACK or
+		 npcBot:GetActiveMode() == BOT_MODE_TEAM_ROAM or
+		 npcBot:GetActiveMode() == BOT_MODE_GANK or
+		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
+	then
+		local npcTarget = npcBot:GetTarget();
+
+		if ( npcTarget ~= nil  and npcTarget:IsHero() ) 
+		then
+			if GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius then
+				return BOT_ACTION_DESIRE_MODERATE
+			end
+		end
+	end
+
+	-- If enemy is channeling cancel it
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+	for _,npcTarget in pairs( tableNearbyEnemyHeroes )
+	do
+		if ( npcTarget:IsChanneling() and GetUnitToUnitDistance( npcTarget, npcBot ) < nRadius ) 
+		then
+			if ( CanCastBAOnTarget( npcTarget ) ) 
+			then
+			--print("retreat Net")
+				return BOT_ACTION_DESIRE_MODERATE
+			end
+		end
+	end
+
+	-- If a mode has set a target, and we can kill them, do it
+	if ( npcTarget ~= nil  and npcTarget:IsHero() and CanCastBAOnTarget( npcTarget ) )
+	then
+		if ( npcTarget:GetActualIncomingDamage( nDamage, 2 ) > npcTarget:GetHealth() and GetUnitToUnitDistance( npcTarget, npcBot ) < nRadius )
+		then
+			return BOT_ACTION_DESIRE_HIGH;
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
 ----------------------------------------------------------------------------------------------------

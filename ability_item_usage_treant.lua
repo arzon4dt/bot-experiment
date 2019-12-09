@@ -20,13 +20,17 @@ local castNGDesire = 0;
 local castLSDesire = 0;
 local castLADesire = 0;
 local castOGDesire = 0;
+local castEFDesire = 0;
 
 local abilityNG = nil;
 local abilityLS = nil;
 local abilityLA = nil;
 local abilityOG = nil;
+local abilityEF = nil;
 
 local npcBot = nil;
+local checkBuildingTime = DotaTime();
+local team = GetTeam();
 
 function AbilityUsageThink()
 
@@ -35,16 +39,19 @@ function AbilityUsageThink()
 	-- Check if we're already using an ability
 	if mutil.CanNotUseAbility(npcBot) then return end
 
-	if abilityNG == nil then abilityNG = npcBot:GetAbilityByName( "treant_natures_guise" ) end
+	if abilityNG == nil then abilityNG = npcBot:GetAbilityByName( "treant_natures_grasp" ) end
 	if abilityLS == nil then abilityLS = npcBot:GetAbilityByName( "treant_leech_seed" ) end
 	if abilityLA == nil then abilityLA = npcBot:GetAbilityByName( "treant_living_armor" ) end
 	if abilityOG == nil then abilityOG = npcBot:GetAbilityByName( "treant_overgrowth" ) end
+	if abilityEF == nil then abilityEF = npcBot:GetAbilityByName( "treant_eyes_in_the_forest" ) end
 
 	-- Consider using each ability
-	castNGDesire, castNGTarget = ConsiderNatureGuise();
+	--castNGDesire, castNGTarget = ConsiderNatureGuise();
+	castNGDesire, castNGTarget = ConsiderNatureGrasp();
 	castLSDesire, castLSTarget = ConsiderLeechSeed();
 	castLADesire, castLATarget = ConsiderLivingArmor();
 	castOGDesire, castOGTarget = ConsiderOvergrowth();
+	castEFDesire, castEFTarget = ConsiderEyeForest();
 	
 
 	if ( castOGDesire > castLSDesire and castOGDesire > castLADesire ) 
@@ -55,13 +62,19 @@ function AbilityUsageThink()
 	
 	if ( castNGDesire > 0 ) 
 	then
-		npcBot:Action_UseAbility( abilityNG );
+		npcBot:Action_UseAbilityOnLocation( abilityNG, castNGTarget );
 		return;
 	end
 
 	if ( castLSDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityLS, castLSTarget );
+		npcBot:Action_UseAbility( abilityLS );
+		return;
+	end
+	
+	if ( castEFDesire > 0 ) 
+	then
+		npcBot:Action_UseAbilityOnTree( abilityEF, castEFTarget );
 		return;
 	end
 	
@@ -76,6 +89,91 @@ function AbilityUsageThink()
 		return;
 	end
 
+end
+
+
+
+function GetTargetBuildingToHeal(total_heal)
+	local target_building = nil;
+	local min_hp = 10000;
+	for i=1, #mutil.towers do
+		local tower = GetTower(team, mutil.towers[i]);
+		if tower ~= nil then
+			local hp = tower:GetHealth();
+			if hp < min_hp and hp + total_heal < tower:GetMaxHealth() then
+				target_building = tower;
+				min_hp = hp;
+			end	
+		end
+	end
+	for i=1, #mutil.barracks do
+		local barrack = GetBarracks(team, mutil.barracks[i]);
+		if barrack ~= nil then
+			local hp = barrack:GetHealth();
+			if hp < min_hp and hp + total_heal < barrack:GetMaxHealth() then
+				target_building = barrack;
+				min_hp = hp;
+			end	
+		end
+	end
+	return target_building;
+end
+
+function ConsiderNatureGrasp()
+
+	-- Make sure it's castable
+	if ( not abilityNG:IsFullyCastable() ) 
+	then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+
+
+	-- Get some of its values
+	local nRadius = abilityNG:GetSpecialValueInt( "latch_range" );
+	local nCastRange = abilityNG:GetCastRange();
+	local nCastPoint = abilityNG:GetCastPoint( );
+
+	if nCastRange > 1600 then nCastRange = 1600; end
+
+	--------------------------------------
+	-- Mode based usage
+	--------------------------------------
+	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+			then
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
+			end
+		end
+	end
+	
+	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
+	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and npcBot:GetMana() / npcBot:GetMaxMana() > 0.6
+	then
+		local lanecreeps = npcBot:GetNearbyLaneCreeps(nCastRange, true);
+		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		if (  locationAoE.count >= 4 and #lanecreeps >= 4   ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		end
+	end
+
+	
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange-200) ) 
+		then
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
+		end
+	end
+--
+	return BOT_ACTION_DESIRE_NONE, 0;
 end
 
 function ConsiderNatureGuise()
@@ -127,7 +225,7 @@ function ConsiderLeechSeed()
 
 
 	-- Get some of its values
-	local nCastRange = abilityLS:GetCastRange();
+	local nCastRange = abilityLS:GetSpecialValueInt('radius');
 	local nDuration = abilityLS:GetSpecialValueInt( "duration" );
 	local nDOT = abilityLS:GetSpecialValueInt( "leech_damage" );
 
@@ -178,7 +276,8 @@ function ConsiderLivingArmor()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	
+	local nCastRange = 1600;
+	local total_heal = abilityLA:GetSpecialValueInt('total_heal');
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
@@ -206,7 +305,7 @@ function ConsiderLivingArmor()
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( 1300, false, BOT_MODE_NONE );
+		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE );
 		for _,npcAlly in pairs( tableNearbyAllyHeroes )
 		do
 			if (  mutil.CanCastOnNonMagicImmune(npcAlly) and( npcAlly:GetHealth() / npcAlly:GetMaxHealth() ) < 0.5 ) 
@@ -220,7 +319,7 @@ function ConsiderLivingArmor()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 600)
+		if mutil.IsValidTarget(npcTarget) and ( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.5  and mutil.IsInRange(npcTarget, npcBot, 600) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcBot;
 		end
@@ -237,17 +336,16 @@ function ConsiderLivingArmor()
 		end
 	end
 	
-	local Team = GetTeam();
-	for i = 0, 10
-	do
-		local tower =  GetTower(Team, i);
-		if tower ~= nil and tower:GetHealth() > 0 then
-			local THealth = tower:GetHealth()/tower:GetMaxHealth();
-			if  THealth < 1.0 and npcBot:GetMana()/npcBot:GetMaxMana() > 0.45 then 
-				return BOT_ACTION_DESIRE_MODERATE, tower;
-			end
-		end
+	local target_building = nil;
+	if  DotaTime() > checkBuildingTime + 5.0 then
+		target_building = GetTargetBuildingToHeal(total_heal);
+		checkBuildingTime = DotaTime();
 	end
+	
+	if target_building ~= nil then
+		return  BOT_ACTION_DESIRE_HIGH, target_building;
+	end
+	
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
@@ -295,4 +393,29 @@ function ConsiderOvergrowth()
 	end
 	
 	return BOT_ACTION_DESIRE_NONE;
+end
+
+
+function ConsiderEyeForest()
+
+	-- Make sure it's castable
+	if ( not abilityEF:IsFullyCastable() or npcBot:HasScepter() == false or npcBot:DistanceFromFountain() < 1000 ) then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+
+	-- Get some of its values
+	local nRadius = abilityEF:GetCastRange();
+
+	local trees = npcBot:GetNearbyTrees(nRadius + 200);
+
+	if #trees >= 1 then
+		for i=1, #trees do
+			if ( IsLocationVisible(GetTreeLocation(trees[i])) or IsLocationPassable(GetTreeLocation(trees[i])) ) then
+				return BOT_ACTION_DESIRE_HIGH, trees[i];
+			end
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
+
 end

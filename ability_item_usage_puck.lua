@@ -82,7 +82,7 @@ local sideOfMap = 0
 	-- Consider using each ability
 
 	castPhaseDesire = ConsiderPhaseShift();
-	castSilenceDesire = ConsiderWaningRift();
+	castSilenceDesire, castSilenceTarget = ConsiderWaningRift();
 	castCoilDesire, castCoilTarget = ConsiderDreamCoil();
 	castJauntDesire = ConsiderEtherealJaunt();
 	castBlinkInitDesire, castBlinkInitTarget = ConsiderBlinkInit();
@@ -134,7 +134,7 @@ local sideOfMap = 0
 		illuOrbLoc = castOrbTarget;
 		npcBot:Action_UseAbilityOnLocation( abilityOrb, castOrbTarget );
     elseif desiredSkill == 2 then 
-		npcBot:Action_UseAbility( abilitySilence);
+		npcBot:Action_UseAbilityOnLocation( abilitySilence, castSilenceTarget);
     elseif desiredSkill == 3 then 
 		npcBot:Action_UseAbility( abilityPhase);
     elseif desiredSkill == 4 then 
@@ -266,17 +266,14 @@ function ConsiderWaningRift()
 
 	-- Get some of its values
 	local nRadius = abilitySilence:GetSpecialValueInt( "radius" );
-	local nCastRange = 0;
+	local nCastRange = abilitySilence:GetCastRange();
 	local nDamage = abilitySilence:GetAbilityDamage();
+	local nManaCost = abilitySilence:GetManaCost();
 
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-	if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes  >= 3 
-	then
-		return BOT_ACTION_DESIRE_MODERATE;
-	end
+	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH ) 
 	then
@@ -285,8 +282,28 @@ function ConsiderWaningRift()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and CanCastWaningRiftOnTarget( npcEnemy )  ) 
 			then
-				return BOT_ACTION_DESIRE_MODERATE;
+				local loc = mutil.GetEscapeLoc();
+				return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange )
 			end
+		end
+	end
+
+	if ( mutil.IsPushing(npcBot) or mutil.IsDefending(npcBot) ) and mutil.AllowedToSpam(npcBot, nManaCost)
+	then
+		local lanecreeps = npcBot:GetNearbyLaneCreeps(nCastRange+200, true);
+		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 4 and #lanecreeps >= 4  ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		end
+	end
+
+	if mutil.IsInTeamFight(npcBot, 1300)
+	then
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
 
@@ -298,12 +315,11 @@ function ConsiderWaningRift()
 		 npcBot:GetActiveMode() == BOT_MODE_DEFEND_ALLY ) 
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( npcTarget ~= nil and npcTarget:IsHero() and CanCastWaningRiftOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nRadius ) 
+		if ( mutil.IsValidTarget(npcTarget) and CanCastWaningRiftOnTarget( npcTarget ) and GetUnitToUnitDistance( npcBot, npcTarget ) < nCastRange + nRadius/2 ) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetLocation();
 		end
 	end
-
 	return BOT_ACTION_DESIRE_NONE;
 
 end

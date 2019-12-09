@@ -7,6 +7,16 @@ local maxAddedRange = 200;
 
 local fSpamThreshold = 0.55;
 
+U.towers = { TOWER_TOP_1, TOWER_TOP_2, TOWER_TOP_3,
+                   TOWER_MID_1, TOWER_MID_2, TOWER_MID_3,
+                   TOWER_BOT_1, TOWER_BOT_2, TOWER_BOT_3,
+                   TOWER_BASE_1, TOWER_BASE_2
+				   }
+U.barracks = { BARRACKS_TOP_MELEE, BARRACKS_TOP_RANGED, 
+					 BARRACKS_MID_MELEE, BARRACKS_MID_RANGED, 
+					 BARRACKS_BOT_MELEE, BARRACKS_BOT_RANGED
+					}				   
+
 local listBoots = {
 	['item_boots'] = 45, 
 	['item_tranquil_boots'] = 90, 

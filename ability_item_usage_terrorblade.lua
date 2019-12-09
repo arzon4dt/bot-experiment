@@ -41,7 +41,7 @@ function AbilityUsageThink()
 
 	-- Consider using each ability
 	castDPDesire = ConsiderDarkPact();
-	castDCDesire = ConsiderDecay();
+	castDCDesire, castDCLoc = ConsiderDecay();
 	castFGDesire = ConsiderFleshGolem();
 	castFBDesire, castFBTarget = ConsiderFireblast();
 
@@ -62,7 +62,7 @@ function AbilityUsageThink()
 	end
 	if ( castDCDesire > 0 ) 
 	then
-		npcBot:Action_UseAbility( abilityDC );
+		npcBot:Action_UseAbilityOnLocation( abilityDC, castDCLoc );
 		return;
 	end
 	
@@ -91,41 +91,30 @@ function ConsiderDecay()
 
 
 	-- Get some of its values
-	local nRadius = abilityDC:GetSpecialValueInt( "range" );
-	local nCastPoint = abilityDC:GetCastPoint( );
+	-- Get some of its values
+	local nRadius      = abilityDC:GetSpecialValueInt('range');
+	local nCastRange   = npcBot:GetAttackRange();
+	local nCastPoint   = abilityDC:GetCastPoint( );
+	local nManaCost    = abilityDC:GetManaCost( );
+	local nAttackRange = npcBot:GetAttackRange( );
 
-	--------------------------------------
-	-- Mode based usage
-	--------------------------------------
-	
-	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if mutil.IsRetreating(npcBot)
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
-			end
-		end
-	end
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 ) then
-			return BOT_ACTION_DESIRE_MODERATE;
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
-	
+
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange( npcTarget, npcBot, nRadius - 200) ) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
-				return BOT_ACTION_DESIRE_MODERATE;
+			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
 		end
 	end
 --

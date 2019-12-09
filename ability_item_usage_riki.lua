@@ -56,7 +56,7 @@ function AbilityUsageThink()
 	
 	if ( castOGDesire > 0 ) 
 	then
-		npcBot:Action_UseAbility( abilityOG );
+		npcBot:Action_UseAbilityOnLocation( abilityOG, castOGTarget );
 		return;
 	end
 	
@@ -217,6 +217,7 @@ function ConsiderOvergrowth()
 	end
 	
 	local nRadius = abilityOG:GetSpecialValueInt( "range" );
+	local nCastRange = abilityOG:GetCastRange( );
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
@@ -226,17 +227,18 @@ function ConsiderOvergrowth()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
 			then
-				return BOT_ACTION_DESIRE_HIGH;
+				local loc = mutil.GetEscapeLoc();
+				return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange )
 			end
 		end
 	end
 	
-	if mutil.IsInTeamFight(npcBot, 1200)
+	if mutil.IsInTeamFight(npcBot, 1300)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE  );
-		if ( #tableNearbyEnemyHeroes >= 3 )
+		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
 		end
 	end
 	
@@ -244,9 +246,9 @@ function ConsiderOvergrowth()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
-			return BOT_ACTION_DESIRE_HIGH;
+			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
 		end
 	end
 	

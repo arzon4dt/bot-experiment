@@ -3,38 +3,58 @@ local BOT_SIDE_SHOP = GetShopLocation(GetTeam(), SHOP_SIDE )
 local TOP_SIDE_SHOP = GetShopLocation(GetTeam(), SHOP_SIDE2 )
 local closestSideShop = nil;
 
+local getop = false;
+local outposts = {}
+
 function GetDesire()
 	
-	if npcBot:IsIllusion() or npcBot:IsChanneling() then
-		return BOT_MODE_DESIRE_NONE;
-	end
 	
-	if string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() then
-		return BOT_MODE_DESIRE_NONE;
-	end
 	
-	if not IsSuitableToBuy() then
-		return BOT_MODE_DESIRE_NONE;
-	end
+	-- if getop == false then
+	-- local units = GetUnitList(UNIT_LIST_ALL);
+	-- for _,unit in pairs(units) do
+		-- if unit:GetUnitName() == 'npc_dota_watch_tower' then
+			-- print(unit:GetUnitName()..tostring(unit));
+			-- table.insert(outposts, unit);
+		-- end
+	-- end
+	-- getop = true;
+	-- end
 	
-	local invFull = true;
+	-- if getop == true and GetTeam() == TEAM_RADIANT then
+		-- return BOT_MODE_DESIRE_ABSOLUTE;
+	-- end
 	
-	for i=0,8 do 
-		if npcBot:GetItemInSlot(i) == nil then
-			invFull = false;
-		end	
-	end
+	-- if npcBot:IsIllusion() or npcBot:IsChanneling() then
+		-- return BOT_MODE_DESIRE_NONE;
+	-- end
 	
-	if invFull then
-		return BOT_MODE_DESIRE_NONE
-	end
+	-- if string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() then
+		-- return BOT_MODE_DESIRE_NONE;
+	-- end
 	
-	if npcBot.SideShop then
-		closestSideShop = GetClosestSideShop();
-		if IsNearbyEnemyClosestToLoc(closestSideShop) == false then
-			return BOT_MODE_DESIRE_HIGH
-		end
-	end
+	-- if not IsSuitableToBuy() then
+		-- return BOT_MODE_DESIRE_NONE;
+	-- end
+	
+	-- local invFull = true;
+	
+	-- for i=0,8 do 
+		-- if npcBot:GetItemInSlot(i) == nil then
+			-- invFull = false;
+		-- end	
+	-- end
+	
+	-- if invFull then
+		-- return BOT_MODE_DESIRE_NONE
+	-- end
+	
+	-- if npcBot.SideShop then
+		-- closestSideShop = GetClosestSideShop();
+		-- if IsNearbyEnemyClosestToLoc(closestSideShop) == false then
+			-- return BOT_MODE_DESIRE_HIGH
+		-- end
+	-- end
 
 	return BOT_MODE_DESIRE_NONE
 
@@ -42,10 +62,13 @@ end
 
 function Think()
 	
-	if npcBot:DistanceFromSideShop() > 0 then
-		npcBot:Action_MoveToLocation(closestSideShop);
-		return
-	end	
+	-- if npcBot:DistanceFromSideShop() > 0 then
+		-- npcBot:Action_MoveToLocation(closestSideShop);
+		-- return
+	-- end	
+	
+	npcBot:Action_UseShrine(outposts[2]);	
+	return
 	
 end
 

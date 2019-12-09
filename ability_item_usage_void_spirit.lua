@@ -32,30 +32,29 @@ local castRDesire = 0;
 
 local remnantLoc = Vector(0, 0, 0);
 local remnantCastTime = -100;
-local remnantCastGap  = 0.1;
+local remnantCastGap  = 0.2;
 
 function AbilityUsageThink()
 	
 	if npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() then return end
 	
-	if abilityQ == nil then abilityQ = npcBot:GetAbilityByName( "ember_spirit_searing_chains" ) end
-	if abilityW == nil then abilityW = npcBot:GetAbilityByName( "ember_spirit_sleight_of_fist" ) end
-	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "ember_spirit_flame_guard" ) end
-	if abilityD == nil then abilityD = npcBot:GetAbilityByName( "ember_spirit_activate_fire_remnant" ) end
-	if abilityR == nil then abilityR = npcBot:GetAbilityByName( "ember_spirit_fire_remnant" ) end
+	if abilityQ == nil then abilityQ = npcBot:GetAbilityByName( "void_spirit_resonant_pulse" ) end
+	if abilityW == nil then abilityW = npcBot:GetAbilityByName( "void_spirit_aether_remnant" ) end
+	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "void_spirit_dissimilate" ) end
+	--if abilityD == nil then abilityD = npcBot:GetAbilityByName( "ember_spirit_activate_fire_remnant" ) end
+	if abilityR == nil then abilityR = npcBot:GetAbilityByName( "void_spirit_astral_step" ) end
 
 	castQDesire              = ConsiderQ();
 	castWDesire, castWLoc    = ConsiderW();
 	castEDesire              = ConsiderE();
-	castDDesire, castDLoc    = ConsiderD();
+	--castDDesire, castDLoc    = ConsiderD();
 	castRDesire, castRLoc    = ConsiderR();
 
 	
 	if ( castRDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnLocation( abilityR, castRLoc );
 		remnantCastTime = DotaTime();
-		remnantLoc = castRLoc;
+		npcBot:Action_UseAbilityOnLocation( abilityR, castRLoc );
 		return;
 	end
 	
@@ -94,7 +93,7 @@ function ConsiderQ()
 
 	-- Get some of its values
 	local nRadius   = abilityQ:GetSpecialValueInt( "radius" );
-	local nDamage   = abilityQ:GetSpecialValueInt( "total_damage_tooltip" );
+	local nDamage   = abilityQ:GetSpecialValueInt( "damage" );
 	local nManaCost = abilityQ:GetManaCost( );
 
 	--------------------------------------
@@ -161,10 +160,10 @@ function ConsiderW()
 
 	-- Get some of its values
 	local nRadius    = abilityW:GetSpecialValueInt('radius');
-	local nCastRange = abilityW:GetCastRange();
+	local nCastRange = abilityW:GetCastRange()-200;
 	local nCastPoint = abilityW:GetCastPoint( );
 	local nManaCost  = abilityW:GetManaCost( );
-	local nDamage    = npcBot:GetAttackDamage() + abilityW:GetSpecialValueInt( 'bonus_hero_damage');
+	local nDamage    = abilityW:GetSpecialValueInt( 'impact_damage');
 	
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + nRadius/2, true, BOT_MODE_NONE );
 	
@@ -183,7 +182,7 @@ function ConsiderW()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) ) 
 			then
-				return BOT_ACTION_DESIRE_HIGH, npcEnemy:GetLocation();
+				return BOT_ACTION_DESIRE_HIGH, npcBot:GetLocation();
 			end
 		end
 	end
@@ -211,7 +210,7 @@ function ConsiderW()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + (nRadius/2)) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation()
 		end
@@ -229,8 +228,8 @@ function ConsiderE()
 	end
 
 	-- Get some of its values
-	local nRadius   = abilityE:GetSpecialValueInt( "radius" );
-	local nDamage   = abilityE:GetSpecialValueFloat( "duration" ) * abilityE:GetSpecialValueInt( "damage_per_second" )
+	local nRadius   = abilityE:GetSpecialValueInt( "first_ring_distance_offset" );
+	local nDamage   = abilityE:GetAbilityDamage();
 	local nManaCost = abilityE:GetManaCost( );
 
 	--------------------------------------
@@ -251,26 +250,11 @@ function ConsiderE()
 		end
 	end
 
-	if npcBot:GetActiveMode() == BOT_MODE_FARM 
-	then
-		local npcTarget = npcBot:GetAttackTarget();
-		if npcTarget ~= nil then
-			return BOT_ACTION_DESIRE_LOW;
-		end
-	end	
-	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
-	then
-		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)  )
-		then
-			return BOT_ACTION_DESIRE_LOW;
-		end
-	end
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 and mutil.IsInRange(tableNearbyEnemyHeroes[1], npcBot, nRadius + 200) ) 
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius+200, true, BOT_MODE_NONE );
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 2 ) 
 		then
 			return BOT_ACTION_DESIRE_LOW;
 		end
@@ -280,7 +264,7 @@ function ConsiderE()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius + 200)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
 		then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
@@ -312,41 +296,23 @@ end
 function ConsiderR()
 	
 	-- Make sure it's castable
-	if ( not abilityR:IsFullyCastable() or not abilityD:IsFullyCastable() or npcBot:IsRooted() ) then 
+	if ( not abilityR:IsFullyCastable() or npcBot:IsRooted() or DotaTime() <= remnantCastTime + remnantCastGap ) then 
 		return BOT_ACTION_DESIRE_NONE, {};
 	end
 	
-	if DotaTime() < remnantCastTime + remnantCastGap then
-		return BOT_ACTION_DESIRE_NONE, {};
-	end
-	
-	local units = GetUnitList(UNIT_LIST_ALLIED_OTHER);
-	local remnantCount = 0;
-	
-	for _,u in pairs(units) do
-		if u ~= nil and u:GetUnitName() == "npc_dota_ember_spirit_remnant" and GetUnitToUnitDistance(npcBot, u) < 1500 then
-			remnantCount = remnantCount + 1;
-		end
-	end
-	
-	if remnantCount > 0 then
-		return BOT_ACTION_DESIRE_NONE, {};
-	end
 	
 	-- Get some of its values
 	local nRadius      = abilityR:GetSpecialValueInt( "radius" );
-	local nCastRange   = abilityR:GetCastRange();
+	local nCastRange   = abilityR:GetSpecialValueInt("max_travel_distance")-200;
 	local nCastPoint   = abilityR:GetCastPoint();
-	local nDamage      = abilityR:GetSpecialValueInt( "damage" );
-	local nSpeed       = npcBot:GetCurrentMovementSpeed() * ( abilityR:GetSpecialValueInt( "speed_multiplier" ) / 100 );
+	local nDamage      = abilityR:GetSpecialValueInt( "pop_damage" );
+	local nSpeed       = 3000;
 	local nManaCost    = abilityR:GetManaCost( );
-
-	if nCastRange > 1600 then nCastRange = 1600 end
 
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange - 200, true, BOT_MODE_NONE );
+	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 	
 	--if we can kill any enemies
 	for _,npcEnemy in pairs(tableNearbyEnemyHeroes)
@@ -378,7 +344,7 @@ function ConsiderR()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 300) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 350) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
 		then
 			local targetAlly  = npcTarget:GetNearbyHeroes(1000, false, BOT_MODE_NONE);
 			local targetEnemy = npcTarget:GetNearbyHeroes(1000, true, BOT_MODE_NONE);
