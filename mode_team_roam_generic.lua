@@ -54,13 +54,13 @@ local cheeseCheck = -90;
 local refShardCheck = -90;
 local pickedItem = nil;
 local lastBootSlotCheck = -90;
+local hasNeutralItemCheck = -90;
 
 local function CheckFlag(bitfield, flag)
     return ((bitfield/flag) % 2) >= 1
 end
 
 function GetDesire()
-	
 	--[[local units = GetUnitList(UNIT_LIST_ALLIED_OTHER)
 	for _,unit in pairs(units) do
 		print(unit:GetUnitName()..":"..tostring(unit:GetBaseMovementSpeed())..":"..tostring(unit:GetBaseDamage())..":"..tostring(unit:GetAttackPoint()))
@@ -157,7 +157,16 @@ function GetDesire()
 				bot:ActionImmediate_SwapItems( tom, lessValItem );
 			end
 		end
-		lastBootSlotCheck = DotaTime();
+		-- if DotaTime() > hasNeutralItemCheck + 3.0 then
+			-- local slt, itm = items.GetNeutralItemInBP(bot);
+			-- if itm ~= nil then
+				-- local lvit = items.GetMainInvLessValItemSlot(bot);
+				-- print("Swap"..tostring(slt)..tostring(lvit))
+				-- bot:ActionImmediate_SwapItems( slt, lvit );
+			-- end
+			-- hasNeutralItemCheck = DotaTime();
+		-- end
+ 		lastBootSlotCheck = DotaTime();
 	end
 	
 	if GetGameMode() == GAMEMODE_1V1MID and bot:GetAssignedLane() ~= LANE_MID then
@@ -254,7 +263,6 @@ function GetDesire()
 	elseif bot:GetUnitName() == "npc_dota_hero_drow_ranger" then
 		if cAbility == nil then cAbility = bot:GetAbilityByName( "drow_ranger_multishot" ) end;
 		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
-			print("Drow team rome");
 			return BOT_MODE_DESIRE_ABSOLUTE;
 		end			
 	elseif bot:GetUnitName() == "npc_dota_hero_batrider" and bot:HasModifier('modifier_batrider_flaming_lasso_self') then
@@ -286,8 +294,8 @@ function GetDesire()
 			return BOT_MODE_DESIRE_MODERATE+0.05;	
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
-		if bot:HasModifier("modifier_tiny_craggy_exterior") == false then
-			if cAbility == nil or cAbility:GetName() ~= "tiny_craggy_exterior" then cAbility = bot:GetAbilityByName('tiny_craggy_exterior') end;
+		if bot:HasModifier("modifier_tiny_tree_grab") == false then
+			if cAbility == nil or cAbility:GetName() ~= "tiny_craggy_exterior" then cAbility = bot:GetAbilityByName('tiny_tree_grab') end;
 			if cAbility:IsFullyCastable() and bot:GetHealth() / bot:GetMaxHealth() > 0.15 and bot:DistanceFromFountain() > 1000 then
 				local trees = bot:GetNearbyTrees(500);
 				if #trees > 0 and ( IsLocationVisible(GetTreeLocation(trees[1])) or IsLocationPassable(GetTreeLocation(trees[1])) ) then
@@ -296,17 +304,30 @@ function GetDesire()
 					return BOT_MODE_DESIRE_ABSOLUTE;
 				end
 			end	
-		elseif bot:HasModifier("modifier_tiny_craggy_exterior") == true 
-			   and bot:GetModifierStackCount( bot:GetModifierByName("modifier_tiny_craggy_exterior") ) == 1 
+		elseif bot:HasModifier("modifier_tiny_tree_grab") == true 
+			   --and bot:GetModifierStackCount( bot:GetModifierByName("modifier_tiny_craggy_exterior") ) == 1 
 		then
 			local target = bot:GetTarget(); 
 			if mutil.IsValidTarget(target) and mutil.CanCastOnNonMagicImmune(target) 
-			   and mutil.IsInRange(target, bot, 500) == false and mutil.IsInRange(target, bot, 1000) == true
+			   and mutil.IsInRange(target, bot, 500) == false and mutil.IsInRange(target, bot, 1200) == true
+			   and bot:GetAttackDamage() >= target:GetHealth()
 			then   
 				treeThrowTarget = target;
 				cAbility = bot:GetAbilityByName('tiny_toss_tree');
 				return BOT_MODE_DESIRE_ABSOLUTE;
-			end		
+			elseif mutil.IsRetreating(bot)
+			then
+				local tableNearbyEnemyHeroes = bot:GetNearbyHeroes(1000, true, BOT_MODE_NONE)
+				for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+				do
+					if ( bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
+					then
+						treeThrowTarget = npcEnemy;
+						cAbility = bot:GetAbilityByName('tiny_toss_tree');
+						return BOT_MODE_DESIRE_ABSOLUTE;
+					end
+				end
+			end	
 		elseif bot:HasScepter() == true then
 			cAbility = bot:GetAbilityByName('tiny_tree_channel');
 			local tSearchRad = cAbility:GetSpecialValueInt('tree_grab_radius');

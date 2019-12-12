@@ -149,12 +149,12 @@ function ConsiderE()
 
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 	
-	if npcBot:GetActiveMode() == BOT_MODE_LANING then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-		if ( locationAoE.count >= 2 ) then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
-		end
-	end
+	-- if npcBot:GetActiveMode() == BOT_MODE_LANING then
+		-- local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		-- if ( locationAoE.count >= 2 ) then
+			-- return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		-- end
+	-- end
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then

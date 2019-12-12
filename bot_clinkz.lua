@@ -3,7 +3,6 @@ local bot = GetBot();
 local AttackDesire = 0;
 local MoveDesire = 0;
 
-
 function  MinionThink(  hMinionUnit ) 
 
 	if hMinionUnit:IsIllusion() then
@@ -35,7 +34,7 @@ function  MinionThink(  hMinionUnit )
 			-- hMinionUnit:Action_AttackUnit(target, true);
 			-- return
 		-- end
-		return true;
+		return;
 	end
 		
 end

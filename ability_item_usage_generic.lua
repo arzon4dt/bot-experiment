@@ -274,23 +274,26 @@ local cr = nil;
 local tm =  GetTeam();
 local pIDs = GetTeamPlayers(tm);
 function CourierUsageThink()
-
 	if GetGameMode() == 23 or bot:IsInvulnerable() or not bot:IsHero() or bot:IsIllusion() or bot:HasModifier("modifier_arc_warden_tempest_double") or GetNumCouriers() == 0 then
 		return;
 	end
 	
-	-- if GetTeam() == TEAM_RADIANT then
+	-- if GetTeam() == TEAM_DIRE then
 		-- print(bot:GetUnitName().."----"..tostring(bot:GetPlayerID()));
 		-- for i = 1, #pIDs do
 			-- print(GetSelectedHeroName(pIDs[i])..":"..pIDs[i])
 		-- end
 	-- end
-	-- for i=1, #pIDs do
-		-- if IsPlayerBot(pIDs[i]) == true then
-			-- local mbr = GetTeamMember(i);
-			-- if bot == mbr then
-				-- bot.courierID = i - 1;
-				-- bot.courierAssigned = true;
+	
+	-- if bot.courierAssigned == false then
+		-- for i=1, #pIDs do
+			-- if IsPlayerBot(pIDs[i]) == true then
+				-- local mbr = GetTeamMember(i);
+				-- if  bot == mbr then
+					-- bot.courierID = i - 1;
+					-- bot.courierAssigned = true;
+					-- print(bot:GetUnitName().." : Courier Successfully Assigned To Courier "..tostring(bot.courierID));
+				-- end
 			-- end
 		-- end
 	-- end
@@ -304,7 +307,7 @@ function CourierUsageThink()
 						-- print(bot:GetUnitName());
 						if cst == COURIER_STATE_MOVING then
 							courierUtils.pIDInc = courierUtils.pIDInc + 1;
-							print(bot:GetUnitName().." : Courier Successfully Assigned ."..tostring(cr));
+							print(bot:GetUnitName().." : Courier Successfully Assigned ."..tostring(bot.courierID));
 							checkCourier = false;
 							bot.courierAssigned = true;
 							courierUtils.calibrateTime = DotaTime();
@@ -822,6 +825,7 @@ end
 
 local giveTime = -90;
 local armToggle = -90;
+local castFusionRuneTime = -90;
 function UnImplementedItemUsage()
 
 	if bot:IsChanneling() or bot:IsUsingAbility() or bot:IsInvisible() or bot:IsMuted( ) or bot:HasModifier("modifier_doom_bringer_doom") then
@@ -1382,6 +1386,372 @@ function UnImplementedItemUsage()
 			   and npcTarget:HasModifier("modifier_item_nullifier_mute") == false 
 			then
 			    bot:Action_UseAbilityOnEntity(null, npcTarget);
+				return;
+			end
+		end
+	end
+	
+	--Neutral Item Usage
+	--item_arcane_ring
+	local arc_ring = IsItemAvailable("item_arcane_ring");
+	if arc_ring ~= nil and arc_ring:IsFullyCastable() then
+		local nRadius = 1200;
+		local nRestore = 75;
+		if bot:GetMana() + nRestore <= bot:GetMaxMana() then
+			local allies = bot:GetNearbyHeroes(nRadius, false, BOT_MODE_NONE);
+			if #allies >= 2 then
+				bot:Action_UseAbility(arc_ring);
+				return;
+			end
+		end	
+		if bot:GetMana() < 100 + 10 * bot:GetLevel() then
+			bot:Action_UseAbility(arc_ring);
+			return;
+		end
+	end
+	
+	--item_elixir
+	local elix = IsItemAvailable("item_elixer");
+	if elix ~= nil and elix:IsFullyCastable() then
+		local hpRes = 500;
+		local mnRes = 250;
+		local nCastRange = 250 + 200;
+		local allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
+		for i=1, #allies do
+			if allies[i]:WasRecentlyDamagedByAnyHero(4.0) == false and allies[i]:HasModifier('modifier_elixer_healing') == false 
+			and ( allies[i]:GetHealth() + hpRes < allies[i]:GetMaxHealth() or allies[i]:GetMana() + mnRes < allies[i]:GetMaxMana() )
+			and mutil.CanCastOnNonMagicImmune(allies[i]) 
+			then
+				bot:Action_UseAbilityOnEntity(elix, allies[i]);
+				return;
+			end
+		end
+	end
+	
+	--item_mango_tree
+	local mang_tree = IsItemAvailable("item_mango_tree");
+	if mang_tree ~= nil and mang_tree:IsFullyCastable() then
+		local nCastRange = 200;
+		bot:Action_UseAbilityOnLocation(mang_tree, bot:GetLocation() + RandomVector(nCastRange));
+		return;
+	end
+	
+	--item_royal_jelly
+	local royal = IsItemAvailable("item_royal_jelly");
+	if royal ~= nil and royal:IsFullyCastable() then
+		local nCastRange = 250 + 200;
+		local allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
+		for i=1, #allies do
+			if allies[i]:HasModifier("modifier_royal_jelly") == false
+			and mutil.CanCastOnNonMagicImmune(allies[i]) 
+			then
+				bot:Action_UseAbilityOnEntity(royal, allies[i]);
+				return;
+			end
+		end
+	end
+	
+	--item_trusty_shovel
+	local shov = IsItemAvailable("item_trusty_shovel");
+	if shov ~= nil and shov:IsFullyCastable() and bot:WasRecentlyDamagedByAnyHero(5.0) == false then
+		local nCastRange = 250;
+		local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+		if #enemies == 0 then
+			bot:Action_UseAbilityOnLocation(shov, bot:GetLocation() + RandomVector(nCastRange));
+			return;
+		end
+	end
+	
+	--item_clumsy_net
+	local clum = IsItemAvailable("item_clumsy_net");
+	if clum ~= nil and clum:IsFullyCastable() then
+		local nCastRange = 900;
+		if mutil.IsGoingOnSomeone(bot)
+		then	
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
+			and mutil.IsInRange(npcTarget, bot, nCastRange+200) 
+			and mutil.IsDisabled(true, npcTarget) == false
+			then
+			    bot:Action_UseAbilityOnEntity(clum, npcTarget);
+				return;
+			end
+		end
+	end
+	
+	--item_essence_ring
+	local ess_ring = IsItemAvailable("item_essence_ring");
+	if ess_ring ~= nil and ess_ring:IsFullyCastable() then
+		local hpRes = 425;
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			( bot:GetHealth() / bot:GetMaxHealth() ) < 0.25 ) and
+			bot:WasRecentlyDamagedByAnyHero(3.0)
+		then
+			bot:Action_UseAbility(ess_ring);
+			return;
+		end
+	end
+	
+	--item_greater_faerie_fire
+	local gff=IsItemAvailable("item_greater_faerie_fire");
+	if gff~=nil and gff:IsFullyCastable() then
+		local hpRes = 500;
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and 
+			bot:DistanceFromFountain() > 0 and
+			bot:WasRecentlyDamagedByAnyHero(3.0) and
+			( bot:GetHealth() / bot:GetMaxHealth() ) < 0.20 ) 
+		then
+			bot:Action_UseAbility(gff);
+			return;
+		end
+	end
+	
+	--item_repair_kit
+	local rep_kit = IsItemAvailable("item_repair_kit");
+	if rep_kit ~= nil and rep_kit:IsFullyCastable() then
+		local nCastRange = 600;
+		local towers = bot:GetNearbyTowers(nCastRange, false);
+		for i=1, #towers do
+			if towers[i]:GetHealth() <= 0.6 * towers[i]:GetMaxHealth() and towers[i]:HasModifier("modifier_repair_kit") == false then
+				bot:Action_UseAbilityOnEntity(rep_kit, towers[i]);
+				return;
+			end
+		end
+	end
+	
+	--item_spider_legs
+	local slegs = IsItemAvailable("item_spider_legs");
+	if slegs ~= nil and slegs:IsFullyCastable() then
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(3.0) )
+		then
+			bot:Action_UseAbility(slegs);
+			return;
+		end
+	end
+	
+	--item_flicker
+	local flick = IsItemAvailable("item_flicker");
+	if flick~= nil and flick:IsFullyCastable() then
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(3.0) and bot:IsRooted() == false )
+		then
+			bot:Action_UseAbility(flick);
+			return;
+		end
+	end
+	
+	--item_havoc_hammer
+	local hav_ham = IsItemAvailable("item_havoc_hammer");
+	if hav_ham ~= nil and hav_ham:IsFullyCastable() then
+		local nCastRange = 300;
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(3.0) )
+		then
+			local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+			if #enemies >= 1 then
+				bot:Action_UseAbility(hav_ham);
+				return;	
+			end
+		end
+	end
+	
+	--item_illusionsts_cape
+	local ill_cape = IsItemAvailable("item_illusionsts_cape");
+	if ill_cape ~= nil and ill_cape:IsFullyCastable() then
+		local nCastRange = bot:GetAttackRange();
+		if mutil.IsGoingOnSomeone(bot)
+		then	
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
+			and mutil.IsInRange(npcTarget, bot, nCastRange+200) 
+			then
+			    bot:Action_UseAbility(ill_cape);
+				return;
+			end
+		end
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(1.0) )
+		then
+			bot:Action_UseAbility(ill_cape);
+			return;
+		end
+	end
+	
+	--item_minotaur_horn
+	local min_horn = IsItemAvailable("item_minotaur_horn");
+	if min_horn ~= nil and min_horn:IsFullyCastable() and bot:IsMagicImmune() == false then
+		local nCastRange = bot:GetAttackRange();
+		if mutil.IsGoingOnSomeone(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
+		then	
+			if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange+200) 
+			then
+			    bot:Action_UseAbility(min_horn);
+				return;
+			end
+		end
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(1.0) )
+		then
+			bot:Action_UseAbility(min_horn);
+			return;
+		end
+	end
+	
+	--item_ninja_gear
+	local nin_gear = IsItemAvailable("item_ninja_gear");
+	if nin_gear ~= nil and nin_gear:IsFullyCastable() then
+		local nCastRange = 1025
+		if mutil.IsGoingOnSomeone(bot)
+		then	
+			if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange+200) == false 
+			and mutil.IsInRange(npcTarget, bot, 2500) == true 
+			then
+			    bot:Action_UseAbility(nin_gear);
+				return;
+			end
+		end
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(3.0) )
+		then
+			local enemies = bot:GetNearbyHeroes(nCastRange+200, true, BOT_MODE_NONE);
+			if #enemies == 0 then
+				bot:Action_UseAbility(nin_gear);
+				return;
+			end
+		end
+	end
+	
+	--item_demonicon
+	local dem = IsItemAvailable("item_demonicon");
+	if dem ~= nil and dem:IsFullyCastable() then
+		local nCastRange = bot:GetAttackRange()
+		if mutil.IsGoingOnSomeone(bot)
+		then	
+			if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange+200) == true
+			then
+			    bot:Action_UseAbility(dem);
+				return;
+			end
+		end
+	end
+	
+	--item_ex_machina
+	local ex_mac = IsItemAvailable("item_ex_machina");
+	if ex_mac ~= nil and ex_mac:IsFullyCastable() then
+		local nCastRange = bot:GetAttackRange()
+		if mutil.IsGoingOnSomeone(bot)
+		then	
+			if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange+200) == true
+			then
+				local nCdItem = 0;
+				for i=0, 5 do
+					local cdIt = bot:GetItemInSlot(i);
+					if cdIt ~= nil and cdIt:GetCooldownTimeRemaining() > 10 then
+						nCdItem = nCdItem + 1;
+					end
+				end
+				if nCdItem >= 2 then
+					bot:Action_UseAbility(ex_mac);
+					return;
+				end
+			end
+		end
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(1.0) )
+		then
+			local nCdItem = 0;
+			for i=0, 5 do
+				local cdIt = bot:GetItemInSlot(i);
+				if cdIt ~= nil and cdIt:GetCooldownTimeRemaining() > 10 then
+					nCdItem = nCdItem + 1;
+				end
+			end
+			if nCdItem >= 2 then
+				bot:Action_UseAbility(ex_mac);
+				return;
+			end
+		end
+	end
+	
+	--item_force_boots
+	local fboot = IsItemAvailable("item_force_boots");
+	if fboot ~= nil and fboot:IsFullyCastable() then
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(1.0) and
+			bot:IsFacingUnit(GetAncient(GetTeam()), 30) )
+		then
+			bot:Action_UseAbility(fboot);
+			return;
+		end
+	end
+	
+	--item_woodland_striders
+	local wood_str = IsItemAvailable("item_woodland_striders");
+	if wood_str ~= nil and wood_str:IsFullyCastable() then
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(0.5) )
+		then
+			bot:Action_UseAbility(wood_str);
+			return;
+		end
+	end
+	
+	--item_fusion_rune
+	local fus_rune = IsItemAvailable("item_fusion_rune");
+	if fus_rune ~= nil and fus_rune:IsFullyCastable() and DotaTime() > castFusionRuneTime + 50 then
+		local nCastRange = bot:GetAttackRange();
+		if mutil.IsGoingOnSomeone(bot)
+		then	
+			if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange+200) 
+			then
+				castFusionRuneTime = DotaTime();
+			    bot:Action_UseAbilityOnEntity(fus_rune, bot);
+				return;
+			end
+		end
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(1.0) )
+		then
+			castFusionRuneTime = DotaTime();
+			bot:Action_UseAbilityOnEntity(fus_rune, bot);
+			return;
+		end
+	end
+	
+	--item_fallen_sky
+	local fsky=IsItemAvailable("item_fallen_sky");
+	if fsky~=nil and fsky:IsFullyCastable() then
+		local nCastRange = 1600
+		local nRadius = 315;
+		if mutil.IsPushing(bot) then
+			local towers = bot:GetNearbyTowers(800, true);
+			if #towers > 0 and towers[1] ~= nil and  towers[1]:IsInvulnerable() == false then 
+				bot:Action_UseAbilityOnLocation(fsky, towers[1]:GetLocation());
+				return;
+			end
+		elseif  mutil.IsInTeamFight(bot, 1200) then
+			local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius/2, 0, 0 );
+			if ( locationAoE.count >= 2 ) 
+			then
+				bot:Action_UseAbilityOnLocation(fsky, locationAoE.targetloc);
+				return;
+			end
+		elseif mutil.IsGoingOnSomeone(bot) then
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange) 
+			   and mutil.IsDisabled(true, npcTarget) == true	
+			then
+				bot:Action_UseAbilityOnLocation(fsky, npcTarget:GetLocation());
 				return;
 			end
 		end

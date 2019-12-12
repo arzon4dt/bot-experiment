@@ -31,24 +31,6 @@ local castForceEnemyDesire = 0;
 ----------------------------------------------------------------------------------------------------
 local courierTime = 0
 local illuOrbLoc = nil;
-
-function CourierUsageThink()
-	local npcBot = GetBot()
-
-	if (IsCourierAvailable() and
-		npcBot:DistanceFromFountain() < 9000 and 
-		DotaTime() > (courierTime + 5) and
-		(npcBot:GetCourierValue( ) > 0 or
-		npcBot:GetStashValue( ) > 0) and
-		npcBot:GetActiveMode() ~= BOT_MODE_ATTACK and
-		npcBot:GetActiveMode() ~= BOT_MODE_RETREAT and
-		npcBot:GetActiveMode() ~= BOT_MODE_EVASIVE_MANEUVERS and
-		npcBot:GetActiveMode() ~= BOT_MODE_DEFEND_ALLY)
-	then
-		npcBot:ActionImmediate_Courier( npcBot, COURIER_ACTION_TAKE_AND_TRANSFER_ITEMS )
-		courierTime = DotaTime()
-	end
-end
 ----------------------------------------------------------------------------------------------------
 
 function AbilityUsageThink()

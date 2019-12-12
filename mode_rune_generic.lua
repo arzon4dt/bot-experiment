@@ -4,6 +4,7 @@ end
 
 local utils = require(GetScriptDirectory() ..  "/util")
 local role = require(GetScriptDirectory() .. "/RoleUtility");
+local uItem = require(GetScriptDirectory() .. "/ItemUtility" )
 local hero_roles = role["hero_roles"];
 local bot = GetBot();
 local minute = 0;
@@ -15,6 +16,9 @@ local teamPlayers = nil;
 local PingTimeGap = 10;
 local bottle = nil;
 local enemyPids = nil
+local neutralItemCheck = -90;
+local dropNeutralItemCheck = -90;
+local neutralItem = nil;
 
 local ListRune = {
 	RUNE_BOUNTY_1,
@@ -61,6 +65,19 @@ function GetDesire()
 		return BOT_MODE_DESIRE_MODERATE;
 	end	
 	
+	if DotaTime() > dropNeutralItemCheck + 5.0 then
+		local canDrop, hItem = uItem.CanDropNeutralItem(bot);
+		if canDrop == true then
+			bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
+			return;
+		end
+		dropNeutralItemCheck = DotaTime();
+	end
+	
+	if neutralItem ~= nil then
+		return CountDesire(BOT_MODE_DESIRE_MODERATE, 500, 2000);
+	end
+	
 	closestRune, closestDist = GetBotClosestRune();
 	if closestRune ~= -1 and IsEnemyCloserToRuneLoc(closestRune, closestDist) == false then
 		if closestRune == RUNE_BOUNTY_1 or closestRune == RUNE_BOUNTY_2 or closestRune == RUNE_BOUNTY_3 or closestRune == RUNE_BOUNTY_4 then
@@ -88,6 +105,20 @@ function GetDesire()
 		end	
 	end
 	
+	if DotaTime() >= neutralItemCheck + 5.0 and neutralItem == nil then
+		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) > 0 then
+			local dropped = GetDroppedItemList();
+			for _,drop in pairs(dropped) do
+				if uItem.GetNeutralItemTier(drop.item:GetName()) > 0 and uItem.IsRecipeNeutralItem(drop.item:GetName()) == false and IsTheClosestOne(drop.location) == true then
+					print(bot:GetUnitName().." taking item:"..tostring(drop))
+					neutralItem = drop;
+					break;
+				end
+			end
+		end	
+		neutralItemCheck = DotaTime();
+	end
+	
 	return BOT_MODE_DESIRE_NONE;
 end
 
@@ -100,9 +131,20 @@ end
 
 function OnEnd()
 	bottle = nil;
+	neutralItem = nil;
 end
 
 function Think()
+	
+	if neutralItem ~= nil then
+		if GetUnitToLocationDistance(bot, neutralItem.location) > 500 then 
+			bot:Action_MoveToLocation(neutralItem.location);
+			return
+		else
+			bot:Action_PickUpItem(neutralItem.item);
+			return
+		end
+	end
 	
 	if DotaTime() < 0 then 
 		if GetTeam() == TEAM_RADIANT then

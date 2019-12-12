@@ -39,12 +39,12 @@ function AbilityUsageThink()
 	if abilityEA == "" then abilityEA = npcBot:GetAbilityByName( "obsidian_destroyer_equilibrium" ); end
 	if abilitySS == "" then abilitySS = npcBot:GetAbilityByName( "obsidian_destroyer_sanity_eclipse" ); end
 	
-	-- if abilitySA:IsTrained() 
-		-- --and abilityEA:GetLevel() >= 3 
-		-- and abilitySA:GetAutoCastState( ) == true 
-	-- then
-		-- abilitySA:ToggleAutoCast();
-	-- end
+	if abilitySA:IsTrained() 
+		and abilityEA:GetLevel() >= 3 
+		and abilitySA:GetAutoCastState( ) == false 
+	then
+		abilitySA:ToggleAutoCast();
+	end
 	
 	castSADesire, castSATarget = ConsiderSearingArrows()
 	castDRDesire, castDRTarget = ConsiderDisruption();
@@ -78,7 +78,7 @@ end
 
 function ConsiderSearingArrows()
 
-	if ( abilitySA:IsFullyCastable() == false ) then 
+	if ( abilitySA:IsFullyCastable() == false or abilitySA:GetAutoCastState( ) == true ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
@@ -153,25 +153,28 @@ function ConsiderDisruption()
 	
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
-		local npcMostDangerousEnemy = nil;
-		local nMostDangerousDamage = 0;
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if mutil.CanCastOnNonMagicImmune( npcEnemy ) and not mutil.IsDisabled(true, npcEnemy) 
-			then
-				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
-				if ( nDamage > nMostDangerousDamage )
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
+		if #tableNearbyEnemyHeroes > 1 then
+			local npcMostDangerousEnemy = nil;
+			local nMostDangerousDamage = 0;
+			local npcTarget = npcBot:GetTarget();
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if npcEnemy ~= npcTarget and mutil.CanCastOnNonMagicImmune( npcEnemy ) and not mutil.IsDisabled(true, npcEnemy) 
 				then
-					nMostDangerousDamage = nDamage;
-					npcMostDangerousEnemy = npcEnemy;
+					local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
+					if ( nDamage > nMostDangerousDamage )
+					then
+						nMostDangerousDamage = nDamage;
+						npcMostDangerousEnemy = npcEnemy;
+					end
 				end
 			end
-		end
 
-		if ( npcMostDangerousEnemy ~= nil )
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy;
+			if ( npcMostDangerousEnemy ~= nil )
+			then
+				return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy;
+			end
 		end
 	end
 	
@@ -182,8 +185,8 @@ function ConsiderDisruption()
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, (nCastRange+200)/2) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and
 		    not mutil.IsDisabled(true, npcTarget) 
 		then
-			local allies = npcTarget:GetNearbyHeroes(450, true, BOT_MODE_NONE);
-			if #allies <= 1 then
+			local allies = npcTarget:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+			if #allies < 2 then
 				return BOT_ACTION_DESIRE_HIGH, npcTarget;
 			end	
 		end

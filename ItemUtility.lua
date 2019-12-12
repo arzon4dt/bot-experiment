@@ -1,5 +1,74 @@
 ItemModule = {}
 
+ItemModule['neutralItem'] = {
+	--Tier 1
+	['item_arcane_ring'] = 1,
+	['item_broom_handle'] = 1,
+	['item_elixer'] = 1,
+	['item_faded_broach'] = 1,
+	['item_iron_talon'] = 1,
+	['item_keen_optic'] = 1,
+	['item_mango_tree'] = 1,
+	['item_ocean_heart'] = 1,
+	['item_poor_mans_shield'] = 1,
+	['item_royal_jelly'] = 1,
+	['item_trusty_shovel'] = 1,
+	['item_recipe_ironwood_tree'] = 1,
+	--Tier 2
+	['item_clumsy_net'] = 2,
+	['item_dragon_scale'] = 2,
+	['item_essence_ring'] = 2,
+	['item_grove_bow'] = 2,
+	['item_imp_claw'] = 2,
+	['item_nether_shawl'] = 2,
+	['item_philosophers_stone'] = 2,
+	['item_pupils_gift'] = 2,
+	['item_ring_of_aquila'] = 2,
+	['item_vampire_fangs'] = 2,
+	['item_recipe_vambrace'] = 2,
+	--Tier 3
+	['item_craggy_coat'] = 3,
+	['item_enchanted_quiver'] = 3,
+	['item_greater_faerie_fire'] = 3,
+	['item_helm_of_the_undying'] = 3,
+	['item_mind_breaker'] = 3,
+	['item_orb_of_destruction'] = 3,
+	['item_paladin_sword'] = 3,
+	['item_quickening_charm'] = 3,
+	['item_repair_kit'] = 3,
+	['item_spider_legs'] = 3,
+	['item_third_eye'] = 3,
+	['item_spy_gadget'] = 3,
+	['item_titan_sliver'] = 3,
+	--Tier 4
+	['item_flicker'] = 4,
+	['item_havoc_hammer'] = 4,
+	['item_illusionsts_cape'] = 4,
+	['item_panic_button'] = 4,
+	['item_minotaur_horn'] = 4,
+	['item_ninja_gear'] = 4,
+	['item_princes_knife'] = 4,
+	['item_spell_prism'] = 4,
+	['item_the_leveller'] = 4,
+	['item_timeless_relic'] = 4,
+	['item_witless_shako'] = 4,
+	--Tier 5
+	['item_apex'] = 5,
+	['item_ballista'] = 5,
+	['item_demonicon'] = 5,
+	['item_desolator_2'] = 5,
+	['item_ex_machina'] = 5,
+	['item_recipe_fallen_sky'] = 5,
+	['item_force_boots'] = 5,
+	['item_fusion_rune'] = 5,
+	['item_mirror_shield'] = 5,
+	['item_phoenix_ash'] = 5,
+	['item_pirate_hat'] = 5,
+	['item_seer_stone'] = 5,
+	['item_recipe_trident'] = 5,
+	['item_woodland_striders'] = 5,
+}
+
 ItemModule['earlyGameItem'] = {
 	 "item_tango_single",
 	 "item_clarity",
@@ -436,6 +505,62 @@ function ItemModule.GetMainInvLessValItemSlot(bot)
 		end
 	end
 	return minSlot;
+end
+
+function ItemModule.GetNeutralItemTier(sName)
+	if ItemModule['neutralItem'][sName] ~= nil then
+		return ItemModule['neutralItem'][sName];
+	end
+	return 0;
+end
+
+function ItemModule.GetNeutralItemInBP(bot)
+	for i=6, 9 do
+		local bpit = bot:GetItemInSlot(i);
+		if bpit ~= nil and ItemModule.GetNeutralItemTier(bpit:GetName()) > 0 then
+			return i, bpit;
+		end
+	end
+	return -1, nil;
+end
+
+function ItemModule.IsRecipeNeutralItem(sItem)
+	return sItem == "item_recipe_ironwood_tree" or sItem == "item_recipe_vambrace" or sItem == "item_recipe_fallen_sky" or sItem == "item_recipe_tri";
+end
+
+function ItemModule.CanDropNeutralItem(bot)
+	if ItemModule.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) == 0 then
+		for i=6,9 do	
+			local item = bot:GetItemInSlot(i);
+			if item ~= nil and ItemModule.GetNeutralItemTier(item:GetName()) > 0 then
+				return true, item;
+			end
+		end
+	end
+	return false, nil;
+end
+
+function ItemModule.GetEmptySlotAmount(bot, nType)
+	local startIdx = 0;
+	local endIdx = 16;
+	if nType == ITEM_SLOT_TYPE_MAIN then
+		startIdx = 0;
+		endIdx = 5;
+	elseif nType == ITEM_SLOT_TYPE_BACKPACK then
+		startIdx = 6;
+		endIdx = 9;
+	elseif nType == ITEM_SLOT_TYPE_STASH then	
+		startIdx = 10;
+		endIdx = 15;
+	end
+	local amount = 0;
+	for i=startIdx,endIdx do	
+		local item = bot:GetItemInSlot(i);
+		if item == nil then
+			amount = amount + 1;
+		end
+	end
+	return amount;
 end
 
 return ItemModule

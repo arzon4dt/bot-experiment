@@ -5,12 +5,7 @@ local hero_roles = role["hero_roles"];
 local requiredHeroes = {
 	--"npc_dota_hero_snapfire",
 	--"npc_dota_hero_void_spirit",
-	"npc_dota_hero_treant",
-	"npc_dota_hero_obsidian_destroyer",
-	"npc_dota_hero_enchantress",
-	"npc_dota_hero_puck",
-	"npc_dota_hero_phantom_lancer",
-	"npc_dota_hero_riki",
+	"npc_dota_hero_tiny",
 };
 
 local UnImplementedHeroes = {
