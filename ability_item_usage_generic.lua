@@ -1749,11 +1749,25 @@ function UnImplementedItemUsage()
 			end
 		elseif mutil.IsGoingOnSomeone(bot) then
 			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange) 
-			   and mutil.IsDisabled(true, npcTarget) == true	
+			   and mutil.IsDisabled(true, npcTarget) == false	
 			then
 				bot:Action_UseAbilityOnLocation(fsky, npcTarget:GetLocation());
 				return;
 			end
+		elseif mutil.IsStuck(bot)
+		then
+			local loc = mutil.GetEscapeLoc();
+			bot:Action_UseAbilityOnLocation(fsky, bot:GetXUnitsTowardsLocation( loc, nCastRange ));
+			return;
+		elseif mutil.IsRetreating(bot)
+		then
+			local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+			if ( bot:WasRecentlyDamagedByAnyHero(2.0) or bot:WasRecentlyDamagedByTower(2.0) or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1  ) )
+			then
+				local loc = mutil.GetEscapeLoc();
+				bot:Action_UseAbilityOnLocation(fsky, bot:GetXUnitsTowardsLocation( loc, nCastRange ));
+				return;
+			end	
 		end
 	end
 	

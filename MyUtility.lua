@@ -122,7 +122,7 @@ function U.CanSpamSpell(bot, manaCost)
 	if manaCost < 100 then
 		initialRatio = 0.6;
 	end
-	return ( bot:GetMana() - manaCost ) / bot:GetMaxMana() >= ( initialRatio - bot:GetLevel()/(2*25) );
+	return ( bot:GetMana() - manaCost ) / bot:GetMaxMana() >= ( initialRatio - bot:GetLevel()/(3*30) );
 end
 
 
@@ -761,5 +761,140 @@ end
 function U.CheckFlag(bitfield, flag)
     return ((bitfield/flag) % 2) >= 1;
 end
+
+function U.GetStrongestUnit(nRange, hUnit, bEnemy, bMagicImune, fTime)
+	local units = hUnit:GetNearbyHeroes(nRange, bEnemy, BOT_MODE_NONE)
+	local strongest_unit = nil;
+	local maxPower = 0;
+	for i=1, #units do
+		if U.IsValidTarget(units[i]) and
+		   ( ( bMagicImune == true and U.CanCastOnMagicImmune(units[i]) == true ) or ( bMagicImune == false and U.CanCastOnNonMagicImmune(units[i]) == true ) )
+		then
+			local power = units[i]:GetEstimatedDamageToTarget( true, hUnit, fTime, DAMAGE_TYPE_ALL );
+			if power > maxPower then
+				maxPower = power;
+				strongest_unit = units[i];
+			end
+		end
+	end
+	return strongest_unit;
+end
+
+function U.GetUnitWithMinDistanceToLoc(hUnit, hUnits, cUnits, fMinDist, vLoc)
+	local minUnit = cUnits;
+	local minVal = fMinDist;
+	
+	for i=1, #hUnits do
+		if hUnits[i] ~= nil and hUnits[i] ~= hUnit and U.CanCastOnNonMagicImmune(hUnits[i]) 
+		then
+			local dist = GetUnitToLocationDistance(hUnits[i], vLoc);
+			if dist < minVal then
+				minVal = dist;
+				minUnit = hUnits[i];	
+			end
+		end	
+	end
+	
+	return minVal, minUnit;
+end
+
+function U.GetUnitWithMaxDistanceToLoc(hUnit, hUnits, cUnits, fMinDist, vLoc)
+	local maxUnit = cUnits;
+	local maxVal = fMinDist;
+	
+	for i=1, #hUnits do
+		if hUnits[i] ~= nil and hUnits[i] ~= hUnit and U.CanCastOnNonMagicImmune(hUnits[i]) 
+		then
+			local dist = GetUnitToLocationDistance(hUnits[i], vLoc);
+			if dist > maxVal then
+				maxVal = dist;
+				maxUnit = hUnits[i];	
+			end
+		end	
+	end
+	
+	return maxVal, maxUnit;
+end
+
+function U.GetFurthestUnitToLocationFrommAll(hUnit, nRange, vLoc)
+	local aHeroes = hUnit:GetNearbyHeroes(nRange, false, BOT_MODE_NONE);
+	local eHeroes = hUnit:GetNearbyHeroes(nRange, true, BOT_MODE_NONE);
+	local aCreeps = hUnit:GetNearbyLaneCreeps(nRange, false);
+	local eCreeps = hUnit:GetNearbyLaneCreeps(nRange, true);
+		
+	local botDist = GetUnitToLocationDistance(hUnit, vLoc);
+	local furthestUnit = hUnit;
+	botDist, furthestUnit = U.GetUnitWithMaxDistanceToLoc(hUnit, aHeroes, furthestUnit, botDist, vLoc);
+	botDist, furthestUnit = U.GetUnitWithMaxDistanceToLoc(hUnit, eHeroes, furthestUnit, botDist, vLoc);
+	botDist, furthestUnit = U.GetUnitWithMaxDistanceToLoc(hUnit, aCreeps, furthestUnit, botDist, vLoc);
+	botDist, furthestUnit = U.GetUnitWithMaxDistanceToLoc(hUnit, eCreeps, furthestUnit, botDist, vLoc);
+	
+	if furthestUnit ~= bot then
+		return furthestUnit;
+	end
+	
+	return nil;
+	
+end
+
+function U.GetClosestUnitToLocationFrommAll(hUnit, nRange, vLoc)
+	local aHeroes = hUnit:GetNearbyHeroes(nRange, false, BOT_MODE_NONE);
+	local eHeroes = hUnit:GetNearbyHeroes(nRange, true, BOT_MODE_NONE);
+	local aCreeps = hUnit:GetNearbyLaneCreeps(nRange, false);
+	local eCreeps = hUnit:GetNearbyLaneCreeps(nRange, true);
+		
+	local botDist = GetUnitToLocationDistance(hUnit, vLoc);
+	local closestUnit = hUnit;
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, aHeroes, closestUnit, botDist, vLoc);
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, eHeroes, closestUnit, botDist, vLoc);
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, aCreeps, closestUnit, botDist, vLoc);
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, eCreeps, closestUnit, botDist, vLoc);
+	
+	if closestUnit ~= bot then
+		return closestUnit;
+	end
+	
+	return nil;
+	
+end
+
+function U.GetClosestUnitToLocationFrommAll2(hUnit, nRange, vLoc)
+	local aHeroes = hUnit:GetNearbyHeroes(nRange, false, BOT_MODE_NONE);
+	local eHeroes = hUnit:GetNearbyHeroes(nRange, true, BOT_MODE_NONE);
+	local aCreeps = hUnit:GetNearbyLaneCreeps(nRange, false);
+	local eCreeps = hUnit:GetNearbyLaneCreeps(nRange, true);
+		
+	local botDist = 10000;
+	local closestUnit = nil;
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, aHeroes, closestUnit, botDist, vLoc);
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, eHeroes, closestUnit, botDist, vLoc);
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, aCreeps, closestUnit, botDist, vLoc);
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, eCreeps, closestUnit, botDist, vLoc);
+	
+	if closestUnit ~= nil then
+		return closestUnit;
+	end
+	
+	return nil;
+	
+end
+
+function U.GetClosestEnemyUnitToLocation(hUnit, nRange, vLoc)
+	local eHeroes = hUnit:GetNearbyHeroes(nRange, true, BOT_MODE_NONE);
+	local eCreeps = hUnit:GetNearbyLaneCreeps(nRange, true);
+		
+	local botDist = GetUnitToLocationDistance(hUnit, vLoc);
+	local closestUnit = hUnit;
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, eHeroes, closestUnit, botDist, vLoc);
+	botDist, closestUnit = U.GetUnitWithMinDistanceToLoc(hUnit, eCreeps, closestUnit, botDist, vLoc);
+	
+	if closestUnit ~= bot then
+		return closestUnit;
+	end
+	
+	return nil;
+	
+end
+
 
 return U;

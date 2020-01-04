@@ -33,6 +33,7 @@ local abilityDF = nil;
 local abilityBC = nil;
 
 local npcBot = nil;
+local bearCheckTime = DotaTime();
 
 function AbilityUsageThink()
 
@@ -92,7 +93,7 @@ end
 function ConsiderFleshGolem()
 
 	-- Make sure it's castable
-	if ( not abilityFG:IsFullyCastable() ) then 
+	if ( not abilityFG:IsFullyCastable() or DotaTime() < bearCheckTime + 5.0 ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
@@ -109,6 +110,8 @@ function ConsiderFleshGolem()
 	if  numBear == 0 then
 		return BOT_ACTION_DESIRE_MODERATE;
 	end
+	
+	bearCheckTime = DotaTime();
 	
 	return BOT_ACTION_DESIRE_NONE;
 end

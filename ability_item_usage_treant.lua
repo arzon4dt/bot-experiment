@@ -98,7 +98,7 @@ function GetTargetBuildingToHeal(total_heal)
 	local min_hp = 10000;
 	for i=1, #mutil.towers do
 		local tower = GetTower(team, mutil.towers[i]);
-		if tower ~= nil then
+		if tower ~= nil and tower:HasModifier('modifier_treant_living_armor') == false then
 			local hp = tower:GetHealth();
 			if hp < min_hp and hp + total_heal < tower:GetMaxHealth() then
 				target_building = tower;
@@ -108,7 +108,7 @@ function GetTargetBuildingToHeal(total_heal)
 	end
 	for i=1, #mutil.barracks do
 		local barrack = GetBarracks(team, mutil.barracks[i]);
-		if barrack ~= nil then
+		if barrack ~= nil and barrack:HasModifier('modifier_treant_living_armor') == false then
 			local hp = barrack:GetHealth();
 			if hp < min_hp and hp + total_heal < barrack:GetMaxHealth() then
 				target_building = barrack;
@@ -279,7 +279,7 @@ function ConsiderLivingArmor()
 	local nCastRange = 1600;
 	local total_heal = abilityLA:GetSpecialValueInt('total_heal');
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if mutil.IsRetreating(npcBot)
+	if mutil.IsRetreating(npcBot) and npcBot:HasModifier('modifier_treant_living_armor') == false
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -296,7 +296,7 @@ function ConsiderLivingArmor()
 	then
 		local tableNearbyFriendlyTowers = npcBot:GetNearbyTowers( 400, false );
 		for _,myTower in pairs(tableNearbyFriendlyTowers) do
-			if ( GetUnitToUnitDistance( myTower, npcBot  ) < 400 ) 
+			if ( GetUnitToUnitDistance( myTower, npcBot  ) < 400 and myTower:HasModifier('modifier_treant_living_armor') == false ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, myTower;
 			end
@@ -308,7 +308,7 @@ function ConsiderLivingArmor()
 		local tableNearbyAllyHeroes = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE );
 		for _,npcAlly in pairs( tableNearbyAllyHeroes )
 		do
-			if (  mutil.CanCastOnNonMagicImmune(npcAlly) and( npcAlly:GetHealth() / npcAlly:GetMaxHealth() ) < 0.5 ) 
+			if (  mutil.CanCastOnNonMagicImmune(npcAlly) and( npcAlly:GetHealth() / npcAlly:GetMaxHealth() ) < 0.5 and npcAlly:HasModifier('modifier_treant_living_armor') == false ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcAlly;
 			end
@@ -316,7 +316,7 @@ function ConsiderLivingArmor()
 	end
 	
 	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) and npcBot:HasModifier('modifier_treant_living_armor') == false
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and ( npcBot:GetHealth() / npcBot:GetMaxHealth() ) < 0.5  and mutil.IsInRange(npcTarget, npcBot, 600) 
@@ -329,7 +329,7 @@ function ConsiderLivingArmor()
 	for i = 1, #numPlayer
 	do
 		local Player = GetTeamMember(i);
-		if Player:IsAlive() and Player:GetHealth()/Player:GetMaxHealth() < 0.65 and 
+		if Player:IsAlive() and Player:HasModifier('modifier_treant_living_armor') == false and Player:GetHealth()/Player:GetMaxHealth() < 0.65 and 
 		   mutil.IsRetreating(Player) and Player:DistanceFromFountain() > 0  
 		then
 			return BOT_ACTION_DESIRE_MODERATE, Player;

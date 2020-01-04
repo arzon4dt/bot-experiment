@@ -294,113 +294,27 @@ function GetDesire()
 			return BOT_MODE_DESIRE_MODERATE+0.05;	
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
-		if bot:HasModifier("modifier_tiny_tree_grab") == false then
-			if cAbility == nil or cAbility:GetName() ~= "tiny_craggy_exterior" then cAbility = bot:GetAbilityByName('tiny_tree_grab') end;
-			if cAbility:IsFullyCastable() and bot:GetHealth() / bot:GetMaxHealth() > 0.15 and bot:DistanceFromFountain() > 1000 then
-				local trees = bot:GetNearbyTrees(500);
-				if #trees > 0 and ( IsLocationVisible(GetTreeLocation(trees[1])) or IsLocationPassable(GetTreeLocation(trees[1])) ) then
-					targetTree = trees[1];
-					treeThrowTarget = nil;
-					return BOT_MODE_DESIRE_ABSOLUTE;
-				end
-			end	
-		elseif bot:HasModifier("modifier_tiny_tree_grab") == true 
-			   --and bot:GetModifierStackCount( bot:GetModifierByName("modifier_tiny_craggy_exterior") ) == 1 
-		then
-			local target = bot:GetTarget(); 
-			if mutil.IsValidTarget(target) and mutil.CanCastOnNonMagicImmune(target) 
-			   and mutil.IsInRange(target, bot, 500) == false and mutil.IsInRange(target, bot, 1200) == true
-			   and bot:GetAttackDamage() >= target:GetHealth()
-			then   
-				treeThrowTarget = target;
-				cAbility = bot:GetAbilityByName('tiny_toss_tree');
-				return BOT_MODE_DESIRE_ABSOLUTE;
-			elseif mutil.IsRetreating(bot)
-			then
-				local tableNearbyEnemyHeroes = bot:GetNearbyHeroes(1000, true, BOT_MODE_NONE)
-				for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-				do
-					if ( bot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
-					then
-						treeThrowTarget = npcEnemy;
-						cAbility = bot:GetAbilityByName('tiny_toss_tree');
-						return BOT_MODE_DESIRE_ABSOLUTE;
-					end
-				end
-			end	
-		elseif bot:HasScepter() == true then
+		if bot:HasScepter() == true then
 			cAbility = bot:GetAbilityByName('tiny_tree_channel');
-			local tSearchRad = cAbility:GetSpecialValueInt('tree_grab_radius');
-			local nCastRange = cAbility:GetCastRange();
-			local trees = bot:GetNearbyTrees(tSearchRad);
-			if #trees >= 3 then
-				if cAbility:IsFullyCastable() == true and cAbility:IsHidden() == false then
-					local npcTarget = bot:GetTarget()
-					if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange)
-					then
-						treeThrowLoc = npcTarget:GetLocation();
-						return BOT_MODE_DESIRE_ABSOLUTE;
-					end
-				end
-			elseif cAbility:IsInAbilityPhase() == true or bot:IsChanneling() then
+			if cAbility:IsInAbilityPhase() == true or bot:IsChanneling() then
 				useTreeChannel = true;
 				return BOT_MODE_DESIRE_ABSOLUTE;
 			end
 		end	
-	elseif bot:GetUnitName() == "npc_dota_hero_viper" then
-		if cAbility == nil then cAbility = bot:GetAbilityByName('viper_nethertoxin') end;
-		if cAbility:IsFullyCastable() then
-			local nRadius = cAbility:GetSpecialValueInt("radius");
-			local nCastRange = cAbility:GetCastRange()+200;
-			local npcTarget = bot:GetTarget()
-			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, bot, nCastRange)
-			then
-				targetLoc = npcTarget:GetLocation();
-				return BOT_MODE_DESIRE_ABSOLUTE;
-			end
-		end		
-	elseif bot:GetUnitName() == "npc_dota_hero_skeleton_king" and bot:HasModifier("modifier_skeleton_king_mortal_strike") then
-		if cAbility == nil then cAbility = bot:GetAbilityByName('skeleton_king_mortal_strike') end
-		if cAbility:IsFullyCastable() then
-			local stack = 0;
-			local modIdx = bot:GetModifierByName("modifier_skeleton_king_mortal_strike");
-			if modIdx > -1 then
-				stack = bot:GetModifierStackCount(modIdx);
-			end
-			local nStack = cAbility:GetSpecialValueInt("max_skeleton_charges");
-			if ( stack >= nStack ) 
-			then
-				local npcTarget = bot:GetTarget()
-				if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, bot, 320)
-				then
-					return BOT_MODE_DESIRE_ABSOLUTE;
-				end
-			end
-		end	
-	elseif bot:GetUnitName() == "npc_dota_hero_phantom_assassin" then
-		if cAbility == nil then cAbility = bot:GetAbilityByName( "phantom_assassin_blur" ) end;
-		if cAbility ~= nil and cAbility:IsFullyCastable() 
-			and bot:GetActiveMode() == BOT_MODE_RETREAT and bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and bot:WasRecentlyDamagedByAnyHero(3.0) 
-		then
-			local enemies = bot:GetNearbyHeroes(650,true,BOT_MODE_NONE);
-			if enemies ~= nil and #enemies == 0 then
-				return BOT_MODE_DESIRE_ABSOLUTE;
-			end	 
-		end			
-	elseif bot:GetUnitName() == "npc_dota_hero_sniper" then
-		if cAbility == nil then cAbility = bot:GetAbilityByName( "sniper_take_aim" ) end;
-		if cAbility ~= nil and cAbility:IsFullyCastable() and bot:GetActiveMode() == BOT_MODE_ATTACK 
-		then
-			local target = bot:GetTarget();
-			local attackRange = bot:GetAttackRange();
-			local bonusRange = cAbility:GetSpecialValueInt('bonus_attack_range');
-			if target ~= nil and target:IsHero() then
-				local dst = GetUnitToUnitDistance(bot, target);
-				if dst >= attackRange and dst < attackRange + bonusRange then
-					return BOT_MODE_DESIRE_ABSOLUTE;
-				end
-			end	 
-		end			
+	-- elseif bot:GetUnitName() == "npc_dota_hero_sniper" then
+		-- if cAbility == nil then cAbility = bot:GetAbilityByName( "sniper_take_aim" ) end;
+		-- if cAbility ~= nil and cAbility:IsFullyCastable() and bot:GetActiveMode() == BOT_MODE_ATTACK 
+		-- then
+			-- local target = bot:GetTarget();
+			-- local attackRange = bot:GetAttackRange();
+			-- local bonusRange = cAbility:GetSpecialValueInt('bonus_attack_range');
+			-- if target ~= nil and target:IsHero() then
+				-- local dst = GetUnitToUnitDistance(bot, target);
+				-- if dst >= attackRange and dst < attackRange + bonusRange then
+					-- return BOT_MODE_DESIRE_ABSOLUTE;
+				-- end
+			-- end	 
+		-- end			
 	elseif bot:GetUnitName() == "npc_dota_hero_lich" then
 		if cAbility == nil then cAbility = bot:GetAbilityByName( "lich_sinister_gaze" ) end;
 		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
@@ -595,30 +509,10 @@ function Think()
 	elseif bot:GetUnitName() == "npc_dota_hero_tiny" then
 		if useTreeChannel == true then
 			return
-		elseif treeThrowTarget ~= nil then
-			bot:Action_UseAbilityOnEntity(cAbility, treeThrowTarget);
-			return;
-		elseif treeThrowLoc ~= nil then
-			bot:Action_ClearActions(true);
-			bot:Action_UseAbilityOnLocation(cAbility, treeThrowLoc);
-			treeThrowLoc = nil;
-			return;
-		elseif targetTree ~= nil then
-			bot:Action_UseAbilityOnTree(cAbility, targetTree);
-			return;
 		end
-	elseif bot:GetUnitName() == "npc_dota_hero_viper" then
-		bot:Action_UseAbilityOnLocation(cAbility, targetLoc);
-		return;	
-	elseif bot:GetUnitName() == "npc_dota_hero_skeleton_king" then
-		bot:Action_UseAbility(cAbility);
-		return;	
-	elseif bot:GetUnitName() == "npc_dota_hero_phantom_assassin" then
-		bot:Action_UseAbility(cAbility);
-		return;	
-	elseif bot:GetUnitName() == "npc_dota_hero_sniper" then
-		bot:Action_UseAbility(cAbility);
-		return;			
+	-- elseif bot:GetUnitName() == "npc_dota_hero_sniper" then
+		-- bot:Action_UseAbility(cAbility);
+		-- return;			
 	end
 end
 

@@ -34,6 +34,9 @@ local setTarget = false;
 local npcBot = nil;
 local castUltDelay = 0;
 local castUltTime = -90;
+local castTeleLandTime = DotaTime();
+local lastStolenSpellTarget = "";
+local lastSSScepterTime = DotaTime();
 
 function AbilityUsageThink()
 
@@ -58,6 +61,8 @@ function AbilityUsageThink()
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityUFB, castUFBTarget );
 		castUltTime = DotaTime();
+		lastStolenSpellTarget = castUFBTarget:GetUnitName();
+		lastSSScepterTime = DotaTime();
 		return;
 	end
 
@@ -71,6 +76,7 @@ function AbilityUsageThink()
 	if ( castTLDesire > 0 and not setTarget ) 
 	then
 		npcBot:Action_UseAbilityOnLocation( abilityTL, castTLLocation );
+		castTeleLandTime = DotaTime();
 		setTarget = true;
 		return;
 	end
@@ -149,9 +155,9 @@ function ConsiderFireblast()
 end
 
 function ConsiderTeleLand()
-
+	
 	-- Make sure it's castable
-	if ( not abilityTL:IsFullyCastable() or abilityTL:IsHidden() ) then 
+	if ( DotaTime() < castTeleLandTime + 0.5 or abilityTL == nil or not abilityTL:IsFullyCastable() or abilityTL:IsHidden() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
@@ -236,27 +242,42 @@ function ConsiderUnrefinedFireblast()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
-	if not string.find(ability4:GetName(), 'empty') and not ability4:IsToggle() and ability4:IsFullyCastable() then
+	if not string.find(ability4:GetName(), 'empty') and ability4:GetName() ~= "life_stealer_infest"  and not ability4:IsToggle() and ability4:IsFullyCastable() then
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 
 	-- Get some of its values
 	local nCastRange = abilityUFB:GetCastRange();
 	local projSpeed = abilityUFB:GetSpecialValueInt('projectile_speed')
+	
+	if nCastRange + 200 > 1600 then nCastRange = 1600 end
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
-
-	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
-	then
-		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + 200) 
+	if npcBot:HasScepter() == true then
+		if mutil.IsGoingOnSomeone(npcBot)
 		then
-			castUltDelay = GetUnitToUnitDistance(npcBot, npcTarget) / projSpeed + ( 2*0.1 ); 
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			local enemies = npcBot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+			for i=0, #enemies do
+				if mutil.IsValidTarget(enemies[i]) and mutil.CanCastOnNonMagicImmune(enemies[i]) 
+					and ( ( enemies[i]:GetUnitName() ~= lastStolenSpellTarget ) or ( enemies[i]:GetUnitName() == lastStolenSpellTarget and DotaTime() > lastSSScepterTime + 5.0 ) )
+				then
+					return BOT_ACTION_DESIRE_HIGH, enemies[i];
+				end
+			end
+		end	
+	else
+		-- If we're going after someone
+		if mutil.IsGoingOnSomeone(npcBot)
+		then
+			local npcTarget = npcBot:GetTarget();
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + 200) 
+			then
+				castUltDelay = GetUnitToUnitDistance(npcBot, npcTarget) / projSpeed + ( 2*0.1 ); 
+				return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			end
 		end
-	end
+	end	
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 

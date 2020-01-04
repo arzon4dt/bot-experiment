@@ -29,9 +29,22 @@ function X.CastStolenSpells(ability)
 	
 	local bot = GetBot()
 	
-	if ability:IsNull() == false and ability ~= nil and not string.find(ability:GetName(), "empty") and not X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_PASSIVE)  then
+	if ability ~= nil and ability:IsNull() == false and not string.find(ability:GetName(), "empty") and not X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_PASSIVE)  then
 	
-		if X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_UNIT_TARGET) then
+		if X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_AUTOCAST) then
+			if ability:GetAutoCastState( ) == false then
+				ability:ToggleAutoCast();
+				return;
+			end
+		end
+		
+		if ability:GetName() == "earthshaker_enchant_totem" and ( bot:HasScepter() or bot:HasModifier('modifier_item_ultimate_scepter_consumed') ) then
+			castPointTarget, castPoint = X.ConsiderPointTarget(ability);
+			if castPointTarget > 0 then
+				bot:Action_UseAbilityOnLocation( ability, castPoint );
+				return;
+			end
+		elseif X.CheckFlag(ability:GetBehavior(), ABILITY_BEHAVIOR_UNIT_TARGET) then
 			castEntityTarget, castTarget, UnitType = X.ConsiderEntityTarget(ability);
 			if castEntityTarget > 0 then
 				if UnitType == "unit" then
@@ -147,6 +160,20 @@ function X.ConsiderEntityTarget(ability)
 		nCastRange = nCastRange + 200;
 	elseif nCastRange > 1600 then
 		nCastRange = 1600;
+	end
+	
+	if ability:GetName() == "doom_bringer_devour" then
+		if X.IsRetreating(npcBot) == false and X.IsEngagingTarget(npcBot) == false 
+		then
+			local clvl = ability:GetSpecialValueInt('creep_level');
+			local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 500, true );
+			for _,npcCreep in pairs( tableNearbyEnemyCreeps )
+			do
+				if ( X.CanCastOnNonMagicImmune(npcCreep) and npcCreep:GetLevel() <= clvl ) then
+					return BOT_ACTION_DESIRE_HIGH, npcCreep, 'unit';
+				end
+			end
+		end
 	end
 	
 	if ability:GetName() == "phantom_assassin_phantom_strike" or ability:GetName() == "riki_blink_strike"  then

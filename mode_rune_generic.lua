@@ -105,7 +105,7 @@ function GetDesire()
 		end	
 	end
 	
-	if DotaTime() >= neutralItemCheck + 5.0 and neutralItem == nil then
+	if DotaTime() >= neutralItemCheck + 5.0 and neutralItem == nil and uItem.IsMeepoClone(bot) == false then
 		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) > 0 then
 			local dropped = GetDroppedItemList();
 			for _,drop in pairs(dropped) do
@@ -350,4 +350,5 @@ function IsEnemyCloserToRuneLoc(iRune, botDist)
 	end
 	return false;
 end
+
 

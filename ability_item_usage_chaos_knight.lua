@@ -64,7 +64,7 @@ local function ConsiderQ()
 			if mutils.CanCastOnNonMagicImmune(enemies[i]) and enemies[i]:IsChanneling()
 			   and enemies[i]:HasModifier("modifier_teleporting") == false 
 			then
-				return BOT_ACTION_DESIRE_LOW, enemies[i]:GetLocation();
+				return BOT_ACTION_DESIRE_LOW, enemies[i];
 			end
 		end
 	end

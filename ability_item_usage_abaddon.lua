@@ -128,7 +128,7 @@ function ConsiderAphoticShield()
 	-- Get some of its values
 	local nCastRange = abilityAC:GetCastRange();
 
-	if mutil.IsRetreating(npcBot) and npcBot:WasRecentlyDamagedByAnyHero( 3.0 ) 
+	if mutil.IsRetreating(npcBot) and npcBot:WasRecentlyDamagedByAnyHero( 3.0 ) and npcBot:HasModifier('modifier_abaddon_aphotic_shield') == false
 	then
 		return BOT_ACTION_DESIRE_MODERATE, npcBot;
 	end
@@ -142,7 +142,7 @@ function ConsiderAphoticShield()
 		local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE  );
 		for _,npcAlly in pairs( tableNearbyAllies )
 		do
-			if ( npcAlly:GetUnitName() ~= npcBot:GetUnitName() and mutil.CanCastOnMagicImmune(npcAlly) )
+			if ( npcAlly:GetUnitName() ~= npcBot:GetUnitName() and mutil.CanCastOnMagicImmune(npcAlly) and npcAlly:HasModifier('modifier_abaddon_aphotic_shield') == false )
 			then
 				local nAllyHP = npcAlly:GetHealth();
 				if ( ( nAllyHP < nLowestHealth and npcAlly:GetHealth() / npcAlly:GetMaxHealth() < 0.35 ) or mutil.IsDisabled(false, npcAlly) )
@@ -171,7 +171,7 @@ function ConsiderAphoticShield()
 			local tableNearbyAllies = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_NONE  );
 			for _,npcAlly in pairs( tableNearbyAllies )
 			do
-				if ( mutil.CanCastOnMagicImmune(npcAlly) )
+				if ( mutil.CanCastOnMagicImmune(npcAlly) and npcAlly:HasModifier('modifier_abaddon_aphotic_shield') == false )
 				then
 					local nAllyDist = GetUnitToUnitDistance(npcTarget, npcAlly);
 					if nAllyDist < nDist  

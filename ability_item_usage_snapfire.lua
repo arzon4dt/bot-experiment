@@ -220,7 +220,7 @@ function ConsiderR()
 		return BOT_ACTION_DESIRE_NONE, {};
 	end
 	
-	local castRange = abUtils.GetProperCastRange(false, bot, abilities[4]);
+	local castRange = 1500;
 	local castPoint = abilities[4]:GetCastPoint();
 	local manaCost  = abilities[4]:GetManaCost();
 	local nRadius   = abilities[4]:GetSpecialValueInt( "impact_radius" );
@@ -255,7 +255,7 @@ function ConsiderR()
 		if abUtils.IsValidTarget(target) and abUtils.CanCastOnNonMagicImmune(target) and abUtils.IsInRange(target, bot, castRange) 
 		then
 			local targetAllies = target:GetNearbyHeroes(2*nRadius, false, BOT_MODE_NONE);
-			if #targetAllies >= 2 then
+			if #targetAllies >= 1 then
 				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
 			end
 		end

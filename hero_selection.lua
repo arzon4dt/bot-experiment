@@ -5,7 +5,15 @@ local hero_roles = role["hero_roles"];
 local requiredHeroes = {
 	--"npc_dota_hero_snapfire",
 	--"npc_dota_hero_void_spirit",
+	"npc_dota_hero_vengefulspirit",
+	"npc_dota_hero_rubick",
+	"npc_dota_hero_phantom_assassin",
 	"npc_dota_hero_tiny",
+	"npc_dota_hero_morphling",
+	"npc_dota_hero_sand_king",
+	"npc_dota_hero_juggernaut",
+	
+	
 };
 
 local UnImplementedHeroes = {

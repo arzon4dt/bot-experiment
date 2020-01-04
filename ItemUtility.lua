@@ -563,4 +563,9 @@ function ItemModule.GetEmptySlotAmount(bot, nType)
 	return amount;
 end
 
+function ItemModule.IsMeepoClone(bot)
+	local nItem = ItemModule.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN);
+	return bot:GetUnitName() == "npc_dota_hero_meepo" and nItem >= 5;
+end
+
 return ItemModule

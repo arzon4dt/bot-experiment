@@ -26,6 +26,7 @@ local abilityPC2 = nil;
 local abilitySD = nil;
 
 local npcBot = nil;
+local toggleTime = DotaTime();
 
 function AbilityUsageThink()
 
@@ -47,6 +48,7 @@ function AbilityUsageThink()
 	
 	if ( castDPDesire > 0 ) 
 	then
+		toggleTime = DotaTime();
 		npcBot:Action_UseAbility( abilityDP );
 		return;
 	end
@@ -65,8 +67,12 @@ function AbilityUsageThink()
 	
 	if ( castSDDesire > 0 ) 
 	then
-		npcBot:Action_UseAbility( abilitySD );
-		return;
+		if npcBot:HasScepter() or npcBot:HasModifier('modifier_item_ultimate_scepter_consumed')  then
+			npcBot:Action_UseAbilityOnEntity( abilitySD, npcBot );
+		else
+			npcBot:Action_UseAbility( abilitySD );
+			return;
+		end
 	end
 
 end
@@ -75,7 +81,7 @@ end
 function ConsiderDarkPact()
 
 	-- Make sure it's castable
-	if ( not abilityDP:IsFullyCastable() ) then 
+	if ( not abilityDP:IsFullyCastable() or DotaTime() <= toggleTime + 0.2 ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
@@ -87,11 +93,8 @@ function ConsiderDarkPact()
 
 	-- Get some of its values
 	local nCastRange = 500;
-
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
-	if #tableNearbyEnemyHeroes == 0 and not inMelee then
-		return BOT_ACTION_DESIRE_MODERATE;
-	end
+	
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------
@@ -111,12 +114,15 @@ function ConsiderDarkPact()
 		end
 	end
 	
+
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
 		if #tableNearbyEnemyHeroes > 0 and abilityPC2:IsFullyCastable() and inMelee then
+			-- print("cond 9")	
 			return BOT_ACTION_DESIRE_MODERATE;
 		elseif not abilityPC2:IsFullyCastable() and not inMelee then   	
+			-- print("cond 10")
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
@@ -124,8 +130,10 @@ function ConsiderDarkPact()
 	if mutil.IsPushing(npcBot)
 	then
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1 and inMelee then
+			-- print("cond 6")
 			return BOT_ACTION_DESIRE_MODERATE;
 		elseif 	tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes < 1 and not inMelee then
+			-- print("cond 7")
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
 	end
@@ -137,20 +145,36 @@ function ConsiderDarkPact()
 		if ( npcTarget ~= nil and npcTarget:IsHero() ) 
 		then
 			local Dist = GetUnitToUnitDistance(npcTarget, npcBot);
-			if mutil.IsDisabled(true, npcTarget) or npcTarget:IsChanneling() then
-				if not inMelee then
+			if ( mutil.IsDisabled(true, npcTarget) or npcTarget:IsChanneling() 
+				or npcBot:HasModifier('modifier_troll_warlord_battle_trance')
+				or npcTarget:GetCurrentMovementSpeed() < npcBot:GetCurrentMovementSpeed() ) and Dist < 1000  	
+			then
+				if inMelee and abilityPC2:IsFullyCastable() then
+					-- print("cond 1")
+					return BOT_ACTION_DESIRE_MODERATE;	
+				elseif not inMelee and abilityPC2:IsFullyCastable() == false then
+					-- print("cond 2")
 					return BOT_ACTION_DESIRE_MODERATE;
 				end
 			else
 				if Dist > nCastRange + 200 and not inMelee then
+					-- print("cond 3")
 					return BOT_ACTION_DESIRE_MODERATE;
-				elseif Dist > nCastRange / 2 + 150 and Dist < nCastRange + 200 and inMelee then
+				elseif Dist > nCastRange / 2 + 175 and Dist < nCastRange + 200 and inMelee then
+					-- print("cond 4")
 					return BOT_ACTION_DESIRE_MODERATE;
-				elseif Dist < nCastRange / 2 + 150 and not inMelee then
+				elseif Dist < nCastRange / 2 + 175 and not inMelee then
+					-- print("cond 5")
 					return BOT_ACTION_DESIRE_MODERATE;
 				end
 			end
 		end
+	end
+	
+	
+	if #tableNearbyEnemyHeroes == 0 and not inMelee then
+		-- print("cond 8")
+		return BOT_ACTION_DESIRE_MODERATE;
 	end
 
 	return BOT_ACTION_DESIRE_NONE;
@@ -254,7 +278,7 @@ end
 function ConsiderShadowDance()
 
 	-- Make sure it's castable
-	if ( not abilitySD:IsFullyCastable() ) then 
+	if ( not abilitySD:IsFullyCastable() or npcBot:GetHealth() > 0.55* npcBot:GetMaxHealth() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	

@@ -43,11 +43,14 @@ local skill1 = nil;
 local skill2 = nil;
 local skill3 = nil;
 local asMorphling = true;
+local plusFactor = 0;
 
 function AbilityUsageThink()
 
 	if npcBot == nil then npcBot = GetBot(); end
 	
+	plusFactor = npcBot:GetLevel() / 30 * 1.0;	
+		
 	if abilityRC == nil then abilityRC = npcBot:GetAbilityByName( "morphling_replicate" ) end
 	
 	local ab1 = npcBot:GetAbilityInSlot(0);
@@ -69,9 +72,9 @@ function AbilityUsageThink()
 		skills.CastStolenSpells(skill1);
 		skills.CastStolenSpells(skill2);
 		skills.CastStolenSpells(skill3);
-		if ( (skill1:IsNull() == false and skill1 ~= nil and skill1:IsFullyCastable() == false) and
-		     (skill2:IsNull() == false and skill2 ~= nil and skill2:IsFullyCastable() == false) and
-		     (skill3:IsNull() == false and skill3 ~= nil and skill3:IsFullyCastable() == false) ) or npcBot:GetHealth() <= 0.25*npcBot:GetMaxHealth()
+		if ( (skill1 ~= nil and skill1:IsNull() == false and skill1:IsFullyCastable() == false) and
+		     (skill2 ~= nil and skill2:IsNull() == false and skill2:IsFullyCastable() == false) and
+		     (skill3 ~= nil and skill3:IsNull() == false and skill3:IsFullyCastable() == false) ) or npcBot:GetHealth() <= 0.35*npcBot:GetMaxHealth()
 		then
 			npcBot:Action_UseAbility(npcBot:GetAbilityByName( "morphling_morph_replicate" ));
 			return
@@ -368,6 +371,14 @@ function ConsiderMorphAgility()
 		end
 	end	
 	
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget)  and mutil.IsInRange(npcTarget, npcBot, 1300)  and npcBot:GetHealth() < 0.35 * npcBot:GetMaxHealth() then
+			return BOT_ACTION_DESIRE_NONE, 0;
+		end
+	end	
+	
 	local nBonusAgi = abilityMRA:GetSpecialValueInt("bonus_attributes");
 	local currAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY);
 	local currSTRENGTH = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
@@ -378,10 +389,10 @@ function ConsiderMorphAgility()
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
-	if currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) < 2.0 and not abilityMRA:GetToggleState() then
+	if currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) < 2.0 + plusFactor  and not abilityMRA:GetToggleState() then
 		--print("start")
 		return BOT_ACTION_DESIRE_LOW;
-	elseif currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) >= 2.0 and abilityMRA:GetToggleState() then
+	elseif currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) >= 2.0 + plusFactor and abilityMRA:GetToggleState() then
 		--print('stop')
 		return BOT_ACTION_DESIRE_LOW;
 	elseif npcBot:DistanceFromFountain() == 0 and currAGI < currSTRENGTH and not abilityMRA:GetToggleState() then	
@@ -403,6 +414,18 @@ function ConsiderMorphStrength()
 	local currAGI = npcBot:GetAttributeValue(ATTRIBUTE_AGILITY);
 	local currSTRENGTH = npcBot:GetAttributeValue(ATTRIBUTE_STRENGTH);
 	
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1300)   then
+			if npcBot:GetHealth() < 0.3 * npcBot:GetMaxHealth() and  abilityMRS:GetToggleState() == false then
+				return BOT_ACTION_DESIRE_MODERATE;
+			elseif npcBot:GetHealth() > 0.3 * npcBot:GetMaxHealth() and  npcBot:GetHealth() < 0.35 * npcBot:GetMaxHealth() and abilityMRS:GetToggleState() == true then
+				return BOT_ACTION_DESIRE_MODERATE;
+			end
+		end
+	end	
+	
 	if npcBot:GetMana() < 1 and abilityMRS:GetToggleState() then
 		return BOT_ACTION_DESIRE_LOW;
 	elseif npcBot:GetMana() < 1 and not abilityMRS:GetToggleState() then
@@ -419,10 +442,10 @@ function ConsiderMorphStrength()
 			--print("Retreat Non Active")
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
-	elseif currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) <= 2.5 and abilityMRS:GetToggleState() then
+	elseif currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) <= 2.2 + plusFactor and abilityMRS:GetToggleState() then
 		--print("Agi Higher Active")
 		return BOT_ACTION_DESIRE_LOW;	
-	elseif currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) > 2.5 and not abilityMRS:GetToggleState() then
+	elseif currAGI >= currSTRENGTH and ( currAGI - currSTRENGTH ) / ( currSTRENGTH / 2 ) > 2.2 + plusFactor and not abilityMRS:GetToggleState() then
 		--print("Agi Higher Non Active")
 		return BOT_ACTION_DESIRE_LOW;
 	end	
@@ -433,7 +456,7 @@ end
 function ConsiderReplicate()
 
 	-- Make sure it's castable
-	if ( not abilityRC:IsFullyCastable() ) then 
+	if ( not abilityRC:IsFullyCastable() or npcBot:GetHealth() < 0.4*npcBot:GetMaxHealth() ) then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	

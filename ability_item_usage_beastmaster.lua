@@ -16,9 +16,38 @@ function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
 
+local ListRune = {
+	RUNE_BOUNTY_1,
+	RUNE_BOUNTY_2,
+	RUNE_BOUNTY_3,
+	RUNE_BOUNTY_4,
+	RUNE_POWERUP_1,
+	RUNE_POWERUP_2
+}
 
-local shrine1 = GetShrine(GetOpposingTeam(), SHRINE_JUNGLE_1):GetLocation();
-local shrine2 = GetShrine(GetOpposingTeam(), SHRINE_JUNGLE_2):GetLocation();
+
+local hawkLocDire = {
+	Vector(-3788.000000, -280.000000, 0.000000),
+	Vector(-166.000000, -4568.000000, 0.000000),
+	GetRuneSpawnLocation(ListRune[1]),
+	GetRuneSpawnLocation(ListRune[2]),
+	GetRuneSpawnLocation(ListRune[3]),
+	GetRuneSpawnLocation(ListRune[4]),
+	GetRuneSpawnLocation(ListRune[5]),
+	GetRuneSpawnLocation(ListRune[6])
+}
+
+local hawkLocRadiant = {
+	Vector(-943.000000, 3546.000000, 0.000000),
+	Vector(3136.000000, -370.000000, 0.000000),
+	GetRuneSpawnLocation(ListRune[1]),
+	GetRuneSpawnLocation(ListRune[2]),
+	GetRuneSpawnLocation(ListRune[3]),
+	GetRuneSpawnLocation(ListRune[4]),
+	GetRuneSpawnLocation(ListRune[5]),
+	GetRuneSpawnLocation(ListRune[6])
+}
+
 
 
 local castWADesire = 0;
@@ -306,12 +335,13 @@ function ConsiderWildHawk()
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
-	local roll = RollPercentage(50);
-	if(roll) 
-	then
-		return BOT_ACTION_DESIRE_MODERATE, shrine1;
+	local roll = RandomInt(1,8);
+	if GetTeam() == TEAM_RADIANT then
+		return BOT_ACTION_DESIRE_MODERATE, hawkLocRadiant[roll];
+	else
+		return BOT_ACTION_DESIRE_MODERATE, hawkLocDire[roll];
 	end
-
-	return BOT_ACTION_DESIRE_MODERATE, shrine2;
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
