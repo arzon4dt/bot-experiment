@@ -181,7 +181,7 @@ ItemModule["item_arcane_boots"] = { "item_boots"; "item_energy_booster"}
 
 ItemModule["item_armlet"] = { "item_helm_of_iron_will"; "item_gloves"; "item_blades_of_attack"; "item_recipe_armlet" }
 
-ItemModule["item_assault"] = { "item_platemail"; "item_hyperstone"; "item_buckler"; "item_recipe_assault" }
+ItemModule["item_assault"] = { "item_platemail"; "item_hyperstone"; "item_recipe_assault"; "item_buckler" }
 
 ItemModule["item_bfury"] = { "item_quelling_blade"; "item_pers"; "item_demon_edge"; "item_recipe_bfury" }
 
@@ -353,7 +353,7 @@ ItemModule["item_vanguard"] = { "item_vitality_booster"; "item_ring_of_health" ;
 
 ItemModule["item_veil_of_discord"] = { "item_crown"; "item_ring_of_basilius"; "item_recipe_veil_of_discord" }
 
-ItemModule["item_vladmir"] = { "item_ring_of_basilius" ; "item_buckler" ; "item_lifesteal"; "item_recipe_vladmir" }
+ItemModule["item_vladmir"] = { "item_ring_of_basilius" ; "item_lifesteal"; "item_recipe_vladmir"; "item_buckler" }
 
 ItemModule["item_wraith_band"] = { "item_slippers"; "item_circlet"; "item_recipe_wraith_band" }
 
@@ -496,6 +496,23 @@ function ItemModule.GetMainInvLessValItemSlot(bot)
 		    and item:GetName() ~= "item_refresher_shard" 
 		    and item:GetName() ~= "item_cheese" 
 		    and item:GetName() ~= "item_bloodstone" 
+		then
+			local cost = GetItemCost(item:GetName()); 
+			if  cost < minPrice then
+				minPrice = cost;
+				minSlot = i;
+			end
+		end
+	end
+	return minSlot;
+end
+
+function ItemModule.GetBPInvLessValItemSlot(bot)
+	local minPrice = 10000;
+	local minSlot = -1;
+	for i=6,9,1 do
+		local item = bot:GetItemInSlot(i);
+		if  item ~= nil 
 		then
 			local cost = GetItemCost(item:GetName()); 
 			if  cost < minPrice then

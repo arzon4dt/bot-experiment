@@ -65,8 +65,6 @@ function GetDesire()
 	for _,unit in pairs(units) do
 		print(unit:GetUnitName()..":"..tostring(unit:GetBaseMovementSpeed())..":"..tostring(unit:GetBaseDamage())..":"..tostring(unit:GetAttackPoint()))
 	end]]--
-	
-	
 	if bot:GetUnitName() == "npc_dota_hero_earthshaker" 
 		--or bot:GetUnitName() == "npc_dota_hero_abaddon" 
 		--or bot:GetUnitName() == "npc_dota_hero_abyssal_underlord" 

@@ -1,18 +1,12 @@
 local role = require(GetScriptDirectory() .. "/RoleUtility");
 local bnUtil = require(GetScriptDirectory() .. "/BotNameUtility");
+local utils = require(GetScriptDirectory() .. "/util");
+
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
 	--"npc_dota_hero_snapfire",
 	--"npc_dota_hero_void_spirit",
-	"npc_dota_hero_vengefulspirit",
-	"npc_dota_hero_rubick",
-	"npc_dota_hero_phantom_assassin",
-	"npc_dota_hero_tiny",
-	"npc_dota_hero_morphling",
-	"npc_dota_hero_sand_king",
-	"npc_dota_hero_juggernaut",
-	
 	
 };
 
@@ -173,8 +167,8 @@ local AllHeroesSelected = false;
 local BanCycle = 1;
 local PickCycle = 1;
 local NeededTime = 29;
-local Min = -5;
-local Max = 25;
+local Min = 27;
+local Max = 28;
 local CMTestMode = false;
 local UnavailableHeroes = {
 	-- "npc_dota_hero_wisp",
@@ -497,6 +491,27 @@ function BansHero()
 		return
 	end	
 	local BannedHero = RandomHero();
+	if BanCycle == 1 then
+		while not role.CanBeOfflaner(BannedHero) do
+			BannedHero = RandomHero();
+		end
+	elseif	BanCycle == 2 then
+		while not role.CanBeSupport(BannedHero) do
+			BannedHero = RandomHero();
+		end
+	elseif	BanCycle == 3 then
+		while not role.CanBeMidlaner(BannedHero) do
+			BannedHero = RandomHero();
+		end
+	elseif	BanCycle == 4 then
+		while not role.CanBeSupport(BannedHero) do
+			BannedHero = RandomHero();
+		end
+	elseif	BanCycle == 5 then
+		while not role.CanBeSafeLaneCarry(BannedHero) do
+			BannedHero = RandomHero();
+		end	
+	end
 	print(BannedHero.." is banned")
 	CMBanHero(BannedHero);
 	BanCycle = BanCycle + 1;
@@ -985,6 +1000,8 @@ function APLaneAssignment()
                 lanes[i] = LANE_BOT
             end
         end
+		--print("RAD")
+		--utils.print_r(lanes)
         return lanes
     elseif ( GetTeam() == TEAM_DIRE )
     then
@@ -1012,6 +1029,7 @@ function APLaneAssignment()
                 lanes[i] = LANE_BOT
             end
         end
+		--print("DIRE")
         --utils.print_r(lanes)
         return lanes
     end

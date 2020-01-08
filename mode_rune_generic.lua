@@ -29,13 +29,18 @@ local ListRune = {
 	RUNE_POWERUP_2
 }
 
+local lastPing = -90;
 
 function GetDesire()
-
+	--print(bot:GetUnitName()..bot:GetAssignedLane())
 	--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "rune") then
 		bot:ActionImmediate_Chat("Catch this in mode_rune_generic", false);
 		bot.lastPlayerChat = nil;
 	end]]--
+	-- if DotaTime() > lastPing + 3.0 then
+		-- bot:ActionImmediate_Ping( GetRuneSpawnLocation(RUNE_BOUNTY_3).x,  GetRuneSpawnLocation(RUNE_BOUNTY_3).y, true)
+		-- lastPing = DotaTime()
+	-- end
 
 	if GetGameMode() == GAMEMODE_1V1MID then
 		return BOT_MODE_DESIRE_NONE;
@@ -49,7 +54,7 @@ function GetDesire()
 	
 	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or bot:HasModifier("modifier_arc_warden_tempest_double") or
        bot:IsUsingAbility() or bot:IsChanneling() or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE or 
-	   GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 2500 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 2500 
+	   GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 5000 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 5000 
 	then
 		return BOT_MODE_DESIRE_NONE;
 	end
@@ -136,6 +141,7 @@ end
 
 function Think()
 	
+	
 	if neutralItem ~= nil then
 		if GetUnitToLocationDistance(bot, neutralItem.location) > 500 then 
 			bot:Action_MoveToLocation(neutralItem.location);
@@ -149,7 +155,7 @@ function Think()
 	if DotaTime() < 0 then 
 		if GetTeam() == TEAM_RADIANT then
 			if bot:GetAssignedLane() == LANE_BOT then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
 				return
 			else
 				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
@@ -160,7 +166,7 @@ function Think()
 				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
 				return
 			end
 		end
