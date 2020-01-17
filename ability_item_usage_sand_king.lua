@@ -143,7 +143,7 @@ function ConsiderW()
 	
 	if mutils.IsRetreating(bot) and ( bot:WasRecentlyDamagedByAnyHero(2.0) or bot:WasRecentlyDamagedByTower(2.0) )
 	then
-		local enemy = bot:GetNearbyHeroes(nRadius+200, true, BOT_MODE_NONE);
+		local enemy = bot:GetNearbyHeroes(2*nRadius, true, BOT_MODE_NONE);
 		if #enemy > 0 then
 		    return BOT_ACTION_DESIRE_HIGH;
 		end

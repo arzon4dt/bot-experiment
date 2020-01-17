@@ -86,7 +86,8 @@ function ConsiderDisruption()
 	--------------------------------------
 	local tableNearbyFriendlyHeroes = npcBot:GetNearbyHeroes( nCastRange+200, false, BOT_MODE_NONE );
 	for _,myFriend in pairs(tableNearbyFriendlyHeroes) do
-		if ( mutil.IsRetreating(npcBot) and myFriend:WasRecentlyDamagedByAnyHero(2.0) and mutil.CanCastOnNonMagicImmune(myFriend) ) or mutil.IsDisabled(false, myFriend)
+		if ( mutil.IsRetreating(npcBot) and myFriend:WasRecentlyDamagedByAnyHero(2.0) and mutil.CanCastOnNonMagicImmune(myFriend) ) 
+			or ( mutil.IsDisabled(false, myFriend) and myFriend:GetTarget() == nil )
 		then
 			return BOT_ACTION_DESIRE_MODERATE, myFriend;
 		end
@@ -214,8 +215,9 @@ function ConsiderShadowPoison()
 
 	-- Get some of its values
 	local nRadius = abilitySP:GetSpecialValueInt("radius");
-	local nCastRange = abilitySP:GetCastRange();
-	local nCastPoint = abilitySP:GetCastPoint( );
+	local nCastRange = mutil.GetProperCastRange(false, npcBot, abilitySP:GetCastRange());
+	local nCastPoint = abilitySP:GetCastPoint();
+	local manaCost = abilitySP:GetManaCost();
 
 	--------------------------------------
 	-- Mode based usage
@@ -232,12 +234,14 @@ function ConsiderShadowPoison()
 	end
 	
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and  npcBot:GetMana()/npcBot:GetMaxMana() >= 0.65
+	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and  mutil.CanSpamSpell(npcBot, manaCost)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-		if ( locationAoE.count >= 4 ) 
-		then
-			return BOT_ACTION_DESIRE_MODERATE, locationAoE.targetloc;
+		if ( locationAoE.count >= 3 ) then
+			local target = mutil.GetVulnerableUnitNearLoc(false, true, nCastRange, nRadius, locationAoE.targetloc, npcBot);
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
+			end
 		end
 	end
 

@@ -1283,7 +1283,7 @@ function UnImplementedItemUsage()
 	
 	local hom=IsItemAvailable("item_hand_of_midas");
 	if hom~=nil and hom:IsFullyCastable() then
-		local range = bot:GetAttackRange() + 200;
+		local range = 600+200;
 		local tableNearbyCreeps = bot:GetNearbyCreeps( range, true );
 		if #tableNearbyCreeps > 0 
 			and tableNearbyCreeps[1] ~= nil 

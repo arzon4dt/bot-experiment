@@ -7,6 +7,10 @@ local hero_roles = role["hero_roles"];
 local requiredHeroes = {
 	--"npc_dota_hero_snapfire",
 	--"npc_dota_hero_void_spirit",
+	"npc_dota_hero_lina",
+	"npc_dota_hero_luna",
+	"npc_dota_hero_tiny",
+	"npc_dota_hero_tiny",
 	
 };
 

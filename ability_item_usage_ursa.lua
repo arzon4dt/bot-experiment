@@ -81,11 +81,11 @@ function ConsiderEarthshock()
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
-			then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 2*nRadius, true, BOT_MODE_NONE );
+		if ( #tableNearbyEnemyHeroes > 0 and ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) ) ) 
+		then
+			local loc = mutil.GetEscapeLoc();
+			if utils.IsFacingLocation(npcBot,loc,15) then
 				return BOT_ACTION_DESIRE_MODERATE;
 			end
 		end
@@ -95,7 +95,7 @@ function ConsiderEarthshock()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius - 150)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nRadius)
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -183,7 +183,7 @@ function ConsiderEnrage()
 		end
 	end	
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.65
 	then
 		local npcTarget = npcBot:GetAttackTarget();
 		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 300)  )
@@ -193,7 +193,7 @@ function ConsiderEnrage()
 	end
 	
 	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) and npcBot:GetHealth()/npcBot:GetMaxHealth() < 0.65
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 300) 

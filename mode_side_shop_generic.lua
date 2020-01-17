@@ -1,76 +1,67 @@
+local utils = require(GetScriptDirectory() ..  "/util")
 local npcBot = GetBot();
-local BOT_SIDE_SHOP = GetShopLocation(GetTeam(), SHOP_SIDE )
-local TOP_SIDE_SHOP = GetShopLocation(GetTeam(), SHOP_SIDE2 )
-local closestSideShop = nil;
 
 local getop = false;
-local outposts = {}
+local closestOutpost = nil;
+local closestDist = 10000;
+local outposts = {};
+local team = GetTeam();
+local enemyPids = nil
 
 function GetDesire()
 	
+	if DotaTime() < 10*60 
+		or ( closestOutpost == nil and npcBot:IsChanneling() ) 
+		or npcBot:IsIllusion() 
+		or (string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable())
+		or IsSuitableToOutpost() == false
+	then
+		return BOT_MODE_DESIRE_NONE;
+	end
 	
+	if getop == false then
+		local units = GetUnitList(UNIT_LIST_ALL);
+		for _,unit in pairs(units) do
+			if unit:GetUnitName() == 'npc_dota_watch_tower' then
+				table.insert(outposts, unit);
+			end
+		end
+		getop = true;
+	end
 	
-	-- if getop == false then
-	-- local units = GetUnitList(UNIT_LIST_ALL);
-	-- for _,unit in pairs(units) do
-		-- if unit:GetUnitName() == 'npc_dota_watch_tower' then
-			-- print(unit:GetUnitName()..tostring(unit));
-			-- table.insert(outposts, unit);
-		-- end
-	-- end
-	-- getop = true;
-	-- end
+	closestOutpost, closestDist = GetClosestOutpost();
+	if ( closestOutpost ~= nil and closestDist <= 5000 ) and IsEnemyCloserToOutpostLoc(closestOutpost:GetLocation(), closestDist) == false then
+		return RemapValClamped(  GetUnitToUnitDistance(npcBot, closestOutpost), 5000, 0, 0.65, 1.0 );
+	end
 	
-	-- if getop == true and GetTeam() == TEAM_RADIANT then
-		-- return BOT_MODE_DESIRE_ABSOLUTE;
-	-- end
-	
-	-- if npcBot:IsIllusion() or npcBot:IsChanneling() then
-		-- return BOT_MODE_DESIRE_NONE;
-	-- end
-	
-	-- if string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable() then
-		-- return BOT_MODE_DESIRE_NONE;
-	-- end
-	
-	-- if not IsSuitableToBuy() then
-		-- return BOT_MODE_DESIRE_NONE;
-	-- end
-	
-	-- local invFull = true;
-	
-	-- for i=0,8 do 
-		-- if npcBot:GetItemInSlot(i) == nil then
-			-- invFull = false;
-		-- end	
-	-- end
-	
-	-- if invFull then
-		-- return BOT_MODE_DESIRE_NONE
-	-- end
-	
-	-- if npcBot.SideShop then
-		-- closestSideShop = GetClosestSideShop();
-		-- if IsNearbyEnemyClosestToLoc(closestSideShop) == false then
-			-- return BOT_MODE_DESIRE_HIGH
-		-- end
-	-- end
-
 	return BOT_MODE_DESIRE_NONE
 
 end
 
-function Think()
+function OnStart()
 	
-	-- if npcBot:DistanceFromSideShop() > 0 then
-		-- npcBot:Action_MoveToLocation(closestSideShop);
-		-- return
-	-- end	
-	
-	npcBot:Action_UseShrine(outposts[2]);	
-	return
 	
 end
+
+function OnEnd()
+	closestOutpost = nil;
+	closestDist = 10000;
+end
+
+function Think()
+	if GetUnitToUnitDistance(npcBot,closestOutpost) > 300
+	then
+		npcBot:Action_MoveToLocation(closestOutpost:GetLocation())
+		return
+	elseif  npcBot:IsChanneling() then 
+		return
+	else
+		npcBot:Action_AttackUnit(closestOutpost,false)
+		return
+	end
+	
+end
+
 
 function IsNearbyEnemyClosestToLoc(loc)
 	local closestDist = GetUnitToLocationDistance(npcBot, loc);
@@ -85,30 +76,55 @@ function IsNearbyEnemyClosestToLoc(loc)
 	return false;
 end
 
-function GetClosestSideShop()
+function GetClosestOutpost()
 
-	local TSSD = GetUnitToLocationDistance(npcBot, TOP_SIDE_SHOP);
-	local BSSD = GetUnitToLocationDistance(npcBot, BOT_SIDE_SHOP);
+	local closest = nil;
+	local dist = 10000;
+	for i=1,2 do
+		if outposts[i] ~= nil 
+			and outposts[i]:IsNull() == false 
+			and outposts[i]:GetTeam() ~= team 
+			and GetUnitToUnitDistance(npcBot, outposts[i]) < dist
+		then
+			closest = outposts[i];
+			dist = GetUnitToUnitDistance(npcBot, outposts[i]);
+		end
+	end
 	
-	if TSSD < BSSD then 
-		return TOP_SIDE_SHOP;
-	else
-		return BOT_SIDE_SHOP;
-	end	
+	return closest, dist;
 
 end
 
-function IsSuitableToBuy()
+function IsSuitableToOutpost()
 	local mode = npcBot:GetActiveMode();
 	if ( ( mode == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH )
 		or mode == BOT_MODE_ATTACK
 		or mode == BOT_MODE_DEFEND_ALLY
+		or mode == BOT_MODE_DEFEND_ALLY
 		or mode == BOT_MODE_DEFEND_TOWER_TOP
 		or mode == BOT_MODE_DEFEND_TOWER_MID
 		or mode == BOT_MODE_DEFEND_TOWER_BOT
+		or npcBot:WasRecentlyDamagedByAnyHero(2.5)
 		) 
 	then
 		return false;
 	end
 	return true;
+end
+
+function IsEnemyCloserToOutpostLoc(opLoc, botDist)
+	if enemyPids == nil then
+		enemyPids = GetTeamPlayers(GetOpposingTeam())
+	end	
+	for i = 1, #enemyPids do
+		local info = GetHeroLastSeenInfo(enemyPids[i])
+		if info ~= nil then
+			local dInfo = info[1]; 
+			if dInfo ~= nil and dInfo.time_since_seen < 5.0  and utils.GetDistance(dInfo.location, opLoc) <  botDist
+			then	
+				return true;
+			end
+		end	
+	end
+	return false;
 end

@@ -366,7 +366,9 @@ function ConsiderMorphAgility()
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT  ) 
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) or npcBot:WasRecentlyDamagedByAnyHero(3.0) == true then
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 ) 
+			or npcBot:WasRecentlyDamagedByAnyHero(2.0) == true or npcBot:WasRecentlyDamagedByTower(2.0) == true 
+		then
 			return BOT_ACTION_DESIRE_NONE, 0;
 		end
 	end	
@@ -434,7 +436,7 @@ function ConsiderMorphStrength()
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_RETREAT ) 
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
 		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and not abilityMRS:GetToggleState() then
 			--print("Retreat Active")
 			return BOT_ACTION_DESIRE_MODERATE;

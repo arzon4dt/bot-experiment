@@ -119,6 +119,7 @@ function ConsiderWildAxes()
 	-- Get some of its values
 	local nRadius = abilityWA:GetSpecialValueInt( "radius" );
 	local nCastRange = abilityWA:GetCastRange();
+	local manaCost = abilityWA:GetManaCost();
 	local nCastPoint = abilityWA:GetCastPoint( );
 	local nDamage = abilityWA:GetSpecialValueInt("axe_damage");
 
@@ -163,13 +164,14 @@ function ConsiderWildAxes()
 	end
 
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) 
+	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and mutil.CanSpamSpell(npcBot, manaCost)
 	then
-		local lanecreeps = npcBot:GetNearbyLaneCreeps(nCastRange, true);
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-		if ( locationAoE.count >= 4 and #lanecreeps >= 4  ) 
-		then
-			return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc;
+		if ( locationAoE.count >= 3 ) then
+			local target = mutil.GetVulnerableUnitNearLoc(false, true, nCastRange, nRadius, locationAoE.targetloc, npcBot);
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
+			end
 		end
 	end
 

@@ -211,7 +211,7 @@ function ConsiderIceVortex()
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) and npcTarget:HasModifier('modifier_ice_vortex') == false  )
 		then
 			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
 		end
@@ -233,7 +233,7 @@ function ConsiderIceVortex()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and not npcEnemy:HasModifier("modifier_ancient_apparition_ice_vortex_thinker") ) 
+			if ( mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and not npcEnemy:HasModifier("modifier_ice_vortex") ) 
 			then
 				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetExtrapolatedLocation(nCastPoint);
 			end
@@ -244,7 +244,7 @@ function ConsiderIceVortex()
 	then
 		local npcTarget = npcBot:GetTarget();
 		if  mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
-			and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and not npcTarget:HasModifier("modifier_ancient_apparition_ice_vortex_thinker") 
+			and mutil.IsInRange(npcTarget, npcBot, nCastRange+200) and not npcTarget:HasModifier("modifier_ice_vortex") 
 		then
 			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation(nCastPoint);
 		end
