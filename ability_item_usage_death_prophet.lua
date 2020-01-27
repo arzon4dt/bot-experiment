@@ -189,7 +189,7 @@ local function ConsiderE()
 		end
 	end
 	
-	if mutils.IsGoingOnSomeone(bot) and bot:GetHealth() <= 0.95*bot:GetMaxHealth() and spiritCharge > 1
+	if mutils.IsGoingOnSomeone(bot) and bot:GetHealth() <= 0.95*bot:GetMaxHealth() 
 	then
 		local target = bot:GetTarget();
 		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target) and mutils.IsInRange(target, bot, nCastRange) 

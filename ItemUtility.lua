@@ -594,4 +594,9 @@ function ItemModule.CanCastNeutralItem(bot, item_name)
 	return nil;
 end
 
+function ItemModule.IsNeutralItemSlotEmpty(bot)
+	local neutral_item_slot = 16;
+	return bot:GetItemInSlot(neutral_item_slot) == nil;
+end
+
 return ItemModule

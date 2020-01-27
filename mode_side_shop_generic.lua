@@ -21,7 +21,6 @@ function GetDesire()
 	
 	if getop == false then
 		local units = GetUnitList(UNIT_LIST_ALL);
-		print(npcBot:GetUnitName())
 		for _,unit in pairs(units) do
 			if unit:GetUnitName() == "npc_dota_watch_tower" 
 				or unit:GetUnitName() == '#DOTA_OutpostName_North' 

@@ -112,7 +112,7 @@ function GetDesire()
 	end
 	
 	if DotaTime() >= neutralItemCheck + 5.0 and neutralItem == nil and uItem.IsMeepoClone(bot) == false then
-		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) > 0 then
+		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) > 0 or uItem.IsNeutralItemSlotEmpty(bot) then
 			local dropped = GetDroppedItemList();
 			for _,drop in pairs(dropped) do
 				if uItem.GetNeutralItemTier(drop.item:GetName()) > 0 
@@ -293,7 +293,7 @@ function CanPickupNeutralItem(r)
 	do	
 		local member = GetTeamMember(k);
 		if  member ~= nil and not member:IsIllusion() and member:IsAlive() 
-			and uItem.GetEmptySlotAmount(member, ITEM_SLOT_TYPE_MAIN) > 0
+			and ( uItem.GetEmptySlotAmount(member, ITEM_SLOT_TYPE_MAIN) > 0 or uItem.IsNeutralItemSlotEmpty(member) )
 		then
 			local dist = GetUnitToLocationDistance(member, r);
 			if dist < minDist then

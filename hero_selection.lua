@@ -5,11 +5,11 @@ local utils = require(GetScriptDirectory() .. "/util");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
+	"npc_dota_hero_broodmother",
+	"npc_dota_hero_skeleton_king",
 	"npc_dota_hero_gyrocopter",
-	"npc_dota_hero_life_stealer",
-	"npc_dota_hero_slark",
-	"npc_dota_hero_faceless_void",
-	"npc_dota_hero_skywrath_mage",
+	"npc_dota_hero_vengefulspirit",
+	"npc_dota_hero_death_prophet",
 	
 };
 

@@ -43,8 +43,6 @@ local stoneCastGap = 1.0;
 
 function AbilityUsageThink()
 	
-	nStone = npcBot:GetModifierStackCount(npcBot:GetModifierByName('modifier_earth_spirit_stone_caller_charge_counter'));
-	
 	if npcBot:IsUsingAbility() or npcBot:IsChanneling() or npcBot:IsSilenced() or npcBot:NumQueuedActions() > 0 then return end
 	
 	if abilityQ == nil then abilityQ = npcBot:GetAbilityByName( "earth_spirit_boulder_smash" ) end
@@ -62,6 +60,11 @@ function AbilityUsageThink()
 	castFDesire, castFTarget          = ConsiderF();
 	castRDesire                       = ConsiderR();
 
+	if abilityD:IsFullyCastable() then
+		nStone = 1;
+	else
+		nStone = 0;
+	end
 	
 	if ( castRDesire > 0 ) 
 	then
