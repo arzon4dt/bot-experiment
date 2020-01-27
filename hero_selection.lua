@@ -5,12 +5,11 @@ local utils = require(GetScriptDirectory() .. "/util");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
-	--"npc_dota_hero_snapfire",
-	--"npc_dota_hero_void_spirit",
-	"npc_dota_hero_lina",
-	"npc_dota_hero_luna",
-	"npc_dota_hero_tiny",
-	"npc_dota_hero_tiny",
+	"npc_dota_hero_gyrocopter",
+	"npc_dota_hero_life_stealer",
+	"npc_dota_hero_slark",
+	"npc_dota_hero_faceless_void",
+	"npc_dota_hero_skywrath_mage",
 	
 };
 
@@ -175,10 +174,7 @@ local Min = 27;
 local Max = 28;
 local CMTestMode = false;
 local UnavailableHeroes = {
-	-- "npc_dota_hero_wisp",
-	-- "npc_dota_hero_mars"
-	'npc_dota_hero_snapfire',
-	'npc_dota_hero_void_spirit'
+
 }
 local HeroLanes = {
 	[1] = LANE_MID,

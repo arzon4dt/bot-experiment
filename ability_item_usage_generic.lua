@@ -41,6 +41,7 @@ local mutil = require(GetScriptDirectory() ..  "/MyUtility");
 local utils = require(GetScriptDirectory() ..  "/util");
 local eUtils = require(GetScriptDirectory() ..  "/EnemyUtility");
 local courierUtils = require(GetScriptDirectory() ..  "/CourierUtility");
+local uItem = require(GetScriptDirectory() .. "/ItemUtility" )
 
 
 local IdleTime = 0;
@@ -263,7 +264,7 @@ local courierTime = -90;
 local cState = -1;
 bot.SShopUser = false;
 local returnTime = -90;
-local apiAvailable = false;
+local apiAvailable = true;
 
 bot.courierID = 0;
 bot.courierAssigned = false;
@@ -350,24 +351,24 @@ function CourierUsageThink()
 		end
 		
 		if IsFlyingCourier(npcCourier) then
-			local burst = npcCourier:GetAbilityByName('courier_shield');
+			local burst = npcCourier:GetAbilityByName('courier_burst');
 			if IsTargetedByUnit(npcCourier) then
-				if burst:IsFullyCastable() and apiAvailable == true 
+				if bot:GetLevel() >= 10 and burst:IsFullyCastable() and apiAvailable == true 
 				then
 					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_BURST );
 					return
-				elseif DotaTime() > returnTime + 7.0
+				elseif DotaTime() > returnTime + 5.0
 					   --and not burst:IsFullyCastable() and not npcCourier:HasModifier('modifier_courier_shield') 
 				then
-					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
 					returnTime = DotaTime();
 					return
 				end
 			end
 		else	
 			if IsTargetedByUnit(npcCourier) then
-				if DotaTime() - returnTime > 7.0 then
-					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN );
+				if DotaTime() > returnTime + 5.0 then
+					bot:ActionImmediate_Courier( npcCourier, COURIER_ACTION_RETURN_STASH_ITEMS );
 					returnTime = DotaTime();
 					return
 				end
@@ -386,7 +387,7 @@ function CourierUsageThink()
 			return
 		end
 		
-		if cState == COURIER_STATE_AT_BASE or cState == COURIER_STATE_IDLE or cState == COURIER_STATE_RETURNING_TO_BASE  then 
+		if ( cState == COURIER_STATE_AT_BASE or cState == COURIER_STATE_IDLE or cState == COURIER_STATE_RETURNING_TO_BASE ) then 
 			if courierPHP < 1.0 then
 				return;
 			end
@@ -836,7 +837,7 @@ function UnImplementedItemUsage()
 	local npcTarget = bot:GetTarget();
 	local mode = bot:GetActiveMode();
 	
-	local tps = bot:GetItemInSlot(16);
+	local tps = bot:GetItemInSlot(15);
 	if tps ~= nil and tps:IsFullyCastable() then
 		local tpLoc = nil
 		local shouldTP = false
@@ -864,6 +865,26 @@ function UnImplementedItemUsage()
 		end
 	end
 	
+	local qb = IsItemAvailable('item_quelling_blade');
+	local bf = IsItemAvailable('item_bfury');
+	if ( qb ~= nil and qb:IsFullyCastable() ) or ( bf ~= nil and bf:IsFullyCastable() )  then
+		if bot:GetUnitName() ~= 'npc_dota_hero_monkey_king' and ( mode == BOT_MODE_ATTACK or ( mode == BOT_MODE_RETREAT and bot:IsInvisible() == false ) )
+		then	
+			local nCastRange = 300;
+			local trees = bot:GetNearbyTrees(nCastRange);
+			for i=1,#trees do
+				if bot:IsFacingLocation(GetTreeLocation(trees[i]), 5) then
+					if qb~=nil then
+						bot:Action_UseAbilityOnTree(qb, trees[i]);
+						return
+					elseif bf~=nil then
+						bot:Action_UseAbilityOnTree(bf, trees[i]);
+						return
+					end
+				end
+			end
+		end	
+	end
 	-- local bas = IsItemAvailable("item_ring_of_basilius");
 	-- if bas~=nil and bas:IsFullyCastable() then
 		-- if mode == BOT_MODE_LANING and not bas:GetToggleState() then
@@ -950,15 +971,15 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	local tpt=IsItemAvailable("item_tpscroll");
-	if tpt~=nil and tpt:IsFullyCastable() then
-		if mutil.IsStuck(bot)
-		then
-			bot:ActionImmediate_Chat("I'm using tp while stuck.", true);
-			bot:Action_UseAbilityOnLocation(tpt, GetAncient(GetTeam()):GetLocation());
-			return;
-		end
-	end
+	-- local tpt=IsItemAvailable("item_tpscroll");
+	-- if tpt~=nil and tpt:IsFullyCastable() then
+		-- if mutil.IsStuck(bot)
+		-- then
+			-- bot:ActionImmediate_Chat("I'm using tp while stuck.", true);
+			-- bot:Action_UseAbilityOnLocation(tpt, GetAncient(GetTeam()):GetLocation());
+			-- return;
+		-- end
+	-- end
 	
 	local its=IsItemAvailable("item_tango_single");
 	if its~=nil and its:IsFullyCastable() and bot:DistanceFromFountain() > 1000 then
@@ -975,11 +996,11 @@ function UnImplementedItemUsage()
 		end
 	end
 	
-	--[[local irt=IsItemAvailable("item_iron_talon");
+	local irt=IsItemAvailable("item_iron_talon");
 	if irt~=nil and irt:IsFullyCastable() then
-		if bot:GetActiveMode() == BOT_MODE_FARM 
+		if bot:GetActiveMode() == BOT_MODE_FARM or mutil.IsDefending(bot) or mutil.IsPushing(bot) 
 		then
-			local neutrals = bot:GetNearbyNeutralCreeps(500);
+			local neutrals = bot:GetNearbyCreeps(500);
 			local maxHP = 0;
 			local target = nil;
 			for _,c in pairs(neutrals) do
@@ -994,7 +1015,7 @@ function UnImplementedItemUsage()
 				return;
 			end
 		end
-	end]]--
+	end
 	
 	local msh=IsItemAvailable("item_moon_shard");
 	if msh~=nil and msh:IsFullyCastable() then
@@ -1392,8 +1413,25 @@ function UnImplementedItemUsage()
 	end
 	
 	--Neutral Item Usage
+	--item_ironwood_tree
+	local ironwood = uItem.CanCastNeutralItem(bot, "item_ironwood_tree");
+	if ironwood ~= nil and ironwood:IsFullyCastable() then
+		local nCastRange = 600;
+		if ( mode == BOT_MODE_RETREAT and 
+			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
+			bot:WasRecentlyDamagedByAnyHero(3.0) )
+		then
+			local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+			if #enemies > 0 and enemies[1] ~= nil and GetUnitToUnitDistance(bot, enemies[1]) > 150 then
+				bot:Action_UseAbilityOnLocation(ironwood, bot:GetXUnitsTowardsLocation(enemies[1]:GetLocation(), 75));
+				return;
+			end
+		end
+	end
+	
+	
 	--item_arcane_ring
-	local arc_ring = IsItemAvailable("item_arcane_ring");
+	local arc_ring = uItem.CanCastNeutralItem(bot, "item_arcane_ring");
 	if arc_ring ~= nil and arc_ring:IsFullyCastable() then
 		local nRadius = 1200;
 		local nRestore = 75;
@@ -1411,7 +1449,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_elixir
-	local elix = IsItemAvailable("item_elixer");
+	local elix = uItem.CanCastNeutralItem(bot,"item_elixer");
 	if elix ~= nil and elix:IsFullyCastable() then
 		local hpRes = 500;
 		local mnRes = 250;
@@ -1429,7 +1467,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_mango_tree
-	local mang_tree = IsItemAvailable("item_mango_tree");
+	local mang_tree = uItem.CanCastNeutralItem(bot,"item_mango_tree");
 	if mang_tree ~= nil and mang_tree:IsFullyCastable() then
 		local nCastRange = 200;
 		bot:Action_UseAbilityOnLocation(mang_tree, bot:GetLocation() + RandomVector(nCastRange));
@@ -1437,7 +1475,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_royal_jelly
-	local royal = IsItemAvailable("item_royal_jelly");
+	local royal = uItem.CanCastNeutralItem(bot,"item_royal_jelly");
 	if royal ~= nil and royal:IsFullyCastable() then
 		local nCastRange = 250 + 200;
 		local allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
@@ -1452,7 +1490,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_trusty_shovel
-	local shov = IsItemAvailable("item_trusty_shovel");
+	local shov = uItem.CanCastNeutralItem(bot,"item_trusty_shovel");
 	if shov ~= nil and shov:IsFullyCastable() and bot:WasRecentlyDamagedByAnyHero(5.0) == false then
 		local nCastRange = 250;
 		local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
@@ -1463,9 +1501,9 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_clumsy_net
-	local clum = IsItemAvailable("item_clumsy_net");
+	local clum = uItem.CanCastNeutralItem(bot,"item_clumsy_net");
 	if clum ~= nil and clum:IsFullyCastable() then
-		local nCastRange = 900;
+		local nCastRange = 650;
 		if mutil.IsGoingOnSomeone(bot)
 		then	
 			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
@@ -1479,7 +1517,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_essence_ring
-	local ess_ring = IsItemAvailable("item_essence_ring");
+	local ess_ring = uItem.CanCastNeutralItem(bot,"item_essence_ring");
 	if ess_ring ~= nil and ess_ring:IsFullyCastable() then
 		local hpRes = 425;
 		if ( mode == BOT_MODE_RETREAT and 
@@ -1493,7 +1531,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_greater_faerie_fire
-	local gff=IsItemAvailable("item_greater_faerie_fire");
+	local gff = uItem.CanCastNeutralItem(bot,"item_greater_faerie_fire");
 	if gff~=nil and gff:IsFullyCastable() then
 		local hpRes = 500;
 		if ( mode == BOT_MODE_RETREAT and 
@@ -1508,7 +1546,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_repair_kit
-	local rep_kit = IsItemAvailable("item_repair_kit");
+	local rep_kit = uItem.CanCastNeutralItem(bot,"item_repair_kit");
 	if rep_kit ~= nil and rep_kit:IsFullyCastable() then
 		local nCastRange = 600;
 		local towers = bot:GetNearbyTowers(nCastRange, false);
@@ -1521,7 +1559,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_spider_legs
-	local slegs = IsItemAvailable("item_spider_legs");
+	local slegs = uItem.CanCastNeutralItem(bot,"item_spider_legs");
 	if slegs ~= nil and slegs:IsFullyCastable() then
 		if ( mode == BOT_MODE_RETREAT and 
 			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
@@ -1533,7 +1571,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_flicker
-	local flick = IsItemAvailable("item_flicker");
+	local flick = uItem.CanCastNeutralItem(bot,"item_flicker");
 	if flick~= nil and flick:IsFullyCastable() then
 		if ( mode == BOT_MODE_RETREAT and 
 			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
@@ -1545,7 +1583,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_havoc_hammer
-	local hav_ham = IsItemAvailable("item_havoc_hammer");
+	local hav_ham = uItem.CanCastNeutralItem(bot,"item_havoc_hammer");
 	if hav_ham ~= nil and hav_ham:IsFullyCastable() then
 		local nCastRange = 300;
 		if ( mode == BOT_MODE_RETREAT and 
@@ -1561,7 +1599,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_illusionsts_cape
-	local ill_cape = IsItemAvailable("item_illusionsts_cape");
+	local ill_cape = uItem.CanCastNeutralItem(bot,"item_illusionsts_cape");
 	if ill_cape ~= nil and ill_cape:IsFullyCastable() then
 		local nCastRange = bot:GetAttackRange();
 		if mutil.IsGoingOnSomeone(bot)
@@ -1583,7 +1621,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_minotaur_horn
-	local min_horn = IsItemAvailable("item_minotaur_horn");
+	local min_horn = uItem.CanCastNeutralItem(bot,"item_minotaur_horn");
 	if min_horn ~= nil and min_horn:IsFullyCastable() and bot:IsMagicImmune() == false then
 		local nCastRange = bot:GetAttackRange();
 		if mutil.IsGoingOnSomeone(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
@@ -1604,7 +1642,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_ninja_gear
-	local nin_gear = IsItemAvailable("item_ninja_gear");
+	local nin_gear = uItem.CanCastNeutralItem(bot,"item_ninja_gear");
 	if nin_gear ~= nil and nin_gear:IsFullyCastable() then
 		local nCastRange = 1025
 		if mutil.IsGoingOnSomeone(bot)
@@ -1629,7 +1667,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_demonicon
-	local dem = IsItemAvailable("item_demonicon");
+	local dem = uItem.CanCastNeutralItem(bot,"item_demonicon");
 	if dem ~= nil and dem:IsFullyCastable() then
 		local nCastRange = bot:GetAttackRange()
 		if mutil.IsGoingOnSomeone(bot)
@@ -1643,7 +1681,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_ex_machina
-	local ex_mac = IsItemAvailable("item_ex_machina");
+	local ex_mac = uItem.CanCastNeutralItem(bot,"item_ex_machina");
 	if ex_mac ~= nil and ex_mac:IsFullyCastable() then
 		local nCastRange = bot:GetAttackRange()
 		if mutil.IsGoingOnSomeone(bot)
@@ -1682,7 +1720,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_force_boots
-	local fboot = IsItemAvailable("item_force_boots");
+	local fboot = uItem.CanCastNeutralItem(bot,"item_force_boots");
 	if fboot ~= nil and fboot:IsFullyCastable() then
 		if ( mode == BOT_MODE_RETREAT and 
 			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
@@ -1695,7 +1733,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_woodland_striders
-	local wood_str = IsItemAvailable("item_woodland_striders");
+	local wood_str = uItem.CanCastNeutralItem(bot,"item_woodland_striders");
 	if wood_str ~= nil and wood_str:IsFullyCastable() then
 		if ( mode == BOT_MODE_RETREAT and 
 			bot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH and
@@ -1707,7 +1745,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_fusion_rune
-	local fus_rune = IsItemAvailable("item_fusion_rune");
+	local fus_rune = uItem.CanCastNeutralItem(bot,"item_fusion_rune");
 	if fus_rune ~= nil and fus_rune:IsFullyCastable() and DotaTime() > castFusionRuneTime + 50 then
 		local nCastRange = bot:GetAttackRange();
 		if mutil.IsGoingOnSomeone(bot)
@@ -1730,7 +1768,7 @@ function UnImplementedItemUsage()
 	end
 	
 	--item_fallen_sky
-	local fsky=IsItemAvailable("item_fallen_sky");
+	local fsky = uItem.CanCastNeutralItem(bot,"item_fallen_sky");
 	if fsky~=nil and fsky:IsFullyCastable() then
 		local nCastRange = 1600
 		local nRadius = 315;
@@ -1773,7 +1811,7 @@ function UnImplementedItemUsage()
 	
 end
 
-function IsItemAvailable(item_name)
+function IsItemAvailable(item_name, neutral)
     --[[for i = 0, 5 do
         local item = bot:GetItemInSlot(i);
 		if item~=nil and item:GetName() == item_name then

@@ -245,7 +245,7 @@ function GetDesire()
 		end	
 	elseif bot:GetUnitName() == "npc_dota_hero_tinker" then
 		if cAbility == nil then cAbility = bot:GetAbilityByName( "tinker_rearm" ) end;
-		if cAbility:IsInAbilityPhase() or bot:IsChanneling() then
+		if cAbility:IsInAbilityPhase() or bot:IsChanneling() or bot:HasModifier('modifier_tinker_rearm') then
 			return BOT_MODE_DESIRE_ABSOLUTE;
 		end
 	elseif bot:GetUnitName() == "npc_dota_hero_spirit_breaker" then
@@ -423,6 +423,7 @@ function Think()
 		or  bot:GetUnitName() == "npc_dota_hero_enigma" 
 		or  bot:GetUnitName() == "npc_dota_hero_lich" 
 		or  bot:GetUnitName() == "npc_dota_hero_drow_ranger" 
+		or  bot:IsChanneling()
 	then
 		return;	
 	elseif bot:GetUnitName() == "npc_dota_hero_magnataur" then

@@ -89,14 +89,26 @@ function ConsiderInnerVitality()
 			return BOT_ACTION_DESIRE_HIGH, npcBot;
 		end
 	end
+	
+	if mutil.IsInTeamFight(npcBot, 1600) 
+	then
+		local enemies = npcBot:GetNearbyHeroes(nRadius-100, true, BOT_MODE_NONE);
+		if ( #enemies >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_LOW;
+		end
+	end
 
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot) 
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget)  and mutil.CanCastOnNonMagicImmune(npcTarget)  and mutil.IsInRange(npcTarget, npcBot, nRadius-150)
+		if mutil.IsValidTarget(npcTarget)  and mutil.CanCastOnNonMagicImmune(npcTarget)  and mutil.IsInRange(npcTarget, npcBot, nRadius-100)
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcBot;
+			local eTarget = npcTarget:GetAttackTarget();
+			if mutil.IsValidTarget(eTarget) or eTarget ~= nil  and eTarget == npcBot then
+				return BOT_ACTION_DESIRE_HIGH, npcBot;
+			end
 		end
 	end
 	
@@ -139,7 +151,19 @@ function ConsiderLifeBreak()
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 	
-	local nCastRange = abilityLB:GetCastRange();
+	local nCastRange = mutil.GetProperCastRange(false, npcBot, abilityLB:GetCastRange());
+	
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
+		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 0 and npcBot:WasRecentlyDamagedByAnyHero(3.0) then
+			local loc = mutil.GetEscapeLoc();
+			local furthestUnit = mutil.GetClosestEnemyUnitToLocation(npcBot, nCastRange, loc);
+			if furthestUnit ~= nil and ( GetUnitToUnitDistance(furthestUnit, npcBot) >= 0.5*nCastRange or GetUnitToUnitDistance(furthestUnit, npcBot) >= 350 ) then
+				return BOT_ACTION_DESIRE_LOW, furthestUnit;
+			end
+		end
+	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then

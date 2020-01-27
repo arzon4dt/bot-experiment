@@ -13,7 +13,7 @@ ItemModule['neutralItem'] = {
 	['item_poor_mans_shield'] = 1,
 	['item_royal_jelly'] = 1,
 	['item_trusty_shovel'] = 1,
-	['item_recipe_ironwood_tree'] = 1,
+	['item_ironwood_tree'] = 1,
 	--Tier 2
 	['item_clumsy_net'] = 2,
 	['item_dragon_scale'] = 2,
@@ -25,7 +25,7 @@ ItemModule['neutralItem'] = {
 	['item_pupils_gift'] = 2,
 	['item_ring_of_aquila'] = 2,
 	['item_vampire_fangs'] = 2,
-	['item_recipe_vambrace'] = 2,
+	['item_vambrace'] = 2,
 	--Tier 3
 	['item_craggy_coat'] = 3,
 	['item_enchanted_quiver'] = 3,
@@ -58,7 +58,7 @@ ItemModule['neutralItem'] = {
 	['item_demonicon'] = 5,
 	['item_desolator_2'] = 5,
 	['item_ex_machina'] = 5,
-	['item_recipe_fallen_sky'] = 5,
+	['item_fallen_sky'] = 5,
 	['item_force_boots'] = 5,
 	['item_fusion_rune'] = 5,
 	['item_mirror_shield'] = 5,
@@ -583,6 +583,15 @@ end
 function ItemModule.IsMeepoClone(bot)
 	local nItem = ItemModule.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN);
 	return bot:GetUnitName() == "npc_dota_hero_meepo" and nItem >= 5;
+end
+
+function ItemModule.CanCastNeutralItem(bot, item_name)
+	local neutral_item_slot = 16;
+	local n_item = bot:GetItemInSlot(neutral_item_slot);
+	if n_item ~= nil and n_item:GetName() == item_name then
+		return n_item;
+	end
+	return nil;
 end
 
 return ItemModule

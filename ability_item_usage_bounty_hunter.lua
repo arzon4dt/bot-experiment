@@ -28,7 +28,7 @@ local castRDesire = 0;
 
 function AbilityUsageThink()
 	
-	if mutil.CanNotUseAbility(npcBot) or npcBot:HasModifier('modifier_bounty_hunter_wind_walk') then return end
+	if mutil.CanNotUseAbility(npcBot) then return end
 	
 	if abilityQ == nil then abilityQ = npcBot:GetAbilityByName( "bounty_hunter_shuriken_toss" ) end
 	if abilityE == nil then abilityE = npcBot:GetAbilityByName( "bounty_hunter_wind_walk" ) end
@@ -61,7 +61,7 @@ end
 function ConsiderQ()
 
 	-- Make sure it's castable
-	if ( not abilityQ:IsFullyCastable() ) then 
+	if ( not abilityQ:IsFullyCastable() or npcBot:HasModifier('modifier_bounty_hunter_wind_walk') ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
@@ -86,7 +86,7 @@ function ConsiderQ()
 			if mutil.IsInRange(npcEnemy, npcBot, nCastRange + 200) then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 			elseif tableNearbyCreeps[1] ~= nil and mutil.StillHasModifier(npcEnemy, 'modifier_bounty_hunter_track') 
-				and mutil.IsInRange(npcEnemy, npcBot, nRadius - 200)
+				and mutil.IsInRange(npcEnemy, tableNearbyCreeps[1], nRadius - 150)
 			then	
 				return BOT_ACTION_DESIRE_HIGH, tableNearbyCreeps[1] ;
 			end
@@ -106,7 +106,7 @@ function ConsiderQ()
 		if trackedEnemy >= 2 then
 			if tableNearbyCreeps[1] ~= nil then
 				return BOT_ACTION_DESIRE_HIGH, tableNearbyCreeps[1];
-			elseif mutil.IsInRange(tableNearbyEnemyHeroes[1], npcBot, nCastRange + 200) 
+			elseif tableNearbyEnemyHeroes[1] ~= nil and mutil.IsInRange(tableNearbyEnemyHeroes[1], npcBot, nCastRange + 200) 
 			then
 				return BOT_ACTION_DESIRE_HIGH, tableNearbyEnemyHeroes[1];
 			end
@@ -119,12 +119,16 @@ function ConsiderQ()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) 
 		then
-			if mutil.IsInRange(npcEnemy, npcBot, nCastRange + 200) then
+			if mutil.IsInRange(npcTarget, npcBot, nCastRange + 200) then
 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
-			elseif tableNearbyCreeps[1] ~= nil and mutil.StillHasModifier(npcEnemy, 'modifier_bounty_hunter_track') 
-				and mutil.IsInRange(npcEnemy, npcBot, nRadius - 200)
-			then	
-				return BOT_ACTION_DESIRE_HIGH, tableNearbyCreeps[1] ;
+			elseif npcTarget:HasModifier('modifier_bounty_hunter_track') 
+			then
+				for i=1, #tableNearbyCreeps do
+					if tableNearbyCreeps[i] ~= nil and mutil.IsInRange(npcTarget, tableNearbyCreeps[i], nRadius - 150)
+					then
+						return BOT_ACTION_DESIRE_HIGH, tableNearbyCreeps[i] ;
+					end
+				end
 			end
 		end
 	end
@@ -136,7 +140,7 @@ end
 function ConsiderE()
 
 	-- Make sure it's castable
-	if ( not abilityE:IsFullyCastable() ) then 
+	if ( not abilityE:IsFullyCastable() or npcBot:HasModifier('modifier_bounty_hunter_wind_walk') ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 
@@ -147,8 +151,8 @@ function ConsiderE()
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 ) 
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1300, true, BOT_MODE_NONE );
+		if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1 ) or npcBot:WasRecentlyDamagedByTower(2.5) 
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
@@ -158,7 +162,7 @@ function ConsiderE()
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 300) and mutil.IsInRange(npcTarget, npcBot, 2000)
+		if mutil.IsValidTarget(npcTarget) and not mutil.IsInRange(npcTarget, npcBot, 1000) and mutil.IsInRange(npcTarget, npcBot, 2500)
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end

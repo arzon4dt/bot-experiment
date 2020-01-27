@@ -177,8 +177,9 @@ local function GeneralPurchase()
 			end
 		end
 		t3Check = DotaTime();
-	elseif t3AlreadyDamaged == true and bot:GetBuybackCooldown() <= 10 then
-		cost = itemCost + bot:GetBuybackCost() + ( 100 + bot:GetNetWorth()/40 );
+	elseif t3AlreadyDamaged == true and bot:GetBuybackCooldown() <= 30 then
+		cost = itemCost + bot:GetBuybackCost() + 100; 
+		--( 200 + bot:GetNetWorth()/12 );
 	end
 	
 	--buy the item if we have the gold

@@ -21,8 +21,12 @@ function GetDesire()
 	
 	if getop == false then
 		local units = GetUnitList(UNIT_LIST_ALL);
+		print(npcBot:GetUnitName())
 		for _,unit in pairs(units) do
-			if unit:GetUnitName() == 'npc_dota_watch_tower' then
+			if unit:GetUnitName() == "npc_dota_watch_tower" 
+				or unit:GetUnitName() == '#DOTA_OutpostName_North' 
+				or unit:GetUnitName() == '#DOTA_OutpostName_South' 
+			then
 				table.insert(outposts, unit);
 			end
 		end
@@ -30,8 +34,8 @@ function GetDesire()
 	end
 	
 	closestOutpost, closestDist = GetClosestOutpost();
-	if ( closestOutpost ~= nil and closestDist <= 5000 ) and IsEnemyCloserToOutpostLoc(closestOutpost:GetLocation(), closestDist) == false then
-		return RemapValClamped(  GetUnitToUnitDistance(npcBot, closestOutpost), 5000, 0, 0.65, 1.0 );
+	if ( closestOutpost ~= nil and closestDist <= 3500 ) and IsEnemyCloserToOutpostLoc(closestOutpost:GetLocation(), closestDist) == false then
+		return RemapValClamped(  GetUnitToUnitDistance(npcBot, closestOutpost), 3500, 0, 0.65, 1.0 );
 	end
 	
 	return BOT_MODE_DESIRE_NONE

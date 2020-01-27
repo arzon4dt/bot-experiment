@@ -121,18 +121,18 @@ function GetDesire()
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
-	if t3Destroyed == false then
-		t3Destroyed = IsThereT3Detroyed();
-	else
-		if bot:DistanceFromFountain() > 10000 then
-			shrineTarget = GetTargetShrine();
-			local barracks = bot:GetNearbyBarracks(700, true);
-			if shrineTarget ~= nil and ( barracks == nil or #barracks == 0 ) and IsSuitableToDestroyShrine()  then
-				cause = "shrine";
-				return BOT_MODE_DESIRE_VERYHIGH;
-			end
-		end
-	end
+	-- if t3Destroyed == false then
+		-- t3Destroyed = IsThereT3Detroyed();
+	-- else
+		-- if bot:DistanceFromFountain() > 10000 then
+			-- shrineTarget = GetTargetShrine();
+			-- local barracks = bot:GetNearbyBarracks(700, true);
+			-- if shrineTarget ~= nil and ( barracks == nil or #barracks == 0 ) and IsSuitableToDestroyShrine()  then
+				-- cause = "shrine";
+				-- return BOT_MODE_DESIRE_VERYHIGH;
+			-- end
+		-- end
+	-- end
 	
 	if campUtils.IsStrongJungler(bot) and bot:GetLevel() >= 6 and bot:GetLevel() < 25 and not IsHumanPlayerInTeam() and GetGameMode() ~= GAMEMODE_MO 
 	then
@@ -202,14 +202,14 @@ function Think()
 		bot:Action_AttackUnit( cogsTarget, true );
 		cause = "";
 		return;
-	elseif cause == "shrine" then
-		if GetUnitToUnitDistance(bot, shrineTarget) > 500 then
-			bot:Action_MoveToLocation(shrineTarget:GetLocation())
-			return
-		else
-			bot:Action_AttackUnit(shrineTarget, true)
-			return
-		end
+	-- elseif cause == "shrine" then
+		-- if GetUnitToUnitDistance(bot, shrineTarget) > 500 then
+			-- bot:Action_MoveToLocation(shrineTarget:GetLocation())
+			-- return
+		-- else
+			-- bot:Action_AttackUnit(shrineTarget, true)
+			-- return
+		-- end
 	end	
 	
 	if LaneCreeps ~= nil and #LaneCreeps > 0 then

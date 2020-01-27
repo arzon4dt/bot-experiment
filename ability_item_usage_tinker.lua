@@ -259,6 +259,14 @@ function ConsiderSlithereenCrush()
 		end
 	end
 
+	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) 
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
+		if #tableNearbyEnemyHeroes > 0 then
+			return BOT_ACTION_DESIRE_MODERATE;
+		end
+	end
+
 	if mutil.IsInTeamFight(npcBot, 1200)
 	then
 		local locationAoE = npcBot:FindAoELocation( true, true, npcBot:GetLocation(), 1200, 500, 0, 0 );
@@ -354,6 +362,11 @@ function ConsiderRearm()
 		then
 			return BOT_ACTION_DESIRE_MODERATE;
 		end
+	end
+	
+	if ( mutil.IsDefending(npcBot) ) and abilitySC:GetCooldownTimeRemaining() > 3
+	then
+		return BOT_ACTION_DESIRE_MODERATE;
 	end
 	
 	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and npcBot:DistanceFromFountain() > 0

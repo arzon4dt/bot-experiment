@@ -20,17 +20,17 @@ bot.ward = false;
 bot.steal = false;
 
 local route = {
-	Vector(-4360.000000, 1982.000000, 0.000000),
-	Vector(-3714.000000, 3375.000000, 0.000000),
-	Vector(-5149.000000, 4878.000000, 0.000000),
-	Vector(-6839.000000, 4742.000000, 0.000000)
+	Vector(-6263.000000, 2265.000000, 0.000000),
+	Vector(-5012.000000, 4765.000000, 0.000000),
+	Vector(-3212.000000, 4865.000000, 0.000000),
+	Vector(-3706.000000, 2950.000000, 0.000000)
 }
 
 local route2 = {
-	Vector(4510.000000, -1913.000000, 0.000000),
-	Vector(3959.000000, -3394.000000, 0.000000),
-	Vector(4557.000000, -4738.000000, 0.000000),
-	Vector(7028.000000, -4337.000000, 0.000000)
+	Vector(6041.000000, -1978.000000, 0.000000),
+	Vector(4622.000000, -4873.000000, 0.000000),
+	Vector(3561.000000, -4297.000000, 0.000000),
+	Vector(3957.000000, -2808.000000, 0.000000)
 }
 
 local vNonStuck = Vector(-2610.000000, 538.000000, 0.000000);
@@ -38,7 +38,6 @@ local vNonStuck = Vector(-2610.000000, 538.000000, 0.000000);
 local chat = false;
 local height = -1;
 function GetDesire()
-
 	-- "morphling_replicate"
 	-- "morphling_morph_replicate"
 
@@ -86,10 +85,10 @@ function GetDesire()
 		end
 	end]]--
 
-	-- local pg = wardUtils.GetHumanPing();
-	-- if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
-		-- print(tostring(pg.location)..":Vis:"..tostring(IsLocationVisible(pg.location))..":Pas:"..tostring(IsLocationPassable(pg.location)).."HLvl:"..tostring(GetHeightLevel(pg.location)));
-	-- end
+	local pg = wardUtils.GetHumanPing();
+	if pg ~= nil and pg.time > 0 and GameTime() - pg.time < 0.25 then
+		print(tostring(pg.location)..":Vis:"..tostring(IsLocationVisible(pg.location))..":Pas:"..tostring(IsLocationPassable(pg.location)).."HLvl:"..tostring(GetHeightLevel(pg.location)));
+	end
 
 	--[[if bot.lastPlayerChat ~= nil and string.find(bot.lastPlayerChat.text, "ward") then
 		bot:ActionImmediate_Chat("Catch this in mode_ward_generic", false);

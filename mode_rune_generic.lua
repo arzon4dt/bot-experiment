@@ -19,6 +19,7 @@ local enemyPids = nil
 local neutralItemCheck = -90;
 local dropNeutralItemCheck = -90;
 local neutralItem = nil;
+local droppedNeutralItems = {};
 
 local ListRune = {
 	RUNE_BOUNTY_1,
@@ -38,7 +39,7 @@ function GetDesire()
 		bot.lastPlayerChat = nil;
 	end]]--
 	-- if DotaTime() > lastPing + 3.0 then
-		-- bot:ActionImmediate_Ping( GetRuneSpawnLocation(RUNE_BOUNTY_3).x,  GetRuneSpawnLocation(RUNE_BOUNTY_3).y, true)
+		-- bot:ActionImmediate_Ping( GetRuneSpawnLocation(RUNE_BOUNTY_4).x,  GetRuneSpawnLocation(RUNE_BOUNTY_4).y, true)
 		-- lastPing = DotaTime()
 	-- end
 
@@ -54,7 +55,7 @@ function GetDesire()
 	
 	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or bot:HasModifier("modifier_arc_warden_tempest_double") or
        bot:IsUsingAbility() or bot:IsChanneling() or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE or 
-	   GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 5000 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 5000 
+	   GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 3500 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 3500 
 	then
 		return BOT_MODE_DESIRE_NONE;
 	end
@@ -67,7 +68,7 @@ function GetDesire()
 	end	
 	
 	if DotaTime() < 0 and not bot:WasRecentlyDamagedByAnyHero(5.0) then 
-		return BOT_MODE_DESIRE_MODERATE;
+		return BOT_MODE_DESIRE_HIGH;
 	end	
 	
 	if DotaTime() > dropNeutralItemCheck + 5.0 then
@@ -114,7 +115,10 @@ function GetDesire()
 		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) > 0 then
 			local dropped = GetDroppedItemList();
 			for _,drop in pairs(dropped) do
-				if uItem.GetNeutralItemTier(drop.item:GetName()) > 0 and uItem.IsRecipeNeutralItem(drop.item:GetName()) == false and IsTheClosestOne(drop.location) == true then
+				if uItem.GetNeutralItemTier(drop.item:GetName()) > 0 
+					and uItem.IsRecipeNeutralItem(drop.item:GetName()) == false 
+					and CanPickupNeutralItem(drop.location) == true 
+				then
 					print(bot:GetUnitName().." taking item:"..tostring(drop))
 					neutralItem = drop;
 					break;
@@ -155,18 +159,18 @@ function Think()
 	if DotaTime() < 0 then 
 		if GetTeam() == TEAM_RADIANT then
 			if bot:GetAssignedLane() == LANE_BOT then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
 				return
 			end
 		elseif GetTeam() == TEAM_DIRE then
 			if bot:GetAssignedLane() == LANE_TOP then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
 				return
 			end
 		end
@@ -206,7 +210,7 @@ function GetBotClosestRune()
 	for _,r in pairs(ListRune)
 	do
 		local rLoc = GetRuneSpawnLocation(r);
-		if not IsHumanPlayerNearby(rLoc) and not IsPingedByHumanPlayer(rLoc) and not IsThereMidlaner(rLoc) and not IsThereCarry(rLoc) and IsTheClosestOne(rLoc)
+		if not IsHumanPlayerNearby(rLoc) and not IsPingedByHumanPlayer(rLoc) and not IsThereMidlaner(rLoc) and IsTheClosestOne(rLoc)
 		then
 			local dist = GetUnitToLocationDistance(bot, rLoc);
 			if dist < cDist then
@@ -272,6 +276,25 @@ function IsTheClosestOne(r)
 	do	
 		local member = GetTeamMember(k);
 		if  member ~= nil and not member:IsIllusion() and member:IsAlive() then
+			local dist = GetUnitToLocationDistance(member, r);
+			if dist < minDist then
+				minDist = dist;
+				closest = member;
+			end
+		end
+	end
+	return closest == bot;
+end
+
+function CanPickupNeutralItem(r)
+	local minDist = GetUnitToLocationDistance(bot, r);
+	local closest = bot;
+	for k,v in pairs(teamPlayers)
+	do	
+		local member = GetTeamMember(k);
+		if  member ~= nil and not member:IsIllusion() and member:IsAlive() 
+			and uItem.GetEmptySlotAmount(member, ITEM_SLOT_TYPE_MAIN) > 0
+		then
 			local dist = GetUnitToLocationDistance(member, r);
 			if dist < minDist then
 				minDist = dist;
