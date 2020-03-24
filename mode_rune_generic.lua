@@ -2,9 +2,10 @@ if GetBot():IsInvulnerable() or not GetBot():IsHero() or not string.find(GetBot(
 	return;
 end
 
-local utils = require(GetScriptDirectory() ..  "/util")
+local utils = require(GetScriptDirectory() ..  "/util");
 local role = require(GetScriptDirectory() .. "/RoleUtility");
-local uItem = require(GetScriptDirectory() .. "/ItemUtility" )
+local uItem = require(GetScriptDirectory() .. "/ItemUtility" );
+local mUtils = require(GetScriptDirectory() .. "/MyUtility" );
 local hero_roles = role["hero_roles"];
 local bot = GetBot();
 local minute = 0;
@@ -18,6 +19,7 @@ local bottle = nil;
 local enemyPids = nil
 local neutralItemCheck = -90;
 local dropNeutralItemCheck = -90;
+local swapNeutralItemCheck = -90;
 local neutralItem = nil;
 local droppedNeutralItems = {};
 
@@ -54,9 +56,30 @@ function GetDesire()
 	if teamPlayers == nil then teamPlayers = GetTeamPlayers(GetTeam()) end
 	
 	if bot:IsIllusion() or bot:IsInvulnerable() or not bot:IsHero() or bot:HasModifier("modifier_arc_warden_tempest_double") or
-       bot:IsUsingAbility() or bot:IsChanneling() or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE or 
-	   GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 3500 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 3500 
+       bot:IsUsingAbility() or bot:IsChanneling() or bot:GetCurrentActionType() == BOT_ACTION_TYPE_IDLE 
 	then
+		return BOT_MODE_DESIRE_NONE;
+	end
+	
+	if DotaTime() > dropNeutralItemCheck + 0.25 then
+		local canDrop, hItem = uItem.CanDropNeutralItem(bot);
+		if canDrop == true then
+			bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
+			return;
+		end
+		dropNeutralItemCheck = DotaTime();
+	end
+	
+	if DotaTime() > swapNeutralItemCheck + 0.25 then
+		local canSwap, hItem1, hItem2 = uItem.CanSwapNeutralItem(bot);
+		if canSwap == true then
+			bot:ActionImmediate_SwapItems(hItem1, hItem2);
+			return;
+		end
+		swapNeutralItemCheck = DotaTime();
+	end
+
+	if GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 3500 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 3500 then
 		return BOT_MODE_DESIRE_NONE;
 	end
 
@@ -71,17 +94,8 @@ function GetDesire()
 		return BOT_MODE_DESIRE_HIGH;
 	end	
 	
-	if DotaTime() > dropNeutralItemCheck + 5.0 then
-		local canDrop, hItem = uItem.CanDropNeutralItem(bot);
-		if canDrop == true then
-			bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
-			return;
-		end
-		dropNeutralItemCheck = DotaTime();
-	end
-	
 	if neutralItem ~= nil then
-		return CountDesire(BOT_MODE_DESIRE_MODERATE, 500, 2000);
+		return CountDesire(BOT_MODE_DESIRE_MODERATE, GetUnitToLocationDistance(bot, neutralItem.location), 2000);
 	end
 	
 	closestRune, closestDist = GetBotClosestRune();
@@ -98,25 +112,39 @@ function GetDesire()
 				return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 5000);
 			end
 		else
-			runeStatus = GetRuneStatus( closestRune );
-			if runeStatus == RUNE_STATUS_AVAILABLE then
-				return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 5000);
-			elseif runeStatus == RUNE_STATUS_UNKNOWN and closestDist <= ProxDist then
-				return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
-			elseif runeStatus == RUNE_STATUS_MISSING and DotaTime() > 60 and ( minute % 2 == 1 and sec > 52 ) and closestDist <= ProxDist then
-				return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
-			elseif IsTeamMustSaveRune(closestRune) and runeStatus == RUNE_STATUS_UNKNOWN then
-				return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 5000);
-			end
+			if DotaTime() > 3 * 60 + 50 then
+				runeStatus = GetRuneStatus( closestRune );
+				if runeStatus == RUNE_STATUS_AVAILABLE then
+					return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 5000);
+				elseif runeStatus == RUNE_STATUS_UNKNOWN and closestDist <= ProxDist then
+					return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
+				elseif runeStatus == RUNE_STATUS_MISSING and DotaTime() > 60 and ( minute % 2 == 1 and sec > 52 ) and closestDist <= ProxDist then
+					return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, ProxDist);
+				elseif IsTeamMustSaveRune(closestRune) and runeStatus == RUNE_STATUS_UNKNOWN then
+					return CountDesire(BOT_MODE_DESIRE_MODERATE, closestDist, 5000);
+				end
+			end	
 		end	
 	end
-	
-	if DotaTime() >= neutralItemCheck + 5.0 and neutralItem == nil and uItem.IsMeepoClone(bot) == false then
-		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) > 0 or uItem.IsNeutralItemSlotEmpty(bot) then
+	-- print(bot:GetUnitName())
+	-- for i=0,25 do
+		-- if bot:GetItemSlotType(i) == ITEM_SLOT_TYPE_MAIN then
+			-- print(tostring(i)..'Main')
+		-- elseif bot:GetItemSlotType(i) == ITEM_SLOT_TYPE_BACKPACK then
+			-- print(tostring(i)..'Back')
+		-- elseif bot:GetItemSlotType(i) == ITEM_SLOT_TYPE_STASH then
+			-- print(tostring(i)..'Stash')
+		-- else
+			-- print(tostring(i)..'NA')
+		-- end
+	-- end
+	if DotaTime() >= neutralItemCheck + 0.5 and neutralItem == nil and uItem.IsMeepoClone(bot) == false then
+		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_BACKPACK) > 1 or uItem.IsNeutralItemSlotEmpty(bot) then
 			local dropped = GetDroppedItemList();
 			for _,drop in pairs(dropped) do
 				if uItem.GetNeutralItemTier(drop.item:GetName()) > 0 
 					and uItem.IsRecipeNeutralItem(drop.item:GetName()) == false 
+					and utils.GetDistance(drop.location, mUtils.GetTeamFountain()) > 500
 					and CanPickupNeutralItem(drop.location) == true 
 				then
 					print(bot:GetUnitName().." taking item:"..tostring(drop))
@@ -162,15 +190,15 @@ function Think()
 				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_3));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
 				return
 			end
 		elseif GetTeam() == TEAM_DIRE then
 			if bot:GetAssignedLane() == LANE_TOP then 
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_2));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
 				return
 			else
-				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_1));
+				bot:Action_MoveToLocation(GetRuneSpawnLocation(RUNE_BOUNTY_4));
 				return
 			end
 		end
@@ -293,7 +321,7 @@ function CanPickupNeutralItem(r)
 	do	
 		local member = GetTeamMember(k);
 		if  member ~= nil and not member:IsIllusion() and member:IsAlive() 
-			and ( uItem.GetEmptySlotAmount(member, ITEM_SLOT_TYPE_MAIN) > 0 or uItem.IsNeutralItemSlotEmpty(member) )
+			and ( uItem.GetEmptySlotAmount(member, ITEM_SLOT_TYPE_BACKPACK) >= 2 or uItem.IsNeutralItemSlotEmpty(member) )
 		then
 			local dist = GetUnitToLocationDistance(member, r);
 			if dist < minDist then

@@ -225,7 +225,7 @@ function Think()
 		local cDist = GetUnitToLocationDistance(bot, preferedCamp.cattr.location);
 		local stackMove = campUtils.GetCampMoveToStack(preferedCamp.idx);
 		local stackTime =  campUtils.GetCampStackTime(preferedCamp);
-		if cDist > 300 and farmState == 0 then
+		if ( cDist > 300 or IsLocationVisible(preferedCamp.cattr.location) == false ) and farmState == 0 then
 			bot:Action_MoveToLocation(preferedCamp.cattr.location);
 			return
 		else

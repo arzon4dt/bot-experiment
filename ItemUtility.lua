@@ -183,7 +183,7 @@ ItemModule["item_armlet"] = { "item_helm_of_iron_will"; "item_gloves"; "item_bla
 
 ItemModule["item_assault"] = { "item_platemail"; "item_hyperstone"; "item_recipe_assault"; "item_buckler" }
 
-ItemModule["item_bfury"] = { "item_quelling_blade"; "item_pers"; "item_demon_edge"; "item_recipe_bfury" }
+ItemModule["item_bfury"] = { "item_quelling_blade"; "item_pers"; "item_broadsword"; "item_mithril_hammer" }
 
 ItemModule["item_black_king_bar"] = { "item_ogre_axe"; "item_mithril_hammer"; "item_recipe_black_king_bar" }
 
@@ -191,7 +191,7 @@ ItemModule["item_blade_mail"] = {  "item_chainmail"; "item_robe"; "item_broadswo
 
 ItemModule["item_bloodstone"] = { "item_soul_booster" ; "item_kaya" }
 
-ItemModule["item_bloodthorn"] = { "item_orchid"; "item_lesser_crit"; "item_recipe_bloodthorn" }
+ItemModule["item_bloodthorn"] = { "item_orchid"; "item_hyperstone"; "item_recipe_bloodthorn" }
 
 ItemModule["item_travel_boots"] = { "item_boots"; "item_recipe_travel_boots" }
 
@@ -199,7 +199,7 @@ ItemModule["item_travel_boots_2"] = { "item_travel_boots"; "item_recipe_travel_b
 
 ItemModule["item_bracer"] = { "item_gauntlets"; "item_circlet"; "item_recipe_bracer" }
 
-ItemModule["item_buckler"] = { "item_branches"; "item_ring_of_protection"; "item_recipe_buckler" }
+ItemModule["item_buckler"] = { "item_ring_of_protection"; "item_recipe_buckler" }
 
 ItemModule["item_butterfly"] = { "item_talisman_of_evasion"; "item_eagle"; "item_quarterstaff" }
 
@@ -245,7 +245,7 @@ ItemModule["item_guardian_greaves"] = { "item_arcane_boots"; "item_mekansm"; "it
 
 ItemModule["item_hand_of_midas"] = { "item_gloves"; "item_recipe_hand_of_midas" }
 
-ItemModule["item_headdress"] = { "item_branches"; "item_ring_of_regen"; "item_recipe_headdress" }
+ItemModule["item_headdress"] = { "item_ring_of_regen"; "item_recipe_headdress" }
 
 ItemModule["item_heart"] = { "item_ring_of_tarrasque"; "item_vitality_booster"; "item_reaver"; "item_recipe_heart" }
 
@@ -319,7 +319,7 @@ ItemModule["item_refresher"] = { "item_pers"; "item_pers"; "item_recipe_refreshe
 				
 ItemModule["item_ring_of_aquila"] = { "item_ring_of_basilius"; "item_crown" }
 			    
-ItemModule["item_ring_of_basilius"] = {  "item_branches"; "item_sobi_mask" ; "item_recipe_ring_of_basilius" }
+ItemModule["item_ring_of_basilius"] = {  "item_sobi_mask" ; "item_recipe_ring_of_basilius" }
 				
 ItemModule["item_rod_of_atos"] = { "item_crown"; "item_crown"; "item_staff_of_wizardry"; "item_recipe_rod_of_atos" }
 
@@ -349,7 +349,7 @@ ItemModule["item_tranquil_boots"] = { "item_wind_lace"; "item_boots"; "item_ring
 
 ItemModule["item_urn_of_shadows"] = { "item_sobi_mask" ; "item_circlet"; "item_ring_of_protection"; "item_recipe_urn_of_shadows" }
 
-ItemModule["item_vanguard"] = { "item_vitality_booster"; "item_ring_of_health" ; "item_recipe_vanguard" }
+ItemModule["item_vanguard"] = { "item_vitality_booster"; "item_ring_of_health"  }
 
 ItemModule["item_veil_of_discord"] = { "item_crown"; "item_ring_of_basilius"; "item_recipe_veil_of_discord" }
 
@@ -546,8 +546,8 @@ function ItemModule.IsRecipeNeutralItem(sItem)
 end
 
 function ItemModule.CanDropNeutralItem(bot)
-	if ItemModule.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) == 0 then
-		for i=6,9 do	
+	if ItemModule.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_BACKPACK) <= 3 and bot:DistanceFromFountain() < 200 then
+		for i=6,8 do	
 			local item = bot:GetItemInSlot(i);
 			if item ~= nil and ItemModule.GetNeutralItemTier(item:GetName()) > 0 then
 				return true, item;
@@ -565,10 +565,10 @@ function ItemModule.GetEmptySlotAmount(bot, nType)
 		endIdx = 5;
 	elseif nType == ITEM_SLOT_TYPE_BACKPACK then
 		startIdx = 6;
-		endIdx = 9;
+		endIdx = 8;
 	elseif nType == ITEM_SLOT_TYPE_STASH then	
-		startIdx = 10;
-		endIdx = 15;
+		startIdx = 9;
+		endIdx = 14;
 	end
 	local amount = 0;
 	for i=startIdx,endIdx do	
@@ -597,6 +597,40 @@ end
 function ItemModule.IsNeutralItemSlotEmpty(bot)
 	local neutral_item_slot = 16;
 	return bot:GetItemInSlot(neutral_item_slot) == nil;
+end
+
+function ItemModule.GetHighestTierNeutralItem(bot)
+	local maxLvl = 0;
+	local highest_slot = -1;
+	for i=6,8 do	
+		local item = bot:GetItemInSlot(i);
+		if item ~= nil then
+			local curLvl = ItemModule.GetNeutralItemTier(item:GetName());
+			if curLvl > maxLvl then
+				maxLvl = curLvl;
+				highest_slot = i;
+			end
+		end
+	end
+	return maxLvl, highest_slot;
+end
+
+function ItemModule.CanSwapNeutralItem(bot)
+	local neutral_item_slot = 16;
+	local active_neutral_item = bot:GetItemInSlot(neutral_item_slot);
+	if active_neutral_item ~= nil then
+		local ani_lvl = ItemModule.GetNeutralItemTier(active_neutral_item:GetName());
+		local nani_lvl, sni_slot = ItemModule.GetHighestTierNeutralItem(bot);
+		if sni_slot ~= -1 and ani_lvl < nani_lvl then
+			return true, neutral_item_slot, sni_slot; 
+		end
+	else
+		local nani_lvl, sni_slot = ItemModule.GetHighestTierNeutralItem(bot);
+		if sni_slot ~= -1 then
+			return true, neutral_item_slot, sni_slot; 
+		end
+	end
+	return false, -1, -1;
 end
 
 return ItemModule

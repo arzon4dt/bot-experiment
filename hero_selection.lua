@@ -5,11 +5,10 @@ local utils = require(GetScriptDirectory() .. "/util");
 local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
-	"npc_dota_hero_broodmother",
-	"npc_dota_hero_skeleton_king",
-	"npc_dota_hero_gyrocopter",
-	"npc_dota_hero_vengefulspirit",
-	"npc_dota_hero_death_prophet",
+	"npc_dota_hero_enchantress",
+	"npc_dota_hero_chen",
+	"npc_dota_hero_doom_bringer",
+	"npc_dota_hero_bloodseeker",
 	
 };
 
@@ -291,7 +290,7 @@ end
 
 local lastpick = 10;
 function NewTurboModeLogic()
-	if GetHeroPickState() == 58 and GameTime() >= 45 and GameTime() >= lastpick + 1.5 then
+	if GetHeroPickState() == 55 and GameTime() >= 10 and GameTime() >= lastpick + 2 then
 		for i,id in pairs(GetTeamPlayers(GetTeam())) do
 			if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
 				if testMode then

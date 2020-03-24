@@ -54,7 +54,7 @@ function AbilityUsageThink()
 	castFBDesire, castFBTarget = ConsiderFireblast();
 	castUFBDesire, castUFBTarget = ConsiderUnrefinedFireblast();
 	--castACDesire, castACTarget = ConsiderAphoticShield();
-	castHPDesire, castHPTarget = ConsiderHolyPersuasion();
+	--castHPDesire, castHPTarget = ConsiderHolyPersuasion();
 	castHoGDesire = ConsiderHandofGod();
 	
 	if ( castHoGDesire > 0 ) 

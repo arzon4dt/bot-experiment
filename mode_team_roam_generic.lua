@@ -455,11 +455,12 @@ function Think()
 	elseif bot:GetUnitName() == "npc_dota_hero_chen" then
 		if bot:IsUsingAbility() or bot:IsCastingAbility() or bot:IsChanneling() or cAbility:IsInAbilityPhase() then return end
 		local closestC, i, dist = GetClosestCamp();
-		if closestC ~= nil and dist > 300 then 
+		local clvl = cAbility:GetSpecialValueInt('level_req');
+		if closestC ~= nil and ( dist > 300 or IsLocationVisible(closestC.location) == false ) then 
 			bot:Action_MoveToLocation(closestC.location);
 			return
 		elseif  closestC ~= nil and dist <= 300 then
-			local target = GetDominatedTarget();
+			local target = GetDevouredTarget2(clvl);
 			if target == nil then
 				table.remove(camps, i);
 				return
@@ -474,7 +475,7 @@ function Think()
 	elseif bot:GetUnitName() == "npc_dota_hero_enchantress" then
 		if bot:IsUsingAbility() or bot:IsCastingAbility() or bot:IsChanneling() or cAbility:IsInAbilityPhase() then return end
 		local closestC, i, dist = GetClosestCamp();
-		if closestC ~= nil and dist > 300 then 
+		if closestC ~= nil and ( dist > 300 or IsLocationVisible(closestC.location) == false ) then 
 			bot:Action_MoveToLocation(closestC.location);
 			return
 		elseif  closestC ~= nil and dist <= 300 then
@@ -492,7 +493,7 @@ function Think()
 		if bot:IsUsingAbility() or bot:IsCastingAbility() or bot:IsChanneling() or cAbility:IsInAbilityPhase() then return end
 		local closestC, i, dist = GetClosestCamp();
 		local clvl = cAbility:GetSpecialValueInt('creep_level');
-		if dist > 300 then 
+		if dist > 300 or IsLocationVisible(closestC.location) == false then 
 			bot:Action_MoveToLocation(closestC.location);
 			return
 		elseif dist <= 300 then
@@ -559,6 +560,22 @@ function GetDevouredTarget(clvl)
 			end
 		end	
 	end
+	return target;
+end
+
+function GetDevouredTarget2(clvl)
+	local target = nil;
+	local neutrals = bot:GetNearbyNeutralCreeps(500);
+	local hp = 0;
+	for _,u in pairs(neutrals) do
+		if mutil.CanBeDominatedCreeps(u:GetUnitName()) 
+			and u:GetLevel() <= clvl 
+			and u:GetHealth() > hp 
+		then
+			target = u;
+			hp = u:GetHealth();
+		end
+	end	
 	return target;
 end
 

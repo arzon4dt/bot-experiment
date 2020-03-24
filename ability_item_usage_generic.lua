@@ -1000,7 +1000,7 @@ function UnImplementedItemUsage()
 	if irt~=nil and irt:IsFullyCastable() then
 		if bot:GetActiveMode() == BOT_MODE_FARM or mutil.IsDefending(bot) or mutil.IsPushing(bot) 
 		then
-			local neutrals = bot:GetNearbyCreeps(500);
+			local neutrals = bot:GetNearbyCreeps(500, true);
 			local maxHP = 0;
 			local target = nil;
 			for _,c in pairs(neutrals) do
@@ -1429,6 +1429,27 @@ function UnImplementedItemUsage()
 		end
 	end
 	
+	--item_iron_talon
+	local irontalon = uItem.CanCastNeutralItem(bot, "item_iron_talon");
+	if irontalon ~= nil and irontalon:IsFullyCastable() then
+		if bot:GetActiveMode() == BOT_MODE_FARM or mutil.IsDefending(bot) or mutil.IsPushing(bot) 
+		then
+			local neutrals = bot:GetNearbyCreeps(500, true);
+			local maxHP = 0;
+			local target = nil;
+			for _,c in pairs(neutrals) do
+				local cHP = c:GetHealth();
+				if cHP > maxHP and not c:IsAncientCreep() then
+					maxHP = cHP;
+					target = c;
+				end
+			end
+			if target ~= nil then
+				bot:Action_UseAbilityOnEntity(irontalon, target);
+				return;
+			end
+		end
+	end
 	
 	--item_arcane_ring
 	local arc_ring = uItem.CanCastNeutralItem(bot, "item_arcane_ring");
