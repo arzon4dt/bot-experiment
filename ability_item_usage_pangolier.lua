@@ -15,6 +15,9 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
 
 local bot = GetBot();
 
@@ -42,7 +45,7 @@ function AbilityUsageThink()
 	end
 	
 	if castQDesire > 0 then
-		print(tostring(QLoc))
+		-- print(tostring(QLoc))
 		bot:Action_UseAbilityOnLocation(abilities[1], QLoc);		
 		return
 	end

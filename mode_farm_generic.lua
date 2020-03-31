@@ -38,7 +38,7 @@ function GetDesire()
 			--bot:ActionImmediate_Ping(cLoc.x, cLoc.y, true);
 			--tPing = DotaTime();
 			farmLane = true;
-			return BOT_MODE_DESIRE_ABSOLUTE;
+			return BOT_MODE_DESIRE_HIGH;
 		else
 			farmLane = false;
 		end
@@ -151,7 +151,7 @@ function GetDesire()
 					preferedCamp = nil;
 					return BOT_MODE_DESIRE_NONE;
 				else
-					return BOT_MODE_DESIRE_VERYHIGH;
+					return BOT_MODE_DESIRE_HIGH;
 				end
 			end
 		end

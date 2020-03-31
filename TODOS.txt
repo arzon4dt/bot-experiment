@@ -1,11 +1,11 @@
 Abilities
-1. Clock Overclock
+1. Clock Overclock V
 2. Enchantrees Sproink V
 3. Kunkka Scepter V
 4. Lich Scepter V
-5. Lifestealer Scepter
-6. Lycan Scepter
-7. Mars Bulwark
+5. Lifestealer Scepter 
+6. Lycan Scepter V
+7. Mars Bulwark V
 8. OD skill V
 9. Pudge Dismember
 10. Silencer Aghs V

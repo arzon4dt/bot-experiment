@@ -15,6 +15,10 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
+
 local castFBDesire = 0;
 local castSCDesire = 0;
 local castTSDesire = 0;
@@ -114,11 +118,9 @@ end
 function TravelOffCD()
 	local bot1=IsItemAvailable("item_travel_boots");
 	local bot2=IsItemAvailable("item_travel_boots_2");
-	if bot1~=nil then
-		return bot1:IsFullyCastable();
-	end
-	if bot2~=nil then
-		return bot2:IsFullyCastable();
+	local tpscroll=npcBot:GetItemInSlot(15);
+	if ( bot1~=nil or bot2~=nil ) and tpscroll~=nil and tpscroll:IsCooldownReady() == false then
+		return false;
 	end
 	return true;
 end
@@ -148,20 +150,21 @@ end
 function ConsiderBoT()
 
 	local bot=IsItemAvailable("item_travel_boots")
+	local tpscroll=npcBot:GetItemInSlot(15);
 	
-	if bot == nil then
+	if tpscroll == nil or bot == nil  then
 		return BOT_ACTION_DESIRE_NONE, {}, {};
 	end
 	
-	if not bot:IsFullyCastable() then
+	if tpscroll:IsFullyCastable() == false then
 		return BOT_ACTION_DESIRE_NONE, {}, {};
 	end
 	
 	local currManaRatio = npcBot:GetMana() / npcBot:GetMaxMana();
-    if npcBot:GetMana() < abilityRA:GetManaCost() and npcBot:DistanceFromFountain() > 0
+    if npcBot:GetMana() < abilityRA:GetManaCost() and npcBot:DistanceFromFountain() > 1000
 	then
 	    local location = mutil.GetTeamFountain();
-		return BOT_ACTION_DESIRE_HIGH, bot, location;
+		return BOT_ACTION_DESIRE_HIGH, tpscroll, location;
 	end
 	
 	return BOT_ACTION_DESIRE_NONE, {}, {};
@@ -350,7 +353,7 @@ function ConsiderRearm()
 	local nManaCost = abilityRA:GetManaCost()
 	local botMana = npcBot:GetMana();
 	
-	if  not TravelOffCD() and npcBot:DistanceFromFountain() > 0 then
+	if  not TravelOffCD() and npcBot:DistanceFromFountain() > 1000 then
 		return BOT_ACTION_DESIRE_MODERATE;
 	end
 	

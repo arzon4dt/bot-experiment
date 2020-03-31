@@ -16,9 +16,9 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
--- function ItemUsageThink()
-	-- ability_item_usage_generic.ItemUsageThink();
--- end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
 
 
 local npcBot = GetBot();

@@ -81,7 +81,6 @@ ItemModule['earlyGameItem'] = {
 	 "item_magic_wand",
 	 "item_bottle",  
 	 "item_soul_ring",  
-	 "item_ring_of_aquila",
 	 "item_bracer",
 	 "item_wraith_band",
 	 "item_null_talisman", 
@@ -353,7 +352,7 @@ ItemModule["item_vanguard"] = { "item_vitality_booster"; "item_ring_of_health"  
 
 ItemModule["item_veil_of_discord"] = { "item_crown"; "item_ring_of_basilius"; "item_recipe_veil_of_discord" }
 
-ItemModule["item_vladmir"] = { "item_ring_of_basilius" ; "item_lifesteal"; "item_recipe_vladmir"; "item_buckler" }
+ItemModule["item_vladmir"] = { "item_ring_of_basilius"; "item_buckler"; "item_lifesteal"; "item_recipe_vladmir" }
 
 ItemModule["item_wraith_band"] = { "item_slippers"; "item_circlet"; "item_recipe_wraith_band" }
 

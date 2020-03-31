@@ -15,6 +15,9 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
 
 local bot = GetBot();
 
@@ -35,7 +38,7 @@ function AbilityUsageThink()
 	
 	castQDesire, castQLoc = ConsiderQ();
 	castWDesire, castWLoc = ConsiderW();
-	--castEDesire, ETarget  = ConsiderE();
+	castEDesire, ETarget  = ConsiderE();
 	castRDesire, castRLoc = ConsiderR();
 	
 	if castWDesire > 0 then
@@ -54,7 +57,7 @@ function AbilityUsageThink()
 	end
 	
 	if castEDesire > 0 then
-		bot:Action_UseAbilityOnEntity(abilities[3], ETarget);		
+		bot:Action_UseAbility(abilities[3]);		
 		return
 	end
 	
@@ -62,7 +65,7 @@ end
 
 function ConsiderQ()
 	if not abUtils.CanBeCast(abilities[1]) then
-		return BOT_ACTION_DESIRE_NONE, {};
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local castRange = abUtils.GetProperCastRange(false, bot, abilities[1]);
@@ -115,12 +118,12 @@ function ConsiderQ()
 	end
 
 	
-	return BOT_ACTION_DESIRE_NONE, {};
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
 function ConsiderW()
 	if not abUtils.CanBeCast(abilities[2]) then
-		return BOT_ACTION_DESIRE_NONE, {};
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local castRange = abUtils.GetProperCastRange(false, bot, abilities[2]);
@@ -171,12 +174,51 @@ function ConsiderW()
 	end
 
 	
-	return BOT_ACTION_DESIRE_NONE, {};
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
+
+function ConsiderE()
+	if not abUtils.CanBeCast(abilities[3]) then
+		return BOT_ACTION_DESIRE_NONE, nil;
+	end
+	
+	if abUtils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) and abilities[3]:GetToggleState( ) == false
+	then
+		local allies = bot:GetNearbyHeroes(1300, false, BOT_MODE_ATTACK)
+		if #allies > 1 then
+			local num_facing = 0;
+			local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
+			for i=1, #enemies do
+				if abUtils.IsValidTarget(enemies[i])
+					and abUtils.CanCastOnMagicImmune(enemies[i])
+					and bot:WasRecentlyDamagedByHero(enemies[i], 3.5)
+					and bot:IsFacingLocation(enemies[i]:GetLocation(), 20) 
+				then
+					num_facing = num_facing + 1;
+				end	
+			end
+			if num_facing >= 1 then
+				return BOT_ACTION_DESIRE_HIGH, nil;
+			end
+		end
+	end	
+	
+	if abUtils.IsGoingOnSomeone(bot) and abilities[3]:GetToggleState( ) == true then
+		return BOT_ACTION_DESIRE_HIGH, nil;
+	end
+	
+	local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE)
+	if #enemies == 0 and abilities[3]:GetToggleState( ) == true then
+		return BOT_ACTION_DESIRE_HIGH, nil;
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
+end
+
 
 function ConsiderR()
 	if not abUtils.CanBeCast(abilities[4]) then
-		return BOT_ACTION_DESIRE_NONE, {};
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local castRange = abUtils.GetProperCastRange(false, bot, abilities[4]);
@@ -218,6 +260,6 @@ function ConsiderR()
 	end
 
 	
-	return BOT_ACTION_DESIRE_NONE, {};
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 

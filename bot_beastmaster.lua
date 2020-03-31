@@ -1,6 +1,6 @@
 local minionutils = dofile( GetScriptDirectory().."/NewMinionUtil" )
 
-function MinionThink(  hMinionUnit ) 
+function MinionThinkd(  hMinionUnit ) 
 	if minionutils.IsValidUnit(hMinionUnit) then
 		if minionutils.IsHawk(hMinionUnit:GetUnitName()) then
 			minionutils.HawkThink(hMinionUnit);

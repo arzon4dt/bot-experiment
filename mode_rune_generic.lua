@@ -33,6 +33,7 @@ local ListRune = {
 }
 
 local lastPing = -90;
+bot.RuneType = RUNE_INVALID;
 
 function GetDesire()
 	--print(bot:GetUnitName()..bot:GetAssignedLane())
@@ -217,6 +218,7 @@ function Think()
 			bot:Action_MoveToLocation(GetRuneSpawnLocation(closestRune));
 			return
 		else
+			bot.RuneType = GetRuneType(closestRune);
 			bot:Action_PickUpRune(closestRune);
 			return
 		end

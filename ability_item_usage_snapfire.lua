@@ -5,6 +5,7 @@ end
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
 local abUtils = require(GetScriptDirectory() ..  "/AbilityItemUsageUtility")
+local mutils = require(GetScriptDirectory() ..  "/MyUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -15,27 +16,35 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
 
 local bot = GetBot();
 
 local abilities = {};
+local gobled_unit = nil;
 
 local castCombo1Desire = 0;
 local castCombo2Desire = 0;
 local castQDesire = 0;
 local castWDesire = 0;
 local castEDesire = 0;
+local castDDesire = 0;
+local castD2Desire = 0;
 local castRDesire = 0;
 
 function AbilityUsageThink()
 	
-	if #abilities == 0 then abilities = abUtils.InitiateAbilities(bot, {0,1,2,5}) end
+	if #abilities == 0 then abilities = abUtils.InitiateAbilities(bot, {0,1,2,5,3,4}) end
 	
 	if abUtils.CantUseAbility(bot) then return end
 	
 	castQDesire, castQLoc = ConsiderQ();
 	castWDesire, castWLoc = ConsiderW();
 	castEDesire, ETarget  = ConsiderE();
+	castDDesire, DTarget  = ConsiderD();
+	castD2Desire, D2Target  = ConsiderD2();
 	castRDesire, castRLoc = ConsiderR();
 	
 	if castWDesire > 0 then
@@ -58,11 +67,22 @@ function AbilityUsageThink()
 		return
 	end
 	
+	if castDDesire > 0 then
+		bot:Action_UseAbilityOnEntity(abilities[5], DTarget);		
+		return
+	end
+	
+	if castD2Desire > 0 then
+		gobled_unit = nil;
+		bot:Action_UseAbilityOnLocation(abilities[6], D2Target);		
+		return
+	end
+	
 end
 
 function ConsiderQ()
 	if not abUtils.CanBeCast(abilities[1]) then
-		return BOT_ACTION_DESIRE_NONE, {};
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local castRange = abUtils.GetProperCastRange(false, bot, abilities[1]);
@@ -116,12 +136,12 @@ function ConsiderQ()
 	end
 
 	
-	return BOT_ACTION_DESIRE_NONE, {};
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
 function ConsiderW()
 	if not abUtils.CanBeCast(abilities[2]) then
-		return BOT_ACTION_DESIRE_NONE, {};
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local castRange = abUtils.GetProperCastRange(false, bot, abilities[2]);
@@ -169,7 +189,7 @@ function ConsiderW()
 	end
 
 	
-	return BOT_ACTION_DESIRE_NONE, {};
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
 function ConsiderE()
@@ -215,9 +235,82 @@ function ConsiderE()
 	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
+function ConsiderD()
+	if not abUtils.CanBeCast(abilities[5]) or bot:HasScepter() == false then
+		return BOT_ACTION_DESIRE_NONE, nil;
+	end
+	
+	local castRange = abUtils.GetProperCastRange(false, bot, abilities[5]);
+	local castRange2 = abUtils.GetProperCastRange(false, bot, abilities[6]);
+	
+	if abUtils.IsGoingOnSomeone(bot)
+	then
+		local target = bot:GetTarget();
+		if abUtils.IsValidTarget(target) 
+			and abUtils.CanCastOnNonMagicImmune(target)
+			and abUtils.IsInRange(target, bot, castRange2) 
+		then
+			local ecreeps = bot:GetNearbyLaneCreeps(castRange, true)
+			local acreeps = bot:GetNearbyLaneCreeps(castRange, false)
+			if #ecreeps ~= nil and #ecreeps > 0 and ecreeps[1] ~= nil then
+				gobled_unit = 'creep'
+				return BOT_ACTION_DESIRE_HIGH, ecreeps[1];
+			end
+			if #acreeps ~= nil and #acreeps > 0 and acreeps[1] ~= nil then
+				gobled_unit = 'creep'
+				return BOT_ACTION_DESIRE_HIGH, acreeps[1];
+			end
+		end	
+	end
+
+	local allies=bot:GetNearbyHeroes(castRange,false,BOT_MODE_NONE);
+	for i=1, #allies do
+		if allies[i]:GetUnitName() ~= bot:GetUnitName() 
+			and abUtils.CanCastOnNonMagicImmune(allies[i]) == true
+			and allies[i]:WasRecentlyDamagedByAnyHero(2.5) == true
+		then
+			local mode2 = allies[i]:GetActiveMode();
+			if  mode2 == BOT_MODE_RETREAT 
+					or ( allies[i]:GetHealth() < 0.15 * allies[i]:GetMaxHealth() 
+						and ( ( allies[i]:GetAttackTarget() == nil ) or ( allies[i]:GetTarget() == nil ) ) ) 
+			then	
+				gobled_unit = 'hero'
+				return BOT_ACTION_DESIRE_ABSOLUTE, allies[i];
+			end
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
+end
+
+function ConsiderD2()
+	if not abUtils.CanBeCast(abilities[6]) or bot:HasScepter() == false then
+		return BOT_ACTION_DESIRE_NONE, nil;
+	end
+	
+	local castRange = 2500;
+	local nRadius   = abilities[6]:GetSpecialValueInt( "impact_radius" );
+	
+	if abUtils.IsGoingOnSomeone(bot) and gobled_unit == 'creep'
+	then
+		local target  = bot:GetTarget(); 
+		if abUtils.IsValidTarget(target) and abUtils.CanCastOnNonMagicImmune(target) and abUtils.IsInRange(target, bot, castRange) 
+		then
+			return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
+		end
+	end
+
+	if gobled_unit == 'hero' then
+		local loc = mutils.GetEscapeLoc();
+		return BOT_ACTION_DESIRE_ABSOLUTE, bot:GetXUnitsTowardsLocation( loc, castRange );
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
+end
+
 function ConsiderR()
 	if not abUtils.CanBeCast(abilities[4]) then
-		return BOT_ACTION_DESIRE_NONE, {};
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local castRange = 1500;
@@ -262,6 +355,6 @@ function ConsiderR()
 	end
 
 	
-	return BOT_ACTION_DESIRE_NONE, {};
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 

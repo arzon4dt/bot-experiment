@@ -17,6 +17,9 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
 
 --[[ Ability Slot
 "Ability1"		"abaddon_death_coil"

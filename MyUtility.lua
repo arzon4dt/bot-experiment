@@ -681,13 +681,26 @@ function U.GetEscapeLoc()
 	end
 end
 
+function U.GetEscapeLoc2(unit)
+	local team = unit:GetTeam();
+	if unit:DistanceFromFountain() > 2500 then
+		return GetAncient(team):GetLocation();
+	else
+		if team == TEAM_DIRE then
+			return DB;
+		else
+			return RB;
+		end
+	end
+end
+
 function U.IsStuck2(npcBot)
 	if npcBot.stuckLoc ~= nil and npcBot.stuckTime ~= nil then 
 		local EAd = GetUnitToUnitDistance(npcBot, GetAncient(GetOpposingTeam()));
 		if DotaTime() > npcBot.stuckTime + 5.0 and GetUnitToLocationDistance(npcBot, npcBot.stuckLoc) < 25  
            and npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and EAd > 2200		
 		then
-			print(npcBot:GetUnitName().." is stuck")
+			--print(npcBot:GetUnitName().." is stuck")
 			--DebugPause();
 			return true;
 		end
@@ -705,7 +718,7 @@ function U.IsStuck(npcBot)
 		if npcBot:GetCurrentActionType() == BOT_ACTION_TYPE_MOVE_TO and attackTarget == nil and EAd > 2200 and TAd > 2200 and #Et == 0 and #At == 0  
 		   and DotaTime() > npcBot.stuckTime + 5.0 and GetUnitToLocationDistance(npcBot, npcBot.stuckLoc) < 25    
 		then
-			print(npcBot:GetUnitName().." is stuck")
+			--print(npcBot:GetUnitName().." is stuck")
 			return true;
 		end
 	end

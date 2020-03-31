@@ -15,6 +15,9 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
 
 local npcBot = GetBot();
 
@@ -189,7 +192,9 @@ function ConsiderR()
 	--if we can kill any enemies
 	for _,npcEnemy in pairs(tableNearbyEnemyHeroes)
 	do
-		if mutil.CanCastOnNonMagicImmune(npcEnemy) and not mutil.StillHasModifier(npcEnemy, 'modifier_bounty_hunter_track') 
+		if 	mutil.IsValidTarget(npcEnemy)
+			and mutil.CanCastOnNonMagicImmune(npcEnemy) 
+			and not mutil.StillHasModifier(npcEnemy, 'modifier_bounty_hunter_track') 
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 		end

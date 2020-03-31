@@ -16,6 +16,9 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
 
 local bot = GetBot();
 
@@ -32,13 +35,13 @@ local lastCheck = -90;
 
 function AbilityUsageThink()
 	
-	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,2,5}) end
+	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,3,5}) end
 	
 	if mutils.CantUseAbility(bot) then return end
 	
 	castQDesire, targetQ = ConsiderQ();
 	castWDesire, targetW = ConsiderW();
-	-- castEDesire, targetE  = ConsiderE();
+	castEDesire, targetE  = ConsiderE();
 	castRDesire, targetR = ConsiderR();
 	
 	if castRDesire > 0 then
@@ -183,66 +186,66 @@ function ConsiderW()
 end	
 
 function ConsiderE()
-	if not mutils.CanBeCast(abilities[3]) 
-	then
+	if not mutils.CanBeCast(abilities[3]) then
 		return BOT_ACTION_DESIRE_NONE, nil;
 	end
 	
 	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[3]:GetCastRange());
+	local nCastPoint = abilities[3]:GetCastPoint();
+	local manaCost  = abilities[3]:GetManaCost();
+	local manaCost2  = abilities[1]:GetManaCost();
+	local nRadius   = abilities[4]:GetSpecialValueInt( "omni_slash_radius" );
+	local nDuration = abilities[3]:GetSpecialValueFloat( "duration" );
+	local nRate = abilities[4]:GetSpecialValueFloat( "attack_rate_multiplier" );
+	local nAttackDamage = bot:GetAttackDamage();
+	local nDamage = nAttackDamage + abilities[4]:GetSpecialValueFloat( "bonus_damage" );
 	
-	local tableNearbyEnemyHeroes = bot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
-	
-	--if we can kill any enemies
-	for _,npcEnemy in pairs(tableNearbyEnemyHeroes)
-	do
-		if mutils.CanCastOnNonMagicImmune(npcEnemy) and  npcEnemy:IsChanneling() then
-			return BOT_ACTION_DESIRE_HIGH, npcEnemy;
-		end
-	end
-	
-	if ( bot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) 
+		and bot:GetMana() >= manaCost + manaCost2 and abilities[1]:GetCooldownTimeRemaining() <= nDuration
 	then
-		local npcTarget = bot:GetAttackTarget();
-		if ( mutils.IsRoshan(npcTarget) and mutils.CanCastOnMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nCastRange) 
-            and not mutils.IsDisabled(true, npcTarget) )
-		then
-			return BOT_ACTION_DESIRE_LOW, npcTarget;
-		end
-	end
-
-	if mutils.IsInTeamFight(bot, 1200)
-	then
-		local highesAD = 0;
-		local highesADUnit = nil;
-		
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			local EnemyAD = npcEnemy:GetAttackDamage();
-			if ( mutils.CanCastOnNonMagicImmune(npcEnemy) and not mutils.IsDisabled(true, npcEnemy) and
-				 EnemyAD > highesAD ) 
+		local enemy = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+		for i=1, #enemy do
+			if mutils.IsValidTarget(enemy[i]) and mutils.CanCastOnNonMagicImmune(enemy[i]) 
 			then
-				highesAD = EnemyAD;
-				highesADUnit = npcEnemy;
+				return BOT_ACTION_DESIRE_HIGH, enemy[i];
 			end
 		end
-		
-		if highesADUnit ~= nil then
-			return BOT_ACTION_DESIRE_HIGH, highesADUnit;
-		end
 	end
 	
-	-- If we're going after someone
+	-- if mutils.IsInTeamFight(bot, 1300)
+	-- then
+		-- local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, nCastPoint, 0 );
+		-- if ( locationAoE.count >= 2 ) then
+			-- local target = mutils.GetVulnerableUnitNearLoc(true, true, nCastRange, nRadius, locationAoE.targetloc, bot);
+			-- if target ~= nil then
+				-- return BOT_ACTION_DESIRE_HIGH, target;
+			-- end
+		-- end
+	-- end
+	
 	if mutils.IsGoingOnSomeone(bot)
 	then
-		local npcTarget = bot:GetTarget();
-		if mutils.IsValidTarget(npcTarget) and mutils.CanCastOnNonMagicImmune(npcTarget) and mutils.IsInRange(npcTarget, bot, nCastRange) 
-		   and not mutils.IsDisabled(true, npcTarget)
+		local target = bot:GetTarget();
+		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target) and mutils.IsInRange(target, bot, nCastRange)
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			local attr = bot:GetAttributeValue(ATTRIBUTE_AGILITY);
+			local aps = (((100+attr)*0.01)/1.7)*nRate;
+			local nTotalDamage = nDuration * aps * nDamage;
+			
+			--print(tostring(abilities[4]:GetEstimatedDamageToTarget(target, nDuration, DAMAGE_TYPE_PHYSICAL)))
+			local enemies = target:GetNearbyHeroes( nRadius, false, BOT_MODE_NONE );
+			local nInvUnit = mutils.CountInvUnits(false, enemies);
+			if nInvUnit >= 2 then
+				return BOT_ACTION_DESIRE_HIGH, target;
+			else
+				if target:GetHealth() > 0.25*nTotalDamage and target:GetHealth() < nTotalDamage then
+					return BOT_ACTION_DESIRE_HIGH, target;
+				end	
+			end
 		end
 	end
 	
-	return BOT_ACTION_DESIRE_NONE, 0;
+	return BOT_ACTION_DESIRE_NONE, nil;
 end		
 
 function ConsiderR()

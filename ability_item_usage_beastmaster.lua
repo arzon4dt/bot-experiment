@@ -4,7 +4,8 @@ end
 
 local ability_item_usage_generic = dofile( GetScriptDirectory().."/ability_item_usage_generic" )
 local utils = require(GetScriptDirectory() ..  "/util")
-local mutil = require(GetScriptDirectory() ..  "/MyUtility")
+local mutils = require(GetScriptDirectory() ..  "/MyUtility")
+local abUtils = require(GetScriptDirectory() ..  "/AbilityItemUsageUtility")
 
 function AbilityLevelUpThink()  
 	ability_item_usage_generic.AbilityLevelUpThink(); 
@@ -15,6 +16,18 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
+
+local bot = GetBot();
+
+local abilities = {};
+
+local castQDesire = 0;
+local castWDesire = 0;
+local castEDesire = 0;
+local castRDesire = 0;
 
 local ListRune = {
 	RUNE_BOUNTY_1,
@@ -49,294 +62,132 @@ local hawkLocRadiant = {
 }
 
 
-
-local castWADesire = 0;
-local castWHDesire = 0;
-local castWBDesire = 0;
-local castPRDesire = 0;
-
-local abilityWA = nil;
-local abilityWH = nil;
-local abilityWB = nil;
-local abilityPR = nil;
-
-local npcBot = nil;
-
 function AbilityUsageThink()
-
-	if npcBot == nil then npcBot = GetBot(); end
 	
-	-- Check if we're already using an ability
-	if mutil.CanNotUseAbility(npcBot) then return end
-
-	if abilityWA == nil then abilityWA = npcBot:GetAbilityByName( "beastmaster_wild_axes" ) end
-	if abilityWH == nil then abilityWH = npcBot:GetAbilityByName( "beastmaster_call_of_the_wild_hawk" ) end
-	if abilityWB == nil then abilityWB = npcBot:GetAbilityByName( "beastmaster_call_of_the_wild_boar" ) end
-	if abilityPR == nil then abilityPR = npcBot:GetAbilityByName( "beastmaster_primal_roar" ) end
-
-	-- Consider using each ability
-	castPRDesire, castPRTarget = ConsiderPrimalRoar();
-	castWADesire, castWALocation = ConsiderWildAxes();
-	castWHDesire, castWHLocation = ConsiderWildHawk();
-	castWBDesire = ConsiderWildBoar();
-
-	if ( castPRDesire > castWADesire ) 
-	then
-		--print("Use WA");
-		npcBot:Action_UseAbilityOnEntity( abilityPR, castPRTarget );
-		return;
-	end
-
-	if ( castWADesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnLocation( abilityWA, castWALocation );
-		return;
+	if #abilities == 0 then abilities = mutils.InitiateAbilities(bot, {0,1,2,5}) end
+	
+	if mutils.CantUseAbility(bot) then return end
+	
+	castQDesire, targetQ = ConsiderQ();
+	castWDesire, targetW = ConsiderW();
+	castEDesire, targetE  = ConsiderE();
+	castRDesire, targetR = ConsiderR();
+	
+	if castRDesire > 0 then
+		bot:Action_UseAbilityOnEntity(abilities[4], targetR);		
+		return
 	end
 	
-	if ( castWHDesire > 0 ) 
-	then
-		npcBot:Action_UseAbilityOnLocation( abilityWH, castWHLocation );
-		return;
+	if castQDesire > 0 then
+		bot:Action_UseAbilityOnLocation(abilities[1], targetQ);		
+		return
 	end
-
-	if ( castWBDesire > 0 ) 
-	then
-		npcBot:Action_UseAbility( abilityWB );
-		return;
+	
+	if castWDesire > 0 then
+		bot:Action_UseAbility(abilities[2]);		
+		return
 	end
-
+	
+	if castEDesire > 0 then
+		bot:Action_UseAbilityOnLocation(abilities[3], targetE);		
+		return
+	end
+	
 end
 
-
-function ConsiderWildAxes()
-
-	-- Make sure it's castable
-	if ( not abilityWA:IsFullyCastable() ) 
-	then 
-		return BOT_ACTION_DESIRE_NONE, 0;
+function ConsiderQ()
+	if not mutils.CanBeCast(abilities[1]) then
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
-
-	-- Get some of its values
-	local nRadius = abilityWA:GetSpecialValueInt( "radius" );
-	local nCastRange = abilityWA:GetCastRange();
-	local manaCost = abilityWA:GetManaCost();
-	local nCastPoint = abilityWA:GetCastPoint( );
-	local nDamage = abilityWA:GetSpecialValueInt("axe_damage");
-
-	if nCastRange > 1600 then nCastRange = 1600 end
-	--------------------------------------
-	-- Mode based usage
-	--------------------------------------
-
-	-- If mana is full and we're laning just hit hero
-	if ( npcBot:GetActiveMode() == BOT_MODE_LANING and 
-		npcBot:GetMana() == npcBot:GetMaxMana() ) 
+	
+	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[1]:GetCastRange());
+	local nCastPoint = abilities[1]:GetCastPoint();
+	local manaCost  = abilities[1]:GetManaCost();
+	local nRadius   = abilities[1]:GetSpecialValueInt( "radius" );
+	
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		if(tableNearbyEnemyHeroes[1] ~= nil) then
-			return BOT_ACTION_DESIRE_MODERATE, tableNearbyEnemyHeroes[1]:GetExtrapolatedLocation( (GetUnitToUnitDistance( tableNearbyEnemyHeroes[1], npcBot )/800) + nCastPoint );
+		local target = mutils.GetVulnerableWeakestUnit(true, true, nCastRange-100, bot);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
 		end
 	end
 	
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	if mutils.IsInTeamFight(bot, 1300)
 	then
-		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
-		then
-			return BOT_ACTION_DESIRE_LOW, npcTarget:GetLocation();
-		end
-	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTarget = npcBot:GetTarget();
-	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and
-	   mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_PHYSICAL) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
-	then
-		return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot )/800) + nCastPoint );
-	end
-	
-	-- If we're farming and can kill 3+ creeps with LSA
-	if ( npcBot:GetActiveMode() == BOT_MODE_FARM ) then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-		if ( locationAoE.count >= 3 ) then
-			return BOT_ACTION_DESIRE_HIGH, locationAoE.targetloc;
-		end
-	end
-
-	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and mutil.CanSpamSpell(npcBot, manaCost)
-	then
-		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
-		if ( locationAoE.count >= 3 ) then
-			local target = mutil.GetVulnerableUnitNearLoc(false, true, nCastRange, nRadius, locationAoE.targetloc, npcBot);
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, nCastPoint, 0 );
+		if ( locationAoE.count >= 2 ) then
+			local target = mutils.GetVulnerableUnitNearLoc(true, true, nCastRange, nRadius, locationAoE.targetloc, bot);
 			if target ~= nil then
 				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
 			end
 		end
 	end
-
-	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	
+	if ( mutils.IsPushing(bot) or mutils.IsDefending(bot) ) and mutils.CanSpamSpell(bot, manaCost)
 	then
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and  mutil.IsInRange(npcTarget, npcBot, nCastRange)
-		then
-			return BOT_ACTION_DESIRE_MODERATE, npcTarget:GetExtrapolatedLocation( (GetUnitToUnitDistance(npcTarget, npcBot )/800) + nCastPoint );
-		end
-	end
-	
-	local skThere, skLoc = mutil.IsSandKingThere(npcBot, nCastRange, 2.0);
-	
-	if skThere then
-		return BOT_ACTION_DESIRE_MODERATE, skLoc;
-	end
-	
-	return BOT_ACTION_DESIRE_NONE, 0;
-end
-
-function ConsiderPrimalRoar()
-
-	-- Make sure it's castable
-	if ( not abilityPR:IsFullyCastable() ) then 
-		return BOT_ACTION_DESIRE_NONE, 0;
-	end
-
-	-- Get some of its values
-	local nCastRange = abilityPR:GetCastRange();
-	local nDamage = abilityPR:GetSpecialValueInt( "damage" );
-	
-	-- If enemy is channeling cancel it
-    local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-	for	_,enemy in pairs(tableNearbyEnemyHeroes)
-	do
-		if enemy:IsChanneling() and mutil.CanCastOnMagicImmune(enemy) then
-			return BOT_ACTION_DESIRE_HIGH, enemy;
-		end
-	end
-	
-	-- If a mode has set a target, and we can kill them, do it
-	local npcTarget = npcBot:GetTarget();
-	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
-	then
-		return BOT_ACTION_DESIRE_HIGH, npcTarget;
-	end
-	
-    if mutil.IsRetreating(npcBot)
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) 
-			then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
+		local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		if ( locationAoE.count >= 3 ) then
+			local target = mutils.GetVulnerableUnitNearLoc(false, true, nCastRange, nRadius, locationAoE.targetloc, bot);
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
 			end
 		end
 	end
 	
-	-- If we're in a teamfight, use it on the scariest enemy
-	if mutil.IsInTeamFight(npcBot, 1200)
+	if mutils.IsGoingOnSomeone(bot)
 	then
-
-		local npcMostDangerousEnemy = nil;
-		local nMostDangerousDamage = 0;
-
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE  );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if mutil.CanCastOnMagicImmune(npcEnemy) 
-			then
-				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
-				if ( nDamage > nMostDangerousDamage )
-				then
-					nMostDangerousDamage = nDamage;
-					npcMostDangerousEnemy = npcEnemy;
-				end
-			end
-		end
-
-		if ( npcMostDangerousEnemy ~= nil )
+		local target = bot:GetTarget();
+		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target) and mutils.IsInRange(target, bot, nCastRange)
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy;
-		end
-	end
-
-	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
-	then
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
-		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
 		end
 	end
 	
-	return BOT_ACTION_DESIRE_NONE, 0;
-
+	return BOT_ACTION_DESIRE_NONE, nil;
 end
 
-function ConsiderWildBoar()
-
-	-- Make sure it's castable
-	if ( not abilityWB:IsFullyCastable() ) 
-	then 
-		return BOT_ACTION_DESIRE_NONE;
+function ConsiderW()
+	if not mutils.CanBeCast(abilities[2]) then
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
-
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	
+	local manaCost  = abilities[1]:GetManaCost();
+	
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
 	then
-		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 800)  )
-		then
-			return BOT_ACTION_DESIRE_LOW;
+		local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+		if #enemies > 0 then	
+			return BOT_ACTION_DESIRE_HIGH, nil;
 		end
 	end
 	
-	--------------------------------------
-	-- Global high-priorty usage
-	--------------------------------------
-	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if  mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
+	if ( mutils.IsPushing(bot) or mutils.IsDefending(bot) ) and mutils.CanSpamSpell(bot, manaCost)
 	then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 800, true );
-		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 800, true );
-		if ( tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 3 ) or ( tableNearbyEnemyTowers ~= nil and #tableNearbyEnemyTowers >= 1 ) 
-		then
-			return BOT_ACTION_DESIRE_LOW;
-		end
-	end
-	--------------------------------------
-	-- Mode based usage
-	--------------------------------------
-
-
-	if mutil.IsInTeamFight(npcBot, 1200)
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
-		if tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes >= 1
-		then
-			return BOT_ACTION_DESIRE_MODERATE;
+		local creeps = bot:GetNearbyCreeps(600, true);
+		if #creeps > 0 then	
+			return BOT_ACTION_DESIRE_HIGH, nil;
 		end
 	end
 	
-	
-	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutils.IsGoingOnSomeone(bot)
 	then
-		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 800)
+		local target = bot:GetTarget();
+		if mutils.IsValidTarget(target) and mutils.CanCastOnMagicImmune(target) and mutils.IsInRange(target, bot, 1000)
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			return BOT_ACTION_DESIRE_HIGH, nil;
 		end
 	end
+	
+	return BOT_ACTION_DESIRE_NONE, nil;
+end	
 
-	return BOT_ACTION_DESIRE_NONE;
-end
-
-function ConsiderWildHawk()
-
-	if ( not abilityWH:IsFullyCastable() ) 
-	then 
-		return BOT_ACTION_DESIRE_NONE;
+function ConsiderE()
+	if not mutils.CanBeCast(abilities[3]) 
+	then
+		return BOT_ACTION_DESIRE_NONE, nil;
 	end
-
+	
 	local roll = RandomInt(1,8);
 	if GetTeam() == TEAM_RADIANT then
 		return BOT_ACTION_DESIRE_MODERATE, hawkLocRadiant[roll];
@@ -344,6 +195,45 @@ function ConsiderWildHawk()
 		return BOT_ACTION_DESIRE_MODERATE, hawkLocDire[roll];
 	end
 	
+	return BOT_ACTION_DESIRE_NONE, 0;
+end		
+
+function ConsiderR()
+	if not mutils.CanBeCast(abilities[4]) then
+		return BOT_ACTION_DESIRE_NONE, nil;
+	end
+	
+	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[4]:GetCastRange());
+	local nCastPoint = abilities[4]:GetCastPoint();
+	local manaCost  = abilities[4]:GetManaCost();
+	
+	
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
+	then
+		local target = mutils.GetVulnerableWeakestUnit(true, true, nCastRange, bot);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, target;
+		end
+	end
+	
+	if mutils.IsInTeamFight(bot, 1300)
+	then
+		local target = mutils.GetStrongestUnit(nCastRange, bot, true, false, 5.0);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_HIGH, target;
+		end
+	end
+	
+	
+	if mutils.IsGoingOnSomeone(bot)
+	then
+		local target = bot:GetTarget();
+		if mutils.IsValidTarget(target) and mutils.CanCastOnNonMagicImmune(target) and mutils.IsInRange(target, bot, nCastRange+200) and not mutils.IsDisabled(true, target)
+		then
+			return BOT_ACTION_DESIRE_HIGH, target;
+		end
+	end
+	
 	return BOT_ACTION_DESIRE_NONE, nil;
 end
-
+	

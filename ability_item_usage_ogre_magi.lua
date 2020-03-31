@@ -16,6 +16,10 @@ end
 function CourierUsageThink()
 	ability_item_usage_generic.CourierUsageThink();
 end
+function ItemUsageThink()
+	ability_item_usage_generic.ItemUsageThink();
+end
+
 local castFBDesire = 0;
 local castUFBDesire = 0;
 local castIGDesire = 0;

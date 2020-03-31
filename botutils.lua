@@ -166,7 +166,7 @@ function U.IsStuck(hUnit)
 			and #Et == 0 and #At == 0  
 		    and DotaTime() > hUnit.stuckTime + 5.0 and GetUnitToLocationDistance(hUnit, hUnit.stuckLoc) < 25    
 		then
-			print(hUnit:GetUnitName().." is stuck")
+			--print(hUnit:GetUnitName().." is stuck")
 			return true;
 		end
 	end
