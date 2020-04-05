@@ -371,7 +371,7 @@ local castDustTime = -90;
 --item_dust
 ItemUsageModule.Use['item_dust'] = function(item, bot, mode, extra_range)
 	
-	if DotaTime() < castDustTime + 0.5 then return BOT_ACTION_DESIRE_NONE end
+	-- if DotaTime() < castDustTime + 0.5 then return BOT_ACTION_DESIRE_NONE end
 	
 	local nRadius = 1050;
 	
@@ -383,8 +383,8 @@ ItemUsageModule.Use['item_dust'] = function(item, bot, mode, extra_range)
 		if IsHeroAlive(enemyPids[i]) == true and info ~= nil then
 			local dInfo = info[1]; 
 			if dInfo ~= nil 
-				and dInfo.time_since_seen > 0.10 
-				and dInfo.time_since_seen < 0.20 
+				and dInfo.time_since_seen > 0.20 
+				and dInfo.time_since_seen < 0.50 
 				and GetUnitToLocationDistance(bot, dInfo.location) + 150 <  nRadius 
 				and ItemUsageModule.IsClosestToDustLocation(bot, dInfo.location)
 			then	
@@ -412,10 +412,17 @@ ItemUsageModule.Use['item_dust'] = function(item, bot, mode, extra_range)
 			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
 		end
 		for i = 1, #enemyPids do
-			if IsHeroAlive(enemyPids[i]) == true and bot:WasRecentlyDamagedByPlayer(enemyPids[i], 0.5) == true then
+			if IsHeroAlive(enemyPids[i]) == true 
+				and bot:WasRecentlyDamagedByPlayer(enemyPids[i], 0.5) == true  
+			then
 				-- print('sec 3')
-				castDustTime = DotaTime();
-				return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+				local info = GetHeroLastSeenInfo(enemyPids[i])	
+				local dInfo = info[1]; 
+				if dInfo ~= nil and GetUnitToLocationDistance(bot, dInfo.location) < nRadius 
+				then
+					castDustTime = DotaTime();
+					return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+				end
 			end
 		end
 	else
@@ -895,9 +902,9 @@ ItemUsageModule.Use['item_power_treads'] = function(item, bot, mode, extra_range
 		then	
 			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
 		end
-	elseif ItemUsageModule.IsHPHealing(bot) == true and tread_stat == ATTRIBUTE_STRENGTH then
+	elseif mutil.IsRetreating(bot) == false and ItemUsageModule.IsHPHealing(bot) == true and tread_stat == ATTRIBUTE_STRENGTH then
 		return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';	
-	elseif bot:WasRecentlyDamagedByAnyHero(3.5) == false and mutil.IsRetreating(bot) == false then
+	elseif ItemUsageModule.IsHPHealing(bot) == false and bot:WasRecentlyDamagedByAnyHero(3.0) == false and mutil.IsRetreating(bot) == false then
 		local enemies = bot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
 		if #enemies == 0 and ItemUsageModule.CanSwitchPTStat(bot, item) == true  then
 			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
@@ -1189,6 +1196,8 @@ end
 
 --item_ancient_janggo
 ItemUsageModule.Use['item_ancient_janggo'] = function(item, bot, mode, extra_range)
+	local charges = item:GetCurrentCharges();
+	if charges == 0 then return BOT_ACTION_DESIRE_NONE; end
 	return ItemUsageModule.Use['item_pipe'](item, bot, mode, extra_range);
 end
 
@@ -1225,7 +1234,7 @@ end
 
 --item_necronomicon_3
 ItemUsageModule.Use['item_necronomicon_3'] = function(item, bot, mode, extra_range)
-	return ItemUsageModule.Use['item_necronomicon_3'](item, bot, mode, extra_range);
+	return ItemUsageModule.Use['item_necronomicon'](item, bot, mode, extra_range);
 end
 
 --item_solar_crest

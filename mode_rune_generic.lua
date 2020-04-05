@@ -68,6 +68,11 @@ function GetDesire()
 			bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
 			return;
 		end
+		canDrop, hItem = uItem.CanDropExcessNeutralItem(bot);
+		if canDrop == true then
+			bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
+			return;
+		end
 		dropNeutralItemCheck = DotaTime();
 	end
 	

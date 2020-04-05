@@ -556,6 +556,40 @@ function ItemModule.CanDropNeutralItem(bot)
 	return false, nil;
 end
 
+function ItemModule.GetLowestNeutralItemInBackpackIfExcess(bot)
+	local lowest_lvl = 6;
+	local lowest = nil;
+	local num_n_item = 0;
+	for i=6,8 do	
+		local item = bot:GetItemInSlot(i);
+		if item ~= nil 
+		then
+			local curr_lvl = ItemModule.GetNeutralItemTier(item:GetName());
+			if curr_lvl > 0 then num_n_item = num_n_item + 1 end
+			if curr_lvl > 0 and curr_lvl < lowest_lvl then
+				lowest_lvl = curr_lvl;
+				lowest = item;
+			end
+		end
+	end
+	return num_n_item, lowest;
+end
+
+function ItemModule.CanDropExcessNeutralItem(bot)
+	local neutral_item = bot:GetItemInSlot(16);
+	if neutral_item ~= nil then
+		if ItemModule.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_BACKPACK) == 0  
+		   and ItemModule.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_MAIN) == 0  
+		then
+			local num, lowest = ItemModule.GetLowestNeutralItemInBackpackIfExcess(bot)
+			if num >= 2 then
+				return true, lowest;
+			end
+		end
+	end
+	return false, nil;
+end
+
 function ItemModule.GetEmptySlotAmount(bot, nType)
 	local startIdx = 0;
 	local endIdx = 16;
