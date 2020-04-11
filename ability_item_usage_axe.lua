@@ -212,23 +212,6 @@ function ConsiderR()
 	local nManaCost  = abilityR:GetManaCost( );
 	local nDamage    = abilityR:GetSpecialValueInt('kill_threshold');
 	
-	if npcBot:HasScepter() then
-	
-		nDamage = abilityR:GetSpecialValueInt('kill_threshold_scepter');
-		
-		if mutil.AllowedToSpam(npcBot, nManaCost) and ( mutil.IsPushing(npcBot) or mutil.IsDefending(npcBot) ) then
-			local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( nCastRange + 200, true );
-			for _,creep in pairs( tableNearbyEnemyCreeps )
-			do
-				if ( creep:GetHealth() < nDamage and mutil.CanCastOnNonMagicImmune(creep) ) 
-				then
-					return BOT_ACTION_DESIRE_HIGH, creep;
-				end
-			end
-		end
-		
-	end	
-	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then

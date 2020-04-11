@@ -181,7 +181,7 @@ function Think()
 	
 	
 	if neutralItem ~= nil then
-		if GetUnitToLocationDistance(bot, neutralItem.location) > 500 then 
+		if GetUnitToLocationDistance(bot, neutralItem.location) > 300 then 
 			bot:Action_MoveToLocation(neutralItem.location);
 			return
 		else

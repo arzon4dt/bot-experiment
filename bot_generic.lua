@@ -78,6 +78,10 @@ function IsMinionWithNoSkill(unit_name)
 		or unit_name == "npc_dota_greater_eidolon"
 		or unit_name == "npc_dota_dire_eidolon"
 		or unit_name == "npc_dota_furion_treant"
+		or unit_name == "npc_dota_furion_treant_1"
+		or unit_name == "npc_dota_furion_treant_2"
+		or unit_name == "npc_dota_furion_treant_3"
+		or unit_name == "npc_dota_furion_treant_4"
 		or unit_name == "npc_dota_furion_treant_large"
 		or unit_name == "npc_dota_invoker_forged_spirit"
 		or unit_name == "npc_dota_broodmother_spiderling"
@@ -534,6 +538,12 @@ function ConsiderFamiliarUseAbilities(bot, hMinionUnit, ability)
 				return BOT_ACTION_DESIRE_HIGH, nil, 'no_target';
 			end
 		end
+		local enemies = hMinionUnit:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+		for i = 1, #enemies do
+			if enemies[i]:IsChanneling() == true and mutil.CanCastOnNonMagicImmune(enemies[i]) == true then
+				return BOT_ACTION_DESIRE_HIGH, nil, 'no_target';
+			end
+		end
 	end
 	return BOT_ACTION_DESIRE_NONE, nil;
 end
@@ -635,11 +645,15 @@ end
 function GetWardAttackTarget(bot, hMinionUnit)
 	local range = hMinionUnit:GetAttackRange() - 50;
 	local target = bot:GetAttackTarget();
-	if IsValidTarget(target) == false or (IsValidTarget(target) and GetUnitToUnitDistance(hMinionUnit, target) < range) then
+	if target == nil then
+		target = bot:GetTarget();
+	end
+	if IsValidTarget(target) == false or (IsValidTarget(target) and GetUnitToUnitDistance(hMinionUnit, target) > range) then
 		target = GetWeakestHero(range, hMinionUnit);
 		if target == nil then target = GetWeakestCreep(range, hMinionUnit); end
 		if target == nil then target = GetWeakestTower(range, hMinionUnit); end
 		if target == nil then target = GetWeakestBarracks(range, hMinionUnit); end
+		if target == nil and GetUnitToUnitDistance(hMinionUnit, EnemyAncient) < range then target = EnemyAncient; end
 	end
 	return target;
 end
@@ -1169,21 +1183,26 @@ function MinionThink(  hMinionUnit )
 				return
 			end
 		elseif IsTrap(hMinionUnit:GetUnitName()) then
-			hMinionUnit.mAbility = hMinionUnit:GetAbilityInSlot(0);
-			if CanAbilityBeCast(hMinionUnit.mAbility) then
-				local nRadius = 400;
-				local enemies = hMinionUnit:GetNearbyHeroes(nRadius, true, BOT_MODE_NONE)
-				if #enemies > 0 then
-					hMinionUnit:ActionPush_UseAbility(hMinionUnit.mAbility);
-					return
+			if hMinionUnit:GetUnitName() == 'npc_dota_templar_assassin_psionic_trap' 
+				or hMinionUnit:GetUnitName() == 'npc_dota_techies_remote_mine'
+			then	
+				hMinionUnit.mAbility = hMinionUnit:GetAbilityInSlot(0);
+				if CanAbilityBeCast(hMinionUnit.mAbility) then
+					local nRadius = 400;
+					local enemies = hMinionUnit:GetNearbyHeroes(nRadius, true, BOT_MODE_NONE)
+					if #enemies > 0 then
+						hMinionUnit:ActionPush_UseAbility(hMinionUnit.mAbility);
+						return
+					end
+					local creeps = hMinionUnit:GetNearbyCreeps(nRadius, true)
+					if #creeps >= 4 then
+						hMinionUnit:ActionPush_UseAbility(hMinionUnit.mAbility);
+						return
+					end
 				end
-				local creeps = hMinionUnit:GetNearbyCreeps(nRadius, true)
-				if #creeps >= 4 then
-					hMinionUnit:ActionPush_UseAbility(hMinionUnit.mAbility);
-					return
-				end
-			end
-			return
+			else	
+				return
+			end	
 		end
 	end
 end	

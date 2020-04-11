@@ -895,17 +895,10 @@ ItemUsageModule.Use['item_power_treads'] = function(item, bot, mode, extra_range
 	local tread_stat = item:GetPowerTreadsStat();
 	if mutil.IsRetreating(bot) == true and tread_stat ~= ATTRIBUTE_STRENGTH and bot:WasRecentlyDamagedByAnyHero(5.0) == true then
 		return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
-	elseif mutil.IsGoingOnSomeone(bot) == true and tread_stat ~= ATTRIBUTE_AGILITY then
-		local target = bot:GetTarget();
-		if  mutil.IsValidTarget(target) 
-			and mutil.IsInRange(target, bot, bot:GetAttackRange() + 250) 
-		then	
-			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
-		end
-	elseif mutil.IsRetreating(bot) == false and ItemUsageModule.IsHPHealing(bot) == true and tread_stat == ATTRIBUTE_STRENGTH then
+	elseif mutil.IsRetreating(bot) == false and ItemUsageModule.IsHPHealing(bot) == true and bot:GetHealth() < 0.95*bot:GetMaxHealth() and tread_stat == ATTRIBUTE_STRENGTH then
 		return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';	
 	elseif ItemUsageModule.IsHPHealing(bot) == false and bot:WasRecentlyDamagedByAnyHero(3.0) == false and mutil.IsRetreating(bot) == false then
-		local enemies = bot:GetNearbyHeroes( 1600, true, BOT_MODE_NONE );
+		local enemies = bot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 		if #enemies == 0 and ItemUsageModule.CanSwitchPTStat(bot, item) == true  then
 			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
 		end
@@ -1838,18 +1831,21 @@ ItemUsageModule.Use['item_black_king_bar'] = function(item, bot, mode, extra_ran
 	if mutil.IsGoingOnSomeone(bot) 
 	then
 		local target = bot:GetTarget();
-		if mutil.IsValidTarget(target) == true
+		if mutil.IsValidTarget(target) == true 
 		then
 			local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
-			for i=1, #enemies do
-				if mutil.IsValidTarget(enemies[i])
-					and mutil.CanCastOnMagicImmune(enemies[i])
-					and mutil.IsInRange(bot, enemies[i], enemies[i]:GetAttackRange()+150)
-					and ( enemies[i]:GetAttackTarget() == bot or enemies[i]:GetTarget() == bot
-					or enemies[i]:IsFacingLocation(bot:GetLocation(), 15) )
-				then
-					return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
-				end	
+			local allies = bot:GetNearbyHeroes(1600, false, BOT_MODE_ATTACK);
+			if #enemies >= #allies then
+				for i=1, #enemies do
+					if mutil.IsValidTarget(enemies[i])
+						and mutil.CanCastOnMagicImmune(enemies[i])
+						and mutil.IsInRange(bot, enemies[i], enemies[i]:GetAttackRange()+150)
+						and ( enemies[i]:GetAttackTarget() == bot or enemies[i]:GetTarget() == bot
+						or enemies[i]:IsFacingLocation(bot:GetLocation(), 15) )
+					then
+						return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+					end	
+				end
 			end
 			if ItemUsageModule.CanDodgeProjectile(bot, 175) == true 
 			then
@@ -1880,7 +1876,6 @@ end
 ItemUsageModule.Use['item_radiance'] = function(item, bot, mode, extra_range)
 	return BOT_ACTION_DESIRE_NONE;
 end
-
 
 
 --item_armlet
@@ -1942,7 +1937,7 @@ ItemUsageModule.Use['item_abyssal_blade'] = function(item, bot, mode, extra_rang
 		elseif tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes == 1 
 			and mutil.IsValidTarget(tableNearbyEnemyHeroes[1])  == true
 			and mutil.CanCastOnNonMagicImmune(tableNearbyEnemyHeroes[1]) == true
-			and mutil.IsDisabled(tableNearbyEnemyHeroes[1]) == false
+			and mutil.IsDisabled(true, tableNearbyEnemyHeroes[1]) == false
 		then	
 			return BOT_ACTION_DESIRE_ABSOLUTE, furthestUnit, 'unit';
 		end
@@ -1951,7 +1946,10 @@ ItemUsageModule.Use['item_abyssal_blade'] = function(item, bot, mode, extra_rang
 	if mutil.IsGoingOnSomeone(bot)
 	then
 		local target = bot:GetTarget();
-		if mutil.IsValidTarget(target) and mutil.CanCastOnNonMagicImmune(target) and mutil.IsInRange(target, bot, nCastRange)
+		if mutil.IsValidTarget(target) 
+			and mutil.CanCastOnNonMagicImmune(target)
+			and mutil.IsInRange(target, bot, nCastRange) 
+			and mutil.IsDisabled(true, target) == false
 		then
 			local enemies = target:GetNearbyHeroes(1000, false, BOT_MODE_NONE);
 			local allies = bot:GetNearbyHeroes(1200, false, BOT_MODE_ATTACK);
@@ -2232,7 +2230,7 @@ ItemUsageModule.Use['item_essence_ring'] = function(item, bot, mode, extra_range
 	local hpRes = 425;
 	if mutil.IsRetreating(bot)
 		and bot:GetHealth() < 0.35 * bot:GetMaxHealth()  
-		and bot:WasRecentlyDamagedByAnyHero(3.0)
+		and ( bot:WasRecentlyDamagedByAnyHero(3.0) or bot:WasRecentlyDamagedByTower(3.0) )
 	then
 		return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
 	end

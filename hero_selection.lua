@@ -8,10 +8,9 @@ local requiredHeroes = {
 	
 -- 'npc_dota_hero_beastmaster',
 -- 'npc_dota_hero_lycan',
-'npc_dota_hero_chaos_knight',
-'npc_dota_hero_phantom_lancer',
-'npc_dota_hero_elder_titan',
-'npc_dota_hero_naga_siren',
+'npc_dota_hero_nevermore',
+'npc_dota_hero_oracle',
+'npc_dota_hero_windrunner',
 };
 
 local UnImplementedHeroes = {

@@ -85,7 +85,8 @@ ItemModule['earlyGameItem'] = {
 	 "item_wraith_band",
 	 "item_null_talisman", 
 	 "item_dust",
-	 "item_ward_observer"
+	 "item_ward_observer",
+	 "item_hand_of_midas"
 	 --"item_tpscroll"
 }
 

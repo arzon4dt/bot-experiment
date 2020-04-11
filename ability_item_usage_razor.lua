@@ -113,7 +113,7 @@ local function ConsiderW()
 			local target = nil;
 			local maxAD = 0;	
 			for i=1, #enemies do
-				if mutils.CanCastOnNonMagicImmune(enemies[i]) and enemies[i]:GetAttackDamage() >= maxAD 
+				if  mutils.IsValidTarget(enemies[i]) and mutils.CanCastOnNonMagicImmune(enemies[i]) and enemies[i]:GetAttackDamage() >= maxAD 
 				then
 					target = enemies[i];
 					maxAD  = enemies[i]:GetAttackDamage();

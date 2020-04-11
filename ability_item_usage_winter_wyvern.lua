@@ -86,34 +86,70 @@ function ConsiderOvergrowth()
 	end
 	
 	local nRadius = 1000;
+	local nRange = abilityOG:GetSpecialValueInt('attack_range_bonus');
+	local attackRange = npcBot:GetAttackRange();
 	
-	if mutil.IsStuck(npcBot)
-	then
-		return BOT_ACTION_DESIRE_HIGH;
-	end
+	if npcBot:HasScepter() == false then
 	
-	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if mutil.IsRetreating(npcBot)
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+		if mutil.IsStuck(npcBot)
+		then
+			return BOT_ACTION_DESIRE_HIGH;
+		end
+		
+		-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+		if mutil.IsRetreating(npcBot)
+		then
+			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nRadius, true, BOT_MODE_NONE );
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) ) 
+				then
+					return BOT_ACTION_DESIRE_HIGH;
+				end
+			end
+		end
+		
+		-- If we're going after someone
+		if mutil.IsGoingOnSomeone(npcBot)
+		then
+			local npcTarget = npcBot:GetTarget();
+
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, attackRange+0.5*nRange)
 			then
 				return BOT_ACTION_DESIRE_HIGH;
 			end
 		end
-	end
 	
-	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
-	then
-		local npcTarget = npcBot:GetTarget();
-
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 1200)
+	else
+		if mutil.IsStuck(npcBot) and abilityOG:GetToggleState() == false
 		then
 			return BOT_ACTION_DESIRE_HIGH;
 		end
+		
+		if mutil.IsGoingOnSomeone(npcBot)
+		then
+			local npcTarget = npcBot:GetTarget();
+
+			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, attackRange+0.5*nRange)
+			then
+				if npcTarget:HasModifier('modifier_winter_wyvern_arctic_burn_slow') == false and abilityOG:GetToggleState() == false 
+				then 
+					return BOT_ACTION_DESIRE_HIGH;
+				elseif npcTarget:HasModifier('modifier_winter_wyvern_arctic_burn_slow') == true and abilityOG:GetToggleState() == true 
+				then
+					return BOT_ACTION_DESIRE_HIGH;
+				elseif npcTarget:CanBeSeen() == false and abilityOG:GetToggleState() == true 	
+				then
+					return BOT_ACTION_DESIRE_HIGH;
+				end	
+			end
+		else
+			if abilityOG:GetToggleState() == true 
+			then
+				return BOT_ACTION_DESIRE_HIGH;
+			end
+		end
+		
 	end
 	
 	return BOT_ACTION_DESIRE_NONE;

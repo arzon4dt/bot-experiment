@@ -67,16 +67,23 @@ end
 
 function HaveItemToSell()
 	 local earlyGameItem = {
+		 "item_tango_single",
 		 "item_clarity",
 		 "item_faerie_fire",
 		 "item_tango",  
 		 "item_flask", 
 		 "item_infused_raindrop",
+		 "item_quelling_blade", 
+		 "item_stout_shield", 
 		 "item_magic_wand",
 		 "item_bottle",  
-		 "item_urn_of_shadows",
+		 "item_soul_ring",  
+		 "item_bracer",
+		 "item_wraith_band",
+		 "item_null_talisman", 
 		 "item_dust",
 		 "item_ward_observer",
+		 "item_hand_of_midas"
 	}
 	for _,item in pairs(earlyGameItem) do
 		local slot = npcBot:FindItemSlot(item);

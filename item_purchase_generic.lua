@@ -389,11 +389,6 @@ function ItemPurchaseThink()
 							slotToSell = itemSlot;
 							break;
 						end
-					-- elseif item == "item_tpscroll" then
-						-- if bot:FindItemSlot("item_travel_boots") > 0  then
-							-- slotToSell = itemSlot;
-							-- break;
-						-- end
 					elseif item == "item_magic_wand" then
 						if buildHoly == false  then
 							slotToSell = itemSlot;
@@ -401,6 +396,11 @@ function ItemPurchaseThink()
 						end	
 					elseif item == "item_quelling_blade" then
 						if buildBFury == false then
+							slotToSell = itemSlot;
+							break;
+						end
+					elseif item == "item_hand_of_midas" then
+						if #bot.itemToBuy <= 1 then
 							slotToSell = itemSlot;
 							break;
 						end

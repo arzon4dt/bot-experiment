@@ -2057,6 +2057,31 @@ function ItemUsageThinks()
 end	
 
 bot.castAmuletTime = DotaTime();
+local backpack_item = {};
+local update_bi_time = -90;
+
+function UpdateBackPackItem(bot)
+	local curr_time = DotaTime();
+	for i=6, 8 do
+		local bp_item = bot:GetItemInSlot(i);
+		if bp_item ~= nil then
+			backpack_item[bp_item:GetName()] = curr_time;
+		end
+	end
+	
+	if curr_time > update_bi_time + 7.0 then
+		for k,v in pairs(backpack_item) do
+			if v ~= nil and v + 7.0 < curr_time then
+				backpack_item[k] = nil;
+			end
+		end
+		update_bi_time = curr_time;
+	end
+end
+
+function JustSwapped(item_name)
+	return backpack_item[item_name] ~= nil and backpack_item[item_name] + 6.5 > DotaTime();
+end
 
 function ItemUsageThink()
 
@@ -2091,6 +2116,7 @@ function ItemUsageThink()
 	for i=1, #item_slot do
 		local item = bot:GetItemInSlot(item_slot[i]);
 		if itemUseUtils.CanCastItem(item) == true 
+			and JustSwapped(item:GetName()) == false
 			and itemUseUtils.Use[item:GetName()] ~= nil
 		then
 			local desire, target, target_type = itemUseUtils.Use[item:GetName()](item, bot, mode, extra_range);
