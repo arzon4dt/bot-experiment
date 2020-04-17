@@ -67,12 +67,12 @@ function AbilityUsageThink()
 end
 
 function LocationOverlapWeb(location, nRadius)
+	local flag = ( 1.5*nRadius ) + 150;
 	local unit = GetUnitList(UNIT_LIST_ALLIES);
 	for _,u in pairs (unit)
 	do
 		if u:GetUnitName() == "npc_dota_broodmother_web"
 		then
-			local flag = ( 2*nRadius ) - 100;
 			if GetUnitToLocationDistance(u, location) <= flag then
 				return true
 			end

@@ -106,22 +106,22 @@ end
 --------------------------------
 
 ---Update the status to prevent bots selling stout shield and queling blade
-local buildBFury = false;
-local buildVanguard = false;
-local buildHoly = false;
+bot.buildBFury = false;
+bot.buildVanguard = false;
+bot.buildHoly = false;
 
 for i=1, math.ceil(#bot.itemToBuy/2) do
 	if bot.itemToBuy[i] == "item_bfury" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_bfury" then
-		buildBFury = true;
+		bot.buildBFury = true;
 	end
 	if bot.itemToBuy[i] == "item_vanguard" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_vanguard" 
 	or bot.itemToBuy[i] == "item_crimson_guard" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_crimson_guard"
 	or bot.itemToBuy[i] == "item_abyssal_blade" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_abyssal_blade"
 	then
-		buildVanguard = true;
+		bot.buildVanguard = true;
 	end
 	if bot.itemToBuy[i] == "item_holy_locket" or bot.itemToBuy[#bot.itemToBuy-i+1] == "item_holy_locket" then
-		buildHoly = true;
+		bot.buildHoly = true;
 	end
 end
 
@@ -361,8 +361,11 @@ function ItemPurchaseThink()
 	--purchase raindrop
 	if buyRD == false and buyBootsStatus == true and GetItemStockCount( "item_infused_raindrop" ) > 0 and bot:GetGold() >= GetItemCost( "item_infused_raindrop" ) and items.HasItem(bot, 'item_boots')
 	then
-		bot:ActionImmediate_PurchaseItem("item_infused_raindrop"); 
-		buyRD = true;
+		if RollPercentage(25) == true 
+		then
+			bot:ActionImmediate_PurchaseItem("item_infused_raindrop"); 
+			buyRD = true;
+		end
 	end
 	
 	---buy tom of knowledge
@@ -385,25 +388,31 @@ function ItemPurchaseThink()
 				local itemSlot = bot:FindItemSlot(item);
 				if itemSlot >= 0 and itemSlot <= 8 then
 					if item == "item_stout_shield" then
-						if buildVanguard == false  then
+						if bot.buildVanguard == false  then
 							slotToSell = itemSlot;
 							break;
 						end
 					elseif item == "item_magic_wand" then
-						if buildHoly == false  then
+						if bot.buildHoly == false  then
 							slotToSell = itemSlot;
 							break;
 						end	
 					elseif item == "item_quelling_blade" then
-						if buildBFury == false then
+						if bot.buildBFury == false then
 							slotToSell = itemSlot;
 							break;
 						end
 					elseif item == "item_hand_of_midas" then
-						if #bot.itemToBuy <= 1 then
+						if #bot.itemToBuy <= 2 then
 							slotToSell = itemSlot;
 							break;
 						end
+					elseif item == "item_ancient_janggo" then
+						local jg = bot:GetItemInSlot(itemSlot);
+						if jg~=nil and jg:GetCurrentCharges() == 0 and #bot.itemToBuy <= 3 then
+							slotToSell = itemSlot;
+							break;
+						end	
 					else
 						slotToSell = itemSlot;
 						break;

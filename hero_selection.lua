@@ -8,9 +8,15 @@ local requiredHeroes = {
 	
 -- 'npc_dota_hero_beastmaster',
 -- 'npc_dota_hero_lycan',
-'npc_dota_hero_nevermore',
+'npc_dota_hero_puck',
 'npc_dota_hero_oracle',
+'npc_dota_hero_invoker',
+'npc_dota_hero_snapfire',
 'npc_dota_hero_windrunner',
+'npc_dota_hero_shredder',
+'npc_dota_hero_pudge',
+'npc_dota_hero_rattletrap',
+'npc_dota_hero_slark',
 };
 
 local UnImplementedHeroes = {

@@ -213,13 +213,15 @@ function ConsiderPounce()
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			local ancient = GetAncient(GetTeam());
-			if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and npcBot:IsFacingUnit(ancient, 10 )
-			then
-				return BOT_ACTION_DESIRE_MODERATE;
+		local loc = mutil.GetEscapeLoc();
+		if utils.IsFacingLocation(npcBot,loc,15) then
+			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
+			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+			do
+				if npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 )
+				then
+					return BOT_ACTION_DESIRE_MODERATE;
+				end
 			end
 		end
 	end
@@ -228,8 +230,11 @@ function ConsiderPounce()
 	if mutil.IsGoingOnSomeone(npcBot) and npcBot:HasModifier('modifier_mirana_leap_buff') == false
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 500) == false and mutil.IsInRange(npcTarget, npcBot, 1000) == true 
-		   and npcBot:IsFacingUnit(npcTarget, 5)
+		if mutil.IsValidTarget(npcTarget) 
+			and mutil.CanCastOnMagicImmune(npcTarget) 
+			and mutil.IsInRange(npcTarget, npcBot, 500) == false 
+			and mutil.IsInRange(npcTarget, npcBot, 1000) == true 
+		    and npcBot:IsFacingUnit(npcTarget, 5)
 		then
 			local tableNearbyEnemyHeroes = npcTarget:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
 			if ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes <= 2 )

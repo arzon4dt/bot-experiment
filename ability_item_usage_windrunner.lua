@@ -79,6 +79,17 @@ local function ConsiderQ()
 		end
 	end
 	
+	local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+	for i=1, #enemies do
+		if mutils.IsValidTarget(enemies[i]) == true 
+			and mutils.CanCastOnNonMagicImmune(enemies[i]) == true 
+			and ( enemies[i]:IsChanneling()
+			or enemies[i]:HasModifier('modifier_teleporting') )
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, enemies[i];
+		end
+	end
+	
 	return BOT_ACTION_DESIRE_NONE;
 end	
 
@@ -90,6 +101,7 @@ local function ConsiderW()
 	local nCastPoint = abilities[2]:GetCastPoint();
 	local manaCost   = abilities[2]:GetManaCost();
 	local nRadius    = abilities[2]:GetSpecialValueInt('arrow_width');
+	local speed    = abilities[2]:GetSpecialValueInt('arrow_speed');
 	local nCastRange    = 1600;
 	local nCastRange2    = 2600;
 	local nAttackRange    = bot:GetAttackRange();
@@ -125,7 +137,13 @@ local function ConsiderW()
 			and mutils.IsInRange(bot, target, 0.5*nAttackRange) == false
 			and mutils.IsInRange(bot, target, nCastRange2-600) == true
 		then
-			return BOT_ACTION_DESIRE_MODERATE, target:GetLocation();
+			local distance = GetUnitToUnitDistance(target, bot)
+			local moveCon = target:GetMovementDirectionStability();
+			local pLoc = target:GetExtrapolatedLocation( nCastPoint + ( distance / speed ) );
+			if moveCon < 0.65 then
+				pLoc = target:GetLocation();
+			end
+			return BOT_ACTION_DESIRE_MODERATE, pLoc;
 		end
 	end
 	

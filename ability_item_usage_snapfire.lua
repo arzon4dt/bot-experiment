@@ -154,18 +154,42 @@ function ConsiderW()
 	
 	local target  = bot:GetTarget(); 
 	local enemies = bot:GetNearbyHeroes(nJumpDistance, true, BOT_MODE_NONE);
+	local allies = bot:GetNearbyHeroes(castRange, false, BOT_MODE_NONE);
 
 	for _,enemy in pairs(enemies)
 	do
-		if enemy:IsChanneling() and bot:IsFacingUnit(enemy, 5) then
+		if enemy:IsChanneling() and mutils.CanCastOnNonMagicImmune(enemy) and bot:IsFacingUnit(enemy, 10) then
 			return BOT_ACTION_DESIRE_HIGH, bot;
+		end
+	end
+	
+	for i=1, #allies 
+	do
+		if allies[i] ~= bot 
+			and mutils.CanCastOnNonMagicImmune(allies[i]) == true
+			and allies[i]:WasRecentlyDamagedByAnyHero(3.0) == true
+			and allies[i]:GetHealth() < 0.35 * allies[i]:GetMaxHealth() 
+		then
+			local loc = mutils.GetEscapeLoc2(allies[i]);
+			local mode2 = allies[i]:GetActiveMode();
+			if  ( mode2 == BOT_MODE_RETREAT  
+				or allies[i]:GetAttackTarget() == nil 
+				or allies[i]:GetTarget() == nil )
+				and utils.IsFacingLocation(allies[i], loc, 15)
+			then	
+				return BOT_ACTION_DESIRE_HIGH, allies[i];
+			end
 		end
 	end
 	
 	if abUtils.IsRetreating(bot)
 	then
-		if #enemies > 0 and bot:WasRecentlyDamagedByAnyHero(2.0) and bot:IsFacingUnit(GetAncient(GetTeam()), 45) then
-			return BOT_ACTION_DESIRE_HIGH, bot;
+		if #enemies > 0 and bot:WasRecentlyDamagedByAnyHero(2.0) 
+		then
+			local loc = mutils.GetEscapeLoc2(bot);
+			if  utils.IsFacingLocation(bot, loc, 15) then
+				return BOT_ACTION_DESIRE_HIGH, bot;
+			end
 		end
 	end	
 	
@@ -182,9 +206,19 @@ function ConsiderW()
 
 	if abUtils.IsGoingOnSomeone(bot)
 	then
-		if abUtils.IsValidTarget(target) and abUtils.CanCastOnNonMagicImmune(target) and abUtils.IsInRange(target, bot, nJumpDistance) and not abUtils.IsDisabled(true, target)
+		if abUtils.IsValidTarget(target) and abUtils.CanCastOnNonMagicImmune(target) and abUtils.IsInRange(target, bot, nJumpDistance+castRange) and not abUtils.IsDisabled(true, target)
 		then
-			return BOT_ACTION_DESIRE_HIGH, bot;
+			local allies = bot:GetNearbyHeroes(castRange, false, BOT_MODE_ATTACK);
+			for i=1, #allies do
+				if mutils.IsValidTarget(allies[i])
+					and mutils.CanCastOnNonMagicImmune(allies[i])
+					and mutils.IsInRange(allies[i], target, 0.25*nJumpDistance) == false
+					and mutils.IsInRange(allies[i], target, nJumpDistance) == true
+					and allies[i]:IsFacingUnit(target, 15)
+				then
+					return BOT_ACTION_DESIRE_HIGH, allies[i];
+				end	
+			end
 		end
 	end
 

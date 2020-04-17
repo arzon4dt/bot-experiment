@@ -200,7 +200,7 @@ function ConsiderE()
 	local nAttackDamage = bot:GetAttackDamage();
 	local nDamage = nAttackDamage + abilities[4]:GetSpecialValueFloat( "bonus_damage" );
 	
-	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) 
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) and bot:GetHealth() < 0.35*bot:GetMaxHealth()
 		and bot:GetMana() >= manaCost + manaCost2 and abilities[1]:GetCooldownTimeRemaining() <= nDuration
 	then
 		local enemy = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
@@ -267,7 +267,7 @@ function ConsiderR()
 		nDuration = abilities[4]:GetSpecialValueFloat( "duration_scepter" );
 	end
 	
-	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) 
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) and bot:GetHealth() < 0.35*bot:GetMaxHealth()
 		and bot:GetMana() >= manaCost + manaCost2 and abilities[1]:GetCooldownTimeRemaining() <= nDuration
 	then
 		local enemy = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);

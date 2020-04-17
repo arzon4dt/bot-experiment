@@ -872,6 +872,20 @@ function U.CountInvUnits(pierceImmune, units)
 	return nUnits;
 end
 
+function U.CountUnitsNearLocation(pierceImmune, hUnits, vLoc, nRadius)
+	local nUnits = 0;
+	if hUnits ~= nil then
+		for i=1, #hUnits do
+			if	GetUnitToLocationDistance(hUnits[i], vLoc) <= nRadius 
+				and ( ( pierceImmune and U.CanCastOnMagicImmune(hUnits[i]) ) or ( not pierceImmune and U.CanCastOnNonMagicImmune(hUnits[i]) ) ) 
+			then
+				nUnits = nUnits + 1;
+			end
+		end
+	end
+	return nUnits;
+end
+
 function U.CanBeDominatedCreeps(name)
 	return name == "npc_dota_neutral_centaur_khan"
 		 or name == "npc_dota_neutral_polar_furbolg_ursa_warrior"	

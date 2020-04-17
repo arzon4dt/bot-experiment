@@ -144,11 +144,25 @@ function ConsiderPounce()
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
 	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1000, true, BOT_MODE_NONE );
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 		if ( npcBot:WasRecentlyDamagedByAnyHero(2.0) or npcBot:WasRecentlyDamagedByTower(2.0) or ( tableNearbyEnemyHeroes ~= nil and #tableNearbyEnemyHeroes > 1  ) )
-		    and npcBot:IsFacingUnit(GetAncient(GetTeam()), 15)
 		then
-			return BOT_ACTION_DESIRE_MODERATE;
+			local loc = mutil.GetEscapeLoc();
+			if utils.IsFacingLocation(npcBot,loc, 15) then
+				local nFacing = 0;
+				local enemies = npcBot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+				for i=1, #enemies do
+					if mutil.IsValidTarget(enemies[i]) 
+						and mutil.CanCastOnNonMagicImmune(enemies[i]) 
+						and npcBot:IsFacingUnit(enemies[i], 10) 
+					then
+						nFacing = nFacing + 1;
+					end	
+				end
+				if nFacing == 0 then
+					return BOT_ACTION_DESIRE_MODERATE;
+				end
+			end
 		end
 	end
 
@@ -192,7 +206,7 @@ function ConsiderShadowDance()
 	end
 
 	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) and npcBot:GetHealth() < 0.65*npcBot:GetMaxHealth()
 	then
 		local npcTarget = npcBot:GetTarget();
 		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 300)  ) 

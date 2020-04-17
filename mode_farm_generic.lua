@@ -199,6 +199,7 @@ function Think()
 	
 	if cause == "cogs" then
 		print("Attack Cogs")
+		bot:Action_ClearActions(false);
 		bot:Action_AttackUnit( cogsTarget, true );
 		cause = "";
 		return;

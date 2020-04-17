@@ -94,7 +94,10 @@ function X.IsEngagingTarget(npcBot)
 end
 
 function X.IsRetreating(npcBot)
-	return npcBot:GetActiveMode() == BOT_MODE_RETREAT and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH; 
+	return npcBot:GetActiveMode() == BOT_MODE_RETREAT 
+		and npcBot:GetActiveModeDesire() >= BOT_MODE_DESIRE_HIGH 
+		and npcBot:WasRecentlyDamagedByAnyHero(3.0)
+		and npcBot:DistanceFromFountain() > 0; 
 end
 
 function X.CanBeUseToChaseOrEscape(ability_name)

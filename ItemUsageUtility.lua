@@ -1016,6 +1016,7 @@ ItemUsageModule.Use['item_pipe'] = function(item, bot, mode, extra_range)
 	if mutil.IsGoingOnSomeone(bot) then
 		local target = bot:GetTarget();
 		if  mutil.IsValidTarget(target) 
+			and mutil.CanCastOnMagicImmune(target) 
 			and mutil.IsInRange(target, bot, bot:GetAttackRange() + 500)  
 		then
 			local allies = bot:GetNearbyHeroes(nRadius, false, BOT_MODE_NONE);
@@ -1025,9 +1026,12 @@ ItemUsageModule.Use['item_pipe'] = function(item, bot, mode, extra_range)
 		end		
 	end
 	
-	local allies = bot:GetNearbyHeroes(nRadius, false, BOT_MODE_RETREAT);
-	if #allies > 0 then
-		return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+	local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE);
+	if #enemies > 0 then
+		local allies = bot:GetNearbyHeroes(nRadius, false, BOT_MODE_RETREAT);
+		if #allies > 0 then
+			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+		end
 	end
 	
 	return BOT_ACTION_DESIRE_NONE;
@@ -1512,7 +1516,7 @@ ItemUsageModule.Use['item_cyclone'] = function(item, bot, mode, extra_range)
 		if mutil.IsValidTarget(target) == true
 			and mutil.IsInRange(bot, target, nCastRange) == true
 			and mutil.CanCastOnNonMagicImmune(target) == true
-			and target:WasRecentlyDamagedByAnyHero(3.0) == false
+			and target:WasRecentlyDamagedByAnyHero(3.5) == false
 			and mutil.IsDisabled(true, target) == false
 		then
 			local enemies = target:GetNearbyHeroes(1000, false, BOT_MODE_NONE);
@@ -1524,7 +1528,10 @@ ItemUsageModule.Use['item_cyclone'] = function(item, bot, mode, extra_range)
 	end
 	
 	if item:GetName() == 'item_cyclone' then
-		if bot:IsSilenced() == true or bot:IsRooted( ) == true then
+		if ( bot:IsSilenced() == true or bot:IsRooted( ) == true )
+			and bot:WasRecentlyDamagedByAnyHero(3.0) == true 
+			and bot:GetHealth() < 0.65*bot:GetMaxHealth() 
+		then
 			return BOT_ACTION_DESIRE_ABSOLUTE, bot, 'unit';
 		end
 	end

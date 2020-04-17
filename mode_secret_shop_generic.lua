@@ -85,11 +85,44 @@ function HaveItemToSell()
 		 "item_ward_observer",
 		 "item_hand_of_midas"
 	}
+	local slotToSell = nil;
 	for _,item in pairs(earlyGameItem) do
-		local slot = npcBot:FindItemSlot(item);
-		if slot >= 0 and slot <= 8 then
-			return true, slot;
+		local itemSlot = npcBot:FindItemSlot(item);
+		if itemSlot >= 0 and itemSlot <= 8 then
+			if item == "item_stout_shield" then
+				if npcBot.buildVanguard == false  then
+					slotToSell = itemSlot;
+					break;
+				end
+			elseif item == "item_magic_wand" then
+				if npcBot.buildHoly == false  then
+					slotToSell = itemSlot;
+					break;
+				end	
+			elseif item == "item_quelling_blade" then
+				if npcBot.buildBFury == false then
+					slotToSell = itemSlot;
+					break;
+				end
+			elseif item == "item_hand_of_midas" then
+				if #npcBot.itemToBuy <= 3 then
+					slotToSell = itemSlot;
+					break;
+				end
+			elseif item == "item_ancient_janggo" then
+				local jg = bot:GetItemInSlot(itemSlot);
+				if jg~=nil and jg:GetCurrentCharges() == 0 and #npcBot.itemToBuy <= 3 then
+					slotToSell = itemSlot;
+					break;
+				end		
+			else
+				slotToSell = itemSlot;
+				break;
+			end
 		end
+	end
+	if slotToSell ~= nil then
+		return true, slotToSell;
 	end
 	return false, nil;
 end

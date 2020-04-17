@@ -9,13 +9,13 @@ X["items"] = {
 	"item_magic_wand",
 	"item_arcane_boots",
 	"item_hand_of_midas",
-	"item_aether_lens",
 	"item_glimmer_cape",
-	"item_force_staff",
-	"item_cyclone",
 	"item_ultimate_scepter",
+	"item_cyclone",
+	"item_sheepstick",
+	"item_lotus_orb",
 	"item_ultimate_scepter_2",
-	"item_sheepstick"
+	"item_dagon_5"
 };			
 
 X["builds"] = {
