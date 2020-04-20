@@ -267,9 +267,10 @@ function ConsiderR()
 				target = enemies[i];
 			end	
 		end
-		local  allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_NONE);
+		local  allies = bot:GetNearbyHeroes(nCastRange, false, BOT_MODE_ATTACK);
 		for i=1, #allies do
 			if allies[i] ~= nil and allies[i] ~= bot
+				and ( allies[i]:GetAttackRange() < 325 or allies[i]:GetStunDuration(true) >= 1.0  )
 				and GetUnitToUnitDistance(allies[i], bot) >= nCastRange / 2 and GetUnitToUnitDistance(allies[i], bot) <= nCastRange
 				and mutils.CanCastOnNonMagicImmune(allies[i]) 
 				and GetUnitToLocationDistance(allies[i], loc) < minDist
@@ -317,14 +318,18 @@ function ConsiderR()
 	if mutils.IsGoingOnSomeone(bot)
 	then
 		local target = bot:GetTarget();
-		if mutils.IsValidTarget(target) and target:WasRecentlyDamagedByAnyHero(2.0) == false and mutils.CanCastOnNonMagicImmune(target) 
-			and mutils.IsInRange(target, bot, nCastRange/2) == false and mutils.IsInRange(target, bot, nCastRange) == true
+		if mutils.IsValidTarget(target) 
+			and target:WasRecentlyDamagedByAnyHero(2.0) == false 
+			and mutils.CanCastOnNonMagicImmune(target) 
+			and mutils.IsInRange(target, bot, nCastRange/2) == false 
+			and mutils.IsInRange(target, bot, nCastRange) == true
+			and mutils.IsDisabled(true, target) == false
 			and GetUnitToUnitDistance(eancient, target) < GetUnitToUnitDistance(eancient, bot)
  		then
 			if bot:HasScepter() == true then
 				return BOT_ACTION_DESIRE_HIGH, target;
 			else
-				local tAllies = target:GetNearbyHeroes(700, false, BOT_MODE_NONE)
+				local tAllies = target:GetNearbyHeroes(0.5*nCastRange, false, BOT_MODE_NONE)
 				if #tAllies <= 2 then
 					return BOT_ACTION_DESIRE_HIGH, target;
 				end

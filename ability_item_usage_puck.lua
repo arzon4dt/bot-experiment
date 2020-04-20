@@ -159,9 +159,9 @@ local function ConsiderW()
 		local target = bot:GetTarget();
 		if mutils.IsValidTarget(target) 
 			and mutils.CanCastOnNonMagicImmune(target) 
-			and mutils.IsInRange(bot, target, nCastRange) == true	
+			and mutils.IsInRange(bot, target, nCastRange+0.5*nRadius) == true	
 		then
-			return BOT_ACTION_DESIRE_MODERATE, target:GetLocation();
+			return BOT_ACTION_DESIRE_MODERATE, bot:GetXUnitsTowardsLocation(target:GetLocation(), nCastRange);
 		end
 	end
 	
@@ -246,7 +246,7 @@ local function ConsiderD()
 			if mutils.CanBeCast(abilities[2]) == true then
 				local allies = target:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
 				local enemies = target:GetNearbyHeroes(1200, false, BOT_MODE_NONE);
-				if ( enemies ~= nil and allies ~= nil and #allies >= #enemies ) or bot:GetStunDuration(true) > 0.5 
+				if ( enemies ~= nil and allies ~= nil and #allies >= #enemies )  
 				then
 					for _,pr in pairs(pro)
 					do
@@ -264,7 +264,7 @@ local function ConsiderD()
 				if mutils.IsInRange(bot, target,  nRange) == false then
 					local allies = target:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
 					local enemies = target:GetNearbyHeroes(1200, false, BOT_MODE_NONE);
-					if ( enemies ~= nil and allies ~= nil and #allies >= #enemies ) or bot:GetStunDuration(true) > 0.5 
+					if ( enemies ~= nil and allies ~= nil and #allies >= #enemies ) 
 					then
 						for _,pr in pairs(pro)
 						do

@@ -68,14 +68,14 @@ function AbilityUsageThink()
 	if ( castCHRDesire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityCHR );
-		ultLoc = 0; 
+		ultLoc = Vector(-6376, 6419, 0); 
 		return;
 	end
 	
 	if ( castCHR2Desire > 0 ) 
 	then
 		npcBot:Action_UseAbility( abilityCHR2 );
-		ultLoc2 = 0; 
+		ultLoc2 = Vector(-6376, 6419, 0); 
 		return;
 	end
 	

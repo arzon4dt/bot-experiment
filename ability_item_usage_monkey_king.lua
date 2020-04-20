@@ -43,10 +43,22 @@ local PSLoc = {0, 0, 0};
 local Ancient = GetAncient(GetTeam());
 
 local npcBot = nil;
+local WCLoc = nil;
+local castWCTime = -90;
 
 function AbilityUsageThink()
 
+	
+
 	if npcBot == nil then npcBot = GetBot(); end
+	
+	if WCLoc ~= nil and DotaTime() > castWCTime +14 then
+		WCLoc = nil;
+	end
+	-- local mod = npcBot:GetModifierList();
+	-- for k,v in pairs(mod) do
+		-- print(tostring(k)..","..tostring(v));
+	-- end
 	
 	if abilityPSE == nil then abilityPSE = npcBot:GetAbilityByName( "monkey_king_primal_spring_early" ) end
 	
@@ -91,6 +103,8 @@ function AbilityUsageThink()
 	if ( castWCDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnLocation( abilityWC, castWCLocation );
+		WCLoc = castWCLocation;
+		castWCTime = DotaTime();
 		return;
 	end
 	
@@ -214,6 +228,7 @@ function ConsiderTreeDance()
 	end
 	
 	local nCastRange = abilityTD:GetCastRange();
+	local nRadius = abilityWC:GetSpecialValueInt("second_radius");
 	
 	local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 	if tableNearbyEnemyHeroes == nil then
@@ -233,31 +248,26 @@ function ConsiderTreeDance()
 			return BOT_ACTION_DESIRE_MODERATE, furthest;
 		end
 	end
-	
-	if mutil.IsInTeamFight(npcBot, 1200)
-	then
-		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-		do
-			if ( mutil.IsInRange(npcEnemy, npcBot, nCastRange) ) 
-			then
-				local tableNearbyTrees = npcEnemy:GetNearbyTrees( nCastRange );
-				if tableNearbyTrees ~= nil and #tableNearbyTrees >= 1  then
-					return BOT_ACTION_DESIRE_MODERATE, tableNearbyTrees[1];
-				end
-			end
-		end
-	end
+
 	
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if ( mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
+		if ( mutil.IsValidTarget(npcTarget) 
+			and mutil.CanCastOnNonMagicImmune(npcTarget) 
+			and mutil.IsInRange(npcTarget, npcBot, nCastRange) ) 
 		then
 			local tableNearbyTrees = npcTarget:GetNearbyTrees( nCastRange );
-			if tableNearbyTrees ~= nil and #tableNearbyTrees >= 1  then
-				return BOT_ACTION_DESIRE_MODERATE, tableNearbyTrees[1];
+			if tableNearbyTrees ~= nil 
+				and #tableNearbyTrees >= 1 
+			then
+				if npcBot:HasModifier('modifier_monkey_king_fur_army_bonus_damage') == false 
+					or WCLoc == nil
+					or ( npcBot:HasModifier('modifier_monkey_king_fur_army_bonus_damage') == true and utils.GetDistance(GetTreeLocation(tableNearbyTrees[1]), WCLoc) < 0.90*nRadius )
+				then	
+					return BOT_ACTION_DESIRE_MODERATE, tableNearbyTrees[1];
+				end
 			end
 		end
 	end 
@@ -361,18 +371,10 @@ function ConsiderMischief()
 	end
 	
 
-	if mutil.IsRetreating(npcBot)
+	if mutil.IsRetreating(npcBot) and ( npcBot:WasRecentlyDamagedByAnyHero(3.0) or npcBot:WasRecentlyDamagedByTower(3.0) )
 	then
 		local tableNearbyEnemy = npcBot:GetNearbyHeroes( 1200, true, BOT_MODE_NONE );
 		if #tableNearbyEnemy >= 1 then
-			return BOT_ACTION_DESIRE_MODERATE
-		end
-	end
-	
-	if mutil.IsDefending(npcBot) then
-		local tableNearbyAlly = npcBot:GetNearbyHeroes( 1000, false, BOT_MODE_NONE );
-		local tower = npcBot:GetNearbyTowers(1000, false);
-		if tower ~= nil and tableNearbyAlly ~= nil and #tower >= 1 and #tableNearbyAlly >= 2 then
 			return BOT_ACTION_DESIRE_MODERATE
 		end
 	end
@@ -416,7 +418,6 @@ function ConsiderWukongCommand()
 	local nCastRange = abilityWC:GetSpecialValueInt("cast_range");
 	local nRadius = abilityWC:GetSpecialValueInt("second_radius");
 
-	
 	--------------------------------------
 	-- Mode based usage
 	--------------------------------------

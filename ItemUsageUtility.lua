@@ -1521,7 +1521,11 @@ ItemUsageModule.Use['item_cyclone'] = function(item, bot, mode, extra_range)
 		then
 			local enemies = target:GetNearbyHeroes(1000, false, BOT_MODE_NONE);
 			local allies = bot:GetNearbyHeroes(1200, false, BOT_MODE_ATTACK);
-			if enemies ~= nil and #enemies == 1 and allies ~= nil and #allies > 1 then
+			local allies2 = target:GetNearbyHeroes(500, true, BOT_MODE_NONE);
+			if enemies ~= nil and #enemies == 1 
+				and allies ~= nil and #allies > 1 
+				and allies2 ~= nil and #allies2 <= 1 
+			then
 				return BOT_ACTION_DESIRE_ABSOLUTE, target, 'unit';
 			end
 		end

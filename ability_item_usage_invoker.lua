@@ -53,6 +53,16 @@ local Q = 1;
 local W = 2;
 local E = 3;
 
+local empDelay = 2.9;
+local tornadoLift = 0;
+local sunstrikeDelay = 2;
+local chaosmeteorDelay = 1.3;
+local tornadoCastTime = -90;
+local empCastTime = -90;
+local chaosmeteorCastTime = -90;
+local sunstrikeCastTime = -90;
+local deafeningblastCastTime = -90;
+
 local function IsOrbTrained(orb)
 	return orb:IsTrained();
 end
@@ -174,7 +184,7 @@ local function ConsiderChaosMeteor()
 	local nRadius    = abilities[10]:GetSpecialValueInt('area_of_effect');
 	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[10]:GetCastRange());
 	
-	if mutils.IsInTeamFight(bot, 1300) then
+	if mutils.IsInTeamFight(bot, 1300) and DotaTime() > tornadoCastTime + tornadoLift then
 		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2  ) 
 		then
@@ -186,7 +196,7 @@ local function ConsiderChaosMeteor()
 		end
 	end
 	
-	if mutils.IsGoingOnSomeone(bot) 
+	if mutils.IsGoingOnSomeone(bot) and DotaTime() > tornadoCastTime + tornadoLift
 	then
 		local target = bot:GetTarget();
 		if mutils.IsValidTarget(target) 
@@ -259,9 +269,9 @@ local function ConsiderDeafeningBlast()
 	local nRadius    = abilities[14]:GetSpecialValueInt('radius_end');
 	local nCastRange = mutils.GetProperCastRange(false, bot, abilities[14]:GetCastRange());
 	
-	if ( mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) )
+	if ( mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) ) 
 	then
-		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange-200, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2  ) 
 		then
 			local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE) ;
@@ -276,9 +286,9 @@ local function ConsiderDeafeningBlast()
 		end
 	end
 	
-	if mutils.IsInTeamFight(bot, 1300)
+	if mutils.IsInTeamFight(bot, 1300) and DotaTime() > tornadoCastTime + tornadoLift 
 	then
-		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 );
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange-200, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2 ) then
 			local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE) ;
 			local nUnits = mutils.CountUnitsNearLocation(false, enemies, locationAoE.targetloc, nRadius)
@@ -288,12 +298,12 @@ local function ConsiderDeafeningBlast()
 		end
 	end
 	
-	if mutils.IsGoingOnSomeone(bot) 
+	if mutils.IsGoingOnSomeone(bot) and DotaTime() > tornadoCastTime + tornadoLift
 	then
 		local target = bot:GetTarget();
 		if mutils.IsValidTarget(target) 
 			and mutils.CanCastOnNonMagicImmune(target) 
-			and mutils.IsInRange(bot, target, nCastRange) == true	
+			and mutils.IsInRange(bot, target, nCastRange-200) == true	
 		then
 			local enemies = target:GetNearbyHeroes(nRadius, false, BOT_MODE_NONE);
 			if enemies ~= nil and #enemies >= 2 then
@@ -324,16 +334,16 @@ local function ConsiderEMP()
 	
 	if ( mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) )
 	then
-		local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
-		if enemies ~= nil and #enemies == 0 then
-			local allies = bot:GetNearbyHeroes(1300, false, BOT_MODE_ATTACK);
+		local enemies = bot:GetNearbyHeroes(nRadius, true, BOT_MODE_NONE);
+		if enemies ~= nil and #enemies > 0 then
+			local allies = bot:GetNearbyHeroes(1200, false, BOT_MODE_ATTACK);
 			if allies ~= nil and #allies > 0 then 
 				return BOT_ACTION_DESIRE_HIGH, bot:GetLocation();
 			end	
 		end
 	end
 	
-	if mutils.IsInTeamFight(bot, 1300)
+	if mutils.IsInTeamFight(bot, 1300) and DotaTime() > tornadoCastTime + tornadoLift - empDelay
 	then
 		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2 ) then
@@ -345,7 +355,7 @@ local function ConsiderEMP()
 		end
 	end
 	
-	if mutils.IsGoingOnSomeone(bot) 
+	if mutils.IsGoingOnSomeone(bot) and DotaTime() > tornadoCastTime + tornadoLift - empDelay
 	then
 		local target = bot:GetTarget();
 		if mutils.IsValidTarget(target) 
@@ -514,7 +524,7 @@ local function ConsiderSunStrike()
 			end
 		end
 		
-		if mutils.IsGoingOnSomeone(bot) 
+		if mutils.IsGoingOnSomeone(bot) and DotaTime() > tornadoCastTime + tornadoLift - sunstrikeDelay
 		then
 			local target = bot:GetTarget();
 			if mutils.IsValidTarget(target) 
@@ -583,8 +593,10 @@ local function ConsiderTornado()
 	local nCastPoint = abilities[7]:GetCastPoint();
 	local manaCost   = abilities[7]:GetManaCost();
 	local nRadius    = abilities[7]:GetSpecialValueInt('area_of_effect');
+	local nSpeed    = abilities[7]:GetSpecialValueInt('travel_speed');
 	local wexLvl	 = abilities[2]:GetLevel();
 	local nCastRange = mutils.GetProperCastRange(false, bot, 400+wexLvl*400);
+	tornadoLift = 0.5+0.3*abilities[1]:GetLevel();
 	
 	if ( mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) )
 	then
@@ -594,28 +606,28 @@ local function ConsiderTornado()
 			local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE) ;
 			local nUnits = mutils.CountUnitsNearLocation(false, enemies, locationAoE.targetloc, nRadius)
 			if nUnits >= locationAoE.count then
-				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc, GetUnitToLocationDistance(bot, locationAoE.targetloc)/nSpeed;
 			end	
 		end
 		local target = mutils.GetVulnerableWeakestUnit(true, true, nCastRange, bot);
 		if target ~= nil then
-			return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
+			return BOT_ACTION_DESIRE_HIGH, target:GetLocation(), GetUnitToUnitDistance(bot, target)/nSpeed;
 		end
 	end
 	
-	if mutils.IsInTeamFight(bot, 1300)
+	if mutils.IsInTeamFight(bot, 1300) and DotaTime() > empCastTime + empDelay 
 	then
 		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2 ) then
 			local enemies = bot:GetNearbyHeroes(1600, true, BOT_MODE_NONE) ;
 			local nUnits = mutils.CountUnitsNearLocation(false, enemies, locationAoE.targetloc, nRadius)
 			if nUnits >= locationAoE.count then
-				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+				return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc, GetUnitToLocationDistance(bot, locationAoE.targetloc)/nSpeed;
 			end	
 		end
 	end
 	
-	if mutils.IsGoingOnSomeone(bot) 
+	if mutils.IsGoingOnSomeone(bot) and DotaTime() > empCastTime + empDelay and DotaTime() > sunstrikeCastTime + sunstrikeDelay
 	then
 		local target = bot:GetTarget();
 		if mutils.IsValidTarget(target) 
@@ -624,11 +636,11 @@ local function ConsiderTornado()
 		then
 			local enemies = target:GetNearbyHeroes(nRadius, false, BOT_MODE_NONE);
 			if enemies ~= nil and #enemies >= 2 then
-				return BOT_ACTION_DESIRE_LOW, target:GetLocation();
+				return BOT_ACTION_DESIRE_LOW, target:GetLocation(), GetUnitToUnitDistance(bot, target)/nSpeed;
 			end
 			if mutils.IsDisabled(true, target) == false and ( bot:GetAttackTarget() ~= nil or bot:GetTarget() ~= nil )
 			then
-				return BOT_ACTION_DESIRE_LOW, target:GetLocation();
+				return BOT_ACTION_DESIRE_LOW, target:GetLocation(), GetUnitToUnitDistance(bot, target)/nSpeed;
 			end
 		end
 	end
@@ -655,7 +667,16 @@ local function ConsiderOrbs()
         if (nWex + nQuas + nExort) >= 3 then break end
     end
     
-    if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) and mutils.CanBeCast(abilities[2])  then
+    if mutils.IsRetreating(bot) 
+		and bot:WasRecentlyDamagedByAnyHero(5.0) 
+		and mutils.CanBeCast(abilities[2])  
+		and ( bot:HasModifier('modifier_maledict_dot') or bot:HasModifier('modifier_maledict') )
+	then
+		if nQuas < 3 then
+            CombineOrb(Q, Q, Q)
+            return true
+        end
+    elseif mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) and mutils.CanBeCast(abilities[2])  then
         if nWex < 3 then 
             CombineOrb(W, W, W)
             return true
@@ -720,18 +741,32 @@ function AbilityUsageThink()
 	castGhostWalkDesire							 	= ConsiderGhostWalk();
 	castIceWallDesire					 			= ConsiderIceWall();
 	castSunStrikeDesire, sunStrikeTarget, ssType	= ConsiderSunStrike();
-	castTornadoDesire, tornadoTarget 				= ConsiderTornado();
+	castTornadoDesire, tornadoTarget, eta			= ConsiderTornado();
 	
 	if bot:HasModifier("modifier_invoker_ghost_walk_self") == false then
+	
+		if castGhostWalkDesire > 0 then
+			if IsAbilityHidden(abilities[6]) == false then
+				bot:Action_UseAbility( abilities[6] );
+				return true;
+			elseif mutils.CanBeCast(abilities[4]) == true then
+				bot:Action_ClearActions(false);
+				InvokeOrbToSpell(Q, Q, W);
+				bot:ActionQueue_UseAbility( abilities[6] );
+				return true;
+			end
+		end
 	
 		if castTornadoDesire > 0 then
 			if IsAbilityHidden(abilities[7]) == false then
 				bot:Action_UseAbilityOnLocation( abilities[7], tornadoTarget );
+				tornadoCastTime = DotaTime()+eta;
 				return true;
 			elseif mutils.CanBeCast(abilities[4]) == true then
 				bot:Action_ClearActions(false);
 				InvokeOrbToSpell(W, W, Q);
 				bot:ActionQueue_UseAbilityOnLocation( abilities[7], tornadoTarget );
+				tornadoCastTime = DotaTime()+eta;
 				return true;
 			end
 		end
@@ -739,11 +774,13 @@ function AbilityUsageThink()
 		if castChaosMeteorDesire > 0 then
 			if IsAbilityHidden(abilities[10]) == false then
 				bot:Action_UseAbilityOnLocation( abilities[10], chaosMeteorTarget );
+				chaosmeteorCastTime = DotaTime();
 				return true;
 			elseif mutils.CanBeCast(abilities[4]) == true then
 				bot:Action_ClearActions(false);
 				InvokeOrbToSpell(E, E, W);
 				bot:ActionQueue_UseAbilityOnLocation( abilities[10], chaosMeteorTarget );
+				chaosmeteorCastTime = DotaTime();
 				return true;
 			end
 		end
@@ -751,11 +788,13 @@ function AbilityUsageThink()
 		if castDeafeningBlastDesire > 0 then
 			if IsAbilityHidden(abilities[14]) == false then
 				bot:Action_UseAbilityOnLocation( abilities[14], deafeningBlastTarget );
+				deafeningblastCastTime = DotaTime();
 				return true;
 			elseif mutils.CanBeCast(abilities[4]) == true then
 				bot:Action_ClearActions(false);
 				InvokeOrbToSpell(Q, W, E);
 				bot:ActionQueue_UseAbilityOnLocation( abilities[14], deafeningBlastTarget );
+				deafeningblastCastTime = DotaTime();
 				return true;
 			end
 		end
@@ -763,11 +802,13 @@ function AbilityUsageThink()
 		if castEMPDesire > 0 then
 			if IsAbilityHidden(abilities[8]) == false then
 				bot:Action_UseAbilityOnLocation( abilities[8], empTarget );
+				empCastTime = DotaTime();
 				return true;
 			elseif mutils.CanBeCast(abilities[4]) == true then
 				bot:Action_ClearActions(false);
 				InvokeOrbToSpell(W, W, W);
 				bot:ActionQueue_UseAbilityOnLocation( abilities[8], empTarget );
+				empCastTime = DotaTime();
 				return true;
 			end
 		end
@@ -816,6 +857,7 @@ function AbilityUsageThink()
 					bot:ActionPush_UseAbility( abilities[11] );
 					bot:ActionPush_UseAbility( abilities[11] );
 				end
+				sunstrikeCastTime = DotaTime();
 				return true;
 			elseif mutils.CanBeCast(abilities[4]) == true then
 				bot:Action_ClearActions(false);
@@ -826,6 +868,7 @@ function AbilityUsageThink()
 					bot:ActionQueue_UseAbility( abilities[11] );
 					bot:ActionQueue_UseAbility( abilities[11] );
 				end
+				sunstrikeCastTime = DotaTime();
 				return true;
 			end
 		end
@@ -838,18 +881,6 @@ function AbilityUsageThink()
 				bot:Action_ClearActions(false);
 				InvokeOrbToSpell(Q, Q, E);
 				bot:ActionQueue_UseAbility( abilities[13] );
-				return true;
-			end
-		end
-		
-		if castGhostWalkDesire > 0 then
-			if IsAbilityHidden(abilities[6]) == false then
-				bot:Action_UseAbility( abilities[6] );
-				return true;
-			elseif mutils.CanBeCast(abilities[4]) == true then
-				bot:Action_ClearActions(false);
-				InvokeOrbToSpell(Q, Q, W);
-				bot:ActionQueue_UseAbility( abilities[6] );
 				return true;
 			end
 		end

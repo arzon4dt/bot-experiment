@@ -84,7 +84,7 @@ function ConsiderQ()
 	local nDamage   = abilities[1]:GetSpecialValueInt( "blade_fury_damage" );
 	
 	
-	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0)
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(5.0)
 	then
 		local incProj = bot:GetIncomingTrackingProjectiles()
 		for _,p in pairs(incProj)
@@ -154,7 +154,7 @@ function ConsiderW()
 	local manaCost  = abilities[2]:GetManaCost();
 	local nRadius   = abilities[2]:GetSpecialValueInt( "healing_ward_aura_radius" );
 	
-	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) and bot:GetHealth() <= 0.45 * bot:GetMaxHealth()
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(5.0) and bot:GetHealth() <= 0.45 * bot:GetMaxHealth()
 	then
 		return BOT_ACTION_DESIRE_LOW, bot:GetLocation()+RandomVector(200);
 	end
@@ -263,11 +263,11 @@ function ConsiderR()
 	local nAttackDamage = bot:GetAttackDamage();
 	local nDamage = nAttackDamage + abilities[4]:GetSpecialValueFloat( "bonus_damage" );
 	
-	if bot:HasScepter() then
-		nDuration = abilities[4]:GetSpecialValueFloat( "duration_scepter" );
-	end
+	-- if bot:HasScepter() then
+		-- nDuration = abilities[4]:GetSpecialValueFloat( "duration_scepter" );
+	-- end
 	
-	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) and bot:GetHealth() < 0.35*bot:GetMaxHealth()
+	if mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0) and bot:GetHealth() < 0.45*bot:GetMaxHealth()
 		and bot:GetMana() >= manaCost + manaCost2 and abilities[1]:GetCooldownTimeRemaining() <= nDuration
 	then
 		local enemy = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
