@@ -76,7 +76,7 @@ function X.RefreshCamp(bot)
 			then
 				table.insert(AllCamps, {idx=k, cattr=camp});
 			end
-		elseif bot:GetLevel() <= 10 then
+		elseif bot:GetLevel() <= 12 then
 			if not X.IsEnemyCamp(camp) and not X.IsAncientCamp(camp)
 			then
 				table.insert(AllCamps, {idx=k, cattr=camp});

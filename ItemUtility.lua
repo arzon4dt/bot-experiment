@@ -254,7 +254,7 @@ ItemModule["item_heavens_halberd"] = { "item_sange"; "item_talisman_of_evasion"}
 
 ItemModule["item_helm_of_the_dominator"] = { "item_headdress"; "item_crown"; "item_broadsword", "item_recipe_helm_of_the_dominator" }
 
-ItemModule["item_hood_of_defiance"] = { "item_ring_of_health"; "item_cloak"; "item_ring_of_regen" }
+ItemModule["item_hood_of_defiance"] = { "item_ring_of_health"; "item_cloak"; "item_ring_of_regen"; "item_recipe_hood_of_defiance" }
 
 ItemModule["item_hurricane_pike"] = { "item_dragon_lance"; "item_force_staff"; "item_recipe_hurricane_pike" }
 
@@ -365,7 +365,7 @@ ItemModule["item_meteor_hammer"] = { "item_ring_of_regen"; "item_sobi_mask"; "it
 --aeon disk
 ItemModule["item_aeon_disk"] = { "item_vitality_booster"; "item_energy_booster"; "item_recipe_aeon_disk" }
 
-ItemModule["item_spirit_vessel"] = { "item_urn_of_shadows"; "item_wind_lace"; "item_vitality_booster"; "item_recipe_spirit_vessel" }
+ItemModule["item_spirit_vessel"] = { "item_urn_of_shadows"; "item_vitality_booster"; "item_recipe_spirit_vessel" }
 
 ItemModule["item_nullifier"] = { "item_helm_of_iron_will"; "item_relic" }
 --kaya

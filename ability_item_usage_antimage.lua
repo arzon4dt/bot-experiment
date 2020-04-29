@@ -73,12 +73,21 @@ function ConsiderTimeWalk()
 	-- Get some of its values
 	local nCastRange = abilityTW:GetSpecialValueInt("blink_range");
 	local nCastPoint = abilityTW:GetCastPoint( );
+	local manaCost   = abilityTW:GetManaCost( );
 
 	if mutil.IsStuck(npcBot)
 	then
 		local loc = mutil.GetEscapeLoc();
 		return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( loc, nCastRange );
 	end
+	
+	-- if npcBot:GetActiveMode() == BOT_MODE_FARM and mutil.CanSpamSpell(npcBot, manaCost) then
+		-- if npcBot.farmLaneLocation ~= nil and GetUnitToLocationDistance(npcBot, npcBot.farmLaneLocation) > 1000 then
+			-- if IsLocationPassable(npcBot:GetXUnitsTowardsLocation( npcBot.farmLaneLocation, nCastRange )) then
+				-- return BOT_ACTION_DESIRE_HIGH, npcBot:GetXUnitsTowardsLocation( npcBot.farmLaneLocation, nCastRange );
+			-- end 
+		-- end
+	-- end
 	
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
 	if mutil.IsRetreating(npcBot)
