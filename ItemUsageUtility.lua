@@ -1146,7 +1146,50 @@ end
 
 --item_holy_locket
 ItemUsageModule.Use['item_holy_locket'] = function(item, bot, mode, extra_range)
-	return ItemUsageModule.Use['item_magic_stick'](item, bot, mode, extra_range);
+	local charges = item:GetCurrentCharges();
+	local hp_ratio = bot:GetHealth() / bot:GetMaxHealth();
+	local mp_ratio = bot:GetMana() / bot:GetMaxMana();
+	local nCastRange = 500 + extra_range;
+	
+	if charges > 5 
+		and mutil.IsGoingOnSomeone(bot)
+		and hp_ratio < 0.55 and mp_ratio < 0.25
+	then
+		local enemies = bot:GetNearbyHeroes(800, true, BOT_MODE_NONE);
+		if #enemies > 0 
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, bot, 'unit';
+		end
+	elseif charges > 1 
+		and mutil.IsRetreating(bot)
+		and ( bot:WasRecentlyDamagedByAnyHero(2.0) == true or bot:WasRecentlyDamagedByTower(3.0) == true )
+	then
+		local enemies = bot:GetNearbyHeroes(1200, true, BOT_MODE_NONE);
+		if #enemies > 0 
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, bot, 'unit';
+		end
+	end	
+	
+	if charges >= 10 then
+		local allies=bot:GetNearbyHeroes(nCastRange,false,BOT_MODE_NONE);
+		for i=1, #allies do
+			if allies[i]:GetUnitName() ~= bot:GetUnitName() 
+				and mutil.CanCastOnNonMagicImmune(allies[i]) == true
+				and allies[i]:WasRecentlyDamagedByAnyHero(2.5) == true
+			then
+				local mode2 = allies[i]:GetActiveMode();
+				if  ( ( mode2 == BOT_MODE_RETREAT and allies[i]:GetHealth() < 0.15 * allies[i]:GetMaxHealth() ) 
+						or ( allies[i]:GetHealth() < 0.25 * allies[i]:GetMaxHealth() 
+							and ( ( allies[i]:GetAttackTarget() == nil ) or ( allies[i]:GetTarget() == nil ) ) ) )
+				then	
+					return BOT_ACTION_DESIRE_ABSOLUTE, allies[i], 'unit';
+				end
+			end
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
 end
 
 --item_urn_of_shadows

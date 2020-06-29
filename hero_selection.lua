@@ -10,8 +10,8 @@ local requiredHeroes = {
 -- 'npc_dota_hero_lycan',
 -- 'npc_dota_hero_alchemist',
 -- 'npc_dota_hero_invoker',
-'npc_dota_hero_antimage',
-'npc_dota_hero_luna',
+'npc_dota_hero_skeleton_king',
+'npc_dota_hero_pudge',
 -- 'npc_dota_hero_mars',
 -- 'npc_dota_hero_oracle',
 -- 'npc_dota_hero_puck',
@@ -450,9 +450,13 @@ function CaptainModeLogic()
 	elseif CMTestMode then
 		NeededTime = 29;
 	end	
+	if GetHeroPickState() ~= lastState then
+		--print('Pick State: '..tostring(GetHeroPickState()))
+		lastState = GetHeroPickState();
+	end
 	if GetHeroPickState() == HEROPICK_STATE_CM_CAPTAINPICK then	
 		PickCaptain();
-	elseif GetHeroPickState() >= HEROPICK_STATE_CM_BAN1 and GetHeroPickState() <= 18 and GetCMPhaseTimeRemaining() <= NeededTime then
+	elseif GetHeroPickState() >= HEROPICK_STATE_CM_BAN1 and GetHeroPickState() <= 20 and GetCMPhaseTimeRemaining() <= NeededTime then
 		BansHero();
 		NeededTime = 0 
 	elseif GetHeroPickState() >= HEROPICK_STATE_CM_SELECT1 and GetHeroPickState() <= HEROPICK_STATE_CM_SELECT10 and GetCMPhaseTimeRemaining() <= NeededTime then

@@ -8,9 +8,25 @@ local outposts = {};
 local team = GetTeam();
 local enemyPids = nil
 
+local towerT2 = {
+	TOWER_TOP_2,
+	TOWER_MID_2,
+	TOWER_BOT_2,
+};
+
+local tower2Down = false;
+
 function GetDesire()
 	
-	if DotaTime() < 10*60 
+	if tower2Down == false then
+		for i=1,#towerT2 do
+			if GetTower(GetOpposingTeam(), towerT2[i]) == nil then
+				tower2Down = true;
+			end
+		end 
+	end
+	
+	if tower2Down == false or DotaTime() < 10*60 
 		or ( closestOutpost == nil and npcBot:IsChanneling() ) 
 		or npcBot:IsIllusion() 
 		or (string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable())

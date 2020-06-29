@@ -27,14 +27,14 @@ local dota2team = {
 		['sponsorship'] = 'G2A';
 	},
 	[3] = {
-		['name'] = "Cignal Ultra";
-		['alias'] = "Cignal";
+		['name'] = "Boom Esports";
+		['alias'] = "Boom";
 		['players'] = {
-			'Nando',
-			'Jamesy',
-			'Van',
-			'Erice',
-			'Grimzx '
+			'Dreamocel',
+			'Mikoto',
+			'Fbz',
+			'Hyde',
+			'Khezcute'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -42,7 +42,7 @@ local dota2team = {
 		['name'] = "PSG LGD";
 		['alias'] = "PSG.LGD";
 		['players'] = {
-			'Ame',
+			'eLeVeN',
 			'Somnus丶M',
 			'Chalice',
 			'fy',
@@ -54,10 +54,10 @@ local dota2team = {
 		['name'] = "Virtus.pro";
 		['alias'] = "VP";
 		['players'] = {
-			'epileptick1d',
+			'iLTW',
 			'No[o]ne',
 			'Resolut1on',
-			'Save-',
+			'Zayac',
 			'Solo'
 		};
 		['sponsorship'] = 'G2A';
@@ -67,7 +67,7 @@ local dota2team = {
 		['alias'] = "Secret";
 		['players'] = {
 			'Nisha',
-			'MidOne',
+			'MATUMBAMAN',
 			'zai',
 			'YapzOr',
 			'Puppey'
@@ -91,10 +91,10 @@ local dota2team = {
 		['alias'] = "OG";
 		['players'] = {
 			'N0tail',
-			'ana',
+			'SumaiL	',
 			'Topson',
-			'JerAx',
-			'Ceb'
+			'Saksa',
+			'MidOne'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -115,8 +115,8 @@ local dota2team = {
 		['alias'] = "QCY";
 		['players'] = {
 			'YawaR',
-			'CCnC',
-			'SabeRLight-',
+			'Quinn',
+			'Lelis',
 			'MSS',
 			'SVG'
 		};
@@ -126,11 +126,11 @@ local dota2team = {
 		['name'] = "Demon Slayers";
 		['alias'] = "DemSlay";
 		['players'] = {
-			'Costabile',
+			'Oceania',
 			'iAnnihilate',
 			'oldWhite',
-			'FrancisLee',
-			'xuan'
+			'Jubei',
+			'N/A'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -150,11 +150,11 @@ local dota2team = {
 		['name'] = " Ninjas in Pyjamas";
 		['alias'] = "NiP";
 		['players'] = {
-			'Skiter',
-			'Gunnar',
-			'Universe',
-			'Biver',
-			'ppd'
+			'CharlieDota',
+			'Supream^',
+			'SabeRLight-',
+			'Era',
+			'SoNNeikO '
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -165,20 +165,20 @@ local dota2team = {
 			'Monet',
 			'Setsu',
 			'Flyby',
-			'dogf1ghts',
-			'Fenrir'
+			'September',
+			'Super'
 		};
 		['sponsorship'] = 'G2A';
 	},
 	[15] = {
-		['name'] = "Team Spirit";
-		['alias'] = "TSpirit";
+		['name'] = "B8";
+		['alias'] = "B8";
 		['players'] = {
-			'iLTW',
-			'Ergon',
-			'Ghostik',
-			'Immersion',
-			'Misha'
+			'Crystallis	',
+			'Dendi',
+			'LastHero',
+			'5up',
+			'Fishman'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -187,22 +187,22 @@ local dota2team = {
 		['alias'] = "Na'Vi";
 		['players'] = {
 			'Crystallize',
-			'MagicaL',
+			'young G',
 			'9pasha',
-			'Zayac',
-			'SoNNeikO'
+			'Immersion',
+			'illias'
 		};
 		['sponsorship'] = 'G2A';
 	},
 	[17] = {
-		['name'] = "Forward Gaming";
-		['alias'] = "FWD";
+		['name'] = "Vikin.gg";
+		['alias'] = "Vikin.gg";
 		['players'] = {
-			'YawaR',
-			'Resolut1on',
-			'UNiVeRsE',
-			'MSS',
-			'SVG'
+			'Shad',
+			'BOOM',
+			'Tobi',
+			'Aramis',
+			'Seleri'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -224,9 +224,9 @@ local dota2team = {
 		['players'] = {
 			'Dust',
 			'ButterflyEffect',
-			'InJuly',
-			'白马',
-			'mianmian'
+			'BEYOND',
+			'@dogf1ghts',
+			'DoDo'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -248,21 +248,21 @@ local dota2team = {
 		['players'] = {
 			'Nikobaby',
 			'Limmp',
-			'33',
+			's4 ',
 			'Handsken',
-			'Fata'
+			'fng'
 		};
 		['sponsorship'] = 'G2A';
 	},
 	[22] = {
-		['name'] = "paiN Gaming";
-		['alias'] = "paiN";
+		['name'] = "T1";
+		['alias'] = "T1";
 		['players'] = {
-			'hFn',
-			'4dr',
-			'Lelis ',
-			'Thiolicor',
-			'444'
+			'Meracle',
+			'inYourdreaM',
+			'Forev',
+			'Jhocam',
+			'Poloson'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -274,7 +274,7 @@ local dota2team = {
 			'Chris Luck',
 			'Wisper',
 			'Scofield',
-			'Stinger '
+			'MoOz '
 		};
 		['sponsorship'] = '';
 	},
@@ -283,10 +283,10 @@ local dota2team = {
 		['alias'] = "GeekFam";
 		['players'] = {
 			'Raven',
-			'Ryoya',
+			'Karl',
 			'Kuku',
 			'Xepher',
-			'DuBu'
+			'Whitemon'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -294,35 +294,35 @@ local dota2team = {
 		['name'] = "HellRaisers";
 		['alias'] = "HR";
 		['players'] = {
-			'V-Tune',
+			'xannii',
 			'Nix',
-			'DM',
-			'ALOHADANCE',
+			'RodjER',
+			'Funn1k',
 			'Miposhka '
 		};
 		['sponsorship'] = 'G2A';
 	},
 	[26] = {
-		['name'] = "J.Storm";
-		['alias'] = "J.Storm";
+		['name'] = "FlyToMoon";
+		['alias'] = "FlyToMoon";
 		['players'] = {
-			'Moo',
-			'Nine',
-			'Brax',
-			'MoOz',
-			'Fear'
+			'V-Tune',
+			'Iceberg',
+			'GeneRaL',
+			'ALOHADANCE',
+			'ALWAYSWANNAFLY'
 		};
 		['sponsorship'] = 'G2A';
 	},
 	[27] = {
-		['name'] = "Gambit Esports";
-		['alias'] = "Gambit";
+		['name'] = "Team Unique";
+		['alias'] = "Unique";
 		['players'] = {
-			'dream`',
-			'gpk',
-			'Shachlo',
-			'XSvamp1Re',
-			'fng'
+			'Palantimos',
+			'19teen',
+			'633',
+			'illusion',
+			'VANSKOR'
 		};
 		['sponsorship'] = 'G2A';
 	},
@@ -342,8 +342,8 @@ local dota2team = {
 		['name'] = "EHOME";
 		['alias'] = "EHOME";
 		['players'] = {
-			'vtFαded',
-			'897',
+			'Sylar',
+			'NothingToSay',
 			'Faith_bian',
 			'XinQ',
 			'y`'

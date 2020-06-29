@@ -2083,6 +2083,10 @@ function JustSwapped(item_name)
 	return backpack_item[item_name] ~= nil and backpack_item[item_name] + 6.5 > DotaTime();
 end
 
+function ShouldNotUseNeutralItemFromMainSlot(item_name, slot)
+	return uItem.GetNeutralItemTier(item_name) > 0 and bot:GetItemSlotType(slot) == ITEM_SLOT_TYPE_MAIN
+end
+
 function ItemUsageThink()
 
 	if bot:IsAlive() == false 
@@ -2117,6 +2121,7 @@ function ItemUsageThink()
 		local item = bot:GetItemInSlot(item_slot[i]);
 		if itemUseUtils.CanCastItem(item) == true 
 			and JustSwapped(item:GetName()) == false
+			and ShouldNotUseNeutralItemFromMainSlot(item:GetName(), item_slot[i]) == false
 			and itemUseUtils.Use[item:GetName()] ~= nil
 		then
 			local desire, target, target_type = itemUseUtils.Use[item:GetName()](item, bot, mode, extra_range);
