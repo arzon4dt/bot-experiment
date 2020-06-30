@@ -301,8 +301,9 @@ local function IsHumanPlayerInRadiant1Slot()
 end
 
 local lastpick = 10;
+local tmstate = -99;
 function NewTurboModeLogic()
-	if GetHeroPickState() == 55 and GameTime() >= 10 and GameTime() >= lastpick + 2 then
+	if GetHeroPickState() == 57 and GameTime() >= 10 and GameTime() >= lastpick + 2 then
 		for i,id in pairs(GetTeamPlayers(GetTeam())) do
 			if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
 				if testMode then
@@ -704,7 +705,9 @@ end
 local RandomedHero = nil;
 function MidOnlyLogic()
 	if IsHumanPresentInGame() then
-		if IsHumansDonePicking() then
+		if GameTime() > 30 then
+			PickMidOnlyRandomHero()
+		elseif GameTime() <= 30 and IsHumansDonePicking() then
 			if IsHumanPlayerExist() then
 				local selectedHero = GetSelectedHumanHero(GetTeam())
 				if selectedHero ~= "" and  selectedHero ~= nil then
@@ -732,33 +735,38 @@ function MidOnlyLogic()
 			end 
 		end 
 	else
-		if GetTeam() ==	TEAM_DIRE then
-			if not IsOpposingTeamDonePicking() then
-				return
-			else
-				local selectedHero = GetOpposingTeamSelectedHero()
-				for i,id in pairs(GetTeamPlayers(GetTeam())) 
-				do 
-					if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
-					then 
-						SelectHero(id, selectedHero); 
-						return;
-					end
-				end 
-			end
+		PickMidOnlyRandomHero()
+	end	
+end
+
+function PickMidOnlyRandomHero()
+	if GetTeam() ==	TEAM_DIRE then
+		if not IsOpposingTeamDonePicking() then
+			return
 		else
-			local selectedHero = SetRandomHero();
+			local selectedHero = GetOpposingTeamSelectedHero()
 			for i,id in pairs(GetTeamPlayers(GetTeam())) 
 			do 
-				if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+				if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
 				then 
 					SelectHero(id, selectedHero); 
 					return;
 				end
 			end 
 		end
-	end	
+	else
+		local selectedHero = SetRandomHero();
+		for i,id in pairs(GetTeamPlayers(GetTeam())) 
+		do 
+			if  GetHeroPickState() == HEROPICK_STATE_AP_SELECT and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == ""
+			then 
+				SelectHero(id, selectedHero); 
+				return;
+			end
+		end 
+	end
 end
+
 --Get Human Selected Hero
 function GetSelectedHumanHero(team)
 	for i,id in pairs(GetTeamPlayers(team)) 
