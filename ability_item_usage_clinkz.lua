@@ -107,7 +107,8 @@ function ConsiderStarfe()
 	end
 	
 	local nCastRange = abilityST:GetCastRange()
-	local creepLvl = abilityST:GetSpecialValueInt('neutral_level');
+	-- local creepLvl = abilityST:GetSpecialValueInt('neutral_level');
+	local creepLvl = 25;
 	
 	if npcBot:GetActiveMode() == BOT_MODE_LANING 
 	then
@@ -115,7 +116,7 @@ function ConsiderStarfe()
 		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
 			for _,creep in pairs(tableNearbyEnemyCreeps)
 			do
-				if creep:GetLevel() <= creepLvl then
+				if creep:IsAncientCreep() == false and creep:GetLevel() <= creepLvl then
 					return BOT_ACTION_DESIRE_LOW, creep;
 				end
 			end
@@ -128,7 +129,7 @@ function ConsiderStarfe()
 		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
 			for _,creep in pairs(tableNearbyEnemyCreeps)
 			do
-				if creep:GetLevel() <= creepLvl then
+				if creep:IsAncientCreep() == false and creep:GetLevel() <= creepLvl then
 					return BOT_ACTION_DESIRE_LOW, creep;
 				end
 			end
@@ -141,7 +142,7 @@ function ConsiderStarfe()
 		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
 			for _,creep in pairs(tableNearbyEnemyCreeps)
 			do
-				if creep:GetLevel() <= creepLvl then
+				if creep:IsAncientCreep() == false and creep:GetLevel() <= creepLvl then
 					return BOT_ACTION_DESIRE_LOW, creep;
 				end
 			end
@@ -157,7 +158,7 @@ function ConsiderStarfe()
 			if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
 				for _,creep in pairs(tableNearbyEnemyCreeps)
 				do
-					if creep:GetLevel() <= creepLvl then
+					if creep:IsAncientCreep() == false and  creep:GetLevel() <= creepLvl then
 						return BOT_ACTION_DESIRE_LOW, creep;
 					end
 				end
