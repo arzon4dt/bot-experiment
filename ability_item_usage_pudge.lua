@@ -25,6 +25,7 @@ local castQDesire = 0;
 local castWDesire = 0;
 local castEDesire = 0;
 local castRDesire = 0;
+local castDDesire = 0;
 
 local moveS = 0;
 local moveST = nil;
@@ -172,7 +173,10 @@ local function ConsiderW()
 		end
 	else
 		local enemies = bot:GetNearbyHeroes(nRadius, true, BOT_MODE_NONE);
-		if (( mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) ) or #enemies == 0 )
+		local creeps = bot:GetNearbyLaneCreeps(nRadius, true);
+		if (( mutils.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(3.0) ) 
+			or #enemies == 0 
+			or ( ( mutils.IsPushing(bot) or mutils.IsDefending(bot) ) and ( #creeps < 4 or bot:GetHealth() < 0.6*bot:GetMaxHealth() ) ) )
 			and abilities[2]:GetToggleState() == true
 		then 
 			return BOT_ACTION_DESIRE_MODERATE;
@@ -221,8 +225,44 @@ local function ConsiderR()
 		end
 	end
 	
+	if bot:HasScepter() == true then
+		local allies=bot:GetNearbyHeroes(nCastRange,false,BOT_MODE_NONE);
+		for i=1, #allies do
+			if allies[i]:GetUnitName() ~= bot:GetUnitName() 
+				and mutils.CanCastOnNonMagicImmune(allies[i]) == true
+				and allies[i]:WasRecentlyDamagedByAnyHero(2.5) == true
+			then
+				local mode2 = allies[i]:GetActiveMode();
+				local loc = mutils.GetEscapeLoc2(allies[i]);
+				if  allies[i]:IsFacingLocation(loc,30)
+					and ( ( mode2 == BOT_MODE_RETREAT and allies[i]:GetHealth() < 0.20 * allies[i]:GetMaxHealth() ) 
+						or ( allies[i]:GetHealth() < 0.20 * allies[i]:GetMaxHealth() 
+							and ( ( allies[i]:GetAttackTarget() == nil ) or ( allies[i]:GetTarget() == nil ) ) ) )
+				then	
+					return BOT_ACTION_DESIRE_ABSOLUTE, allies[i];
+				end
+			end
+		end
+	end
+	
 	return BOT_ACTION_DESIRE_NONE;
 end	
+
+local function ConsiderD()
+	if  mutils.CanBeCast(abilities[5]) == false then
+		return BOT_ACTION_DESIRE_NONE;
+	end
+	
+	local nCastRange = 1400;
+	
+	local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+	
+	if enemies == nil or #enemies == 0 then
+		return BOT_ACTION_DESIRE_ABSOLUTE
+	end
+	
+	return BOT_ACTION_DESIRE_NONE;
+end
 
 function AbilityUsageThink()
 	

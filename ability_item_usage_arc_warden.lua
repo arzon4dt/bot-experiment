@@ -180,7 +180,7 @@ function ConsiderMagneticField()
 	--------------------------------------
 
 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-	if mutil.IsRetreating(npcBot)
+	if mutil.IsRetreating(npcBot) and npcBot:HasModifier("modifier_arc_warden_magnetic_field_attack_speed") == false
 	then
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
@@ -192,7 +192,7 @@ function ConsiderMagneticField()
 		end
 	end
 
-	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  and npcBot:HasModifier("modifier_arc_warden_magnetic_field_attack_speed") == false  ) 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
 		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
@@ -204,12 +204,12 @@ function ConsiderMagneticField()
 	-- If we're farming and can kill 3+ creeps with LSA
 	if ( npcBot:GetActiveMode() == BOT_MODE_FARM ) then
 		local locationAoE = npcBot:FindAoELocation( true, false, npcBot:GetLocation(), 600, nRadius, 0, 0 );
-		if ( locationAoE.count >= 3 and not npcBot:HasModifier("modifier_arc_warden_magnetic_field") ) then
+		if ( locationAoE.count >= 3 and not npcBot:HasModifier("modifier_arc_warden_magnetic_field_attack_speed") ) then
 			return BOT_ACTION_DESIRE_HIGH, npcBot:GetLocation();
 		end
 	end
 
-	if mutil.IsInTeamFight(npcBot, 1200)
+	if mutil.IsInTeamFight(npcBot, 1200) and npcBot:HasModifier("modifier_arc_warden_magnetic_field_attack_speed") == false
 	then
 		local locationAoE = npcBot:FindAoELocation( false, true, npcBot:GetLocation(), nCastRange, nRadius, 0, 0 );
 		if ( locationAoE.count >= 2 ) then
@@ -218,7 +218,7 @@ function ConsiderMagneticField()
 	end
 
 	-- If we're pushing or defending a lane and can hit 4+ creeps, go for it
-	if mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot)
+	if ( mutil.IsDefending(npcBot) or mutil.IsPushing(npcBot) ) and npcBot:HasModifier("modifier_arc_warden_magnetic_field_attack_speed") == false
 	then
 		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 800, true );
 		local tableNearbyEnemyTowers = npcBot:GetNearbyTowers( 800, true );
@@ -229,7 +229,7 @@ function ConsiderMagneticField()
 	end
 	
 	-- If we're going after someone
-	if mutil.IsGoingOnSomeone(npcBot)
+	if mutil.IsGoingOnSomeone(npcBot) 
 	then
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and  mutil.IsInRange(npcTarget, npcBot, nCastRange)  
@@ -237,7 +237,7 @@ function ConsiderMagneticField()
 			local tableNearbyAttackingAlliedHeroes = npcBot:GetNearbyHeroes( nCastRange, false, BOT_MODE_ATTACK );
 			for _,npcAlly in pairs( tableNearbyAttackingAlliedHeroes )
 			do
-				if ( mutil.IsInRange(npcAlly, npcBot, nCastRange) and not npcAlly:HasModifier("modifier_arc_warden_magnetic_field")  ) 
+				if ( mutil.IsInRange(npcAlly, npcBot, nCastRange) and not npcAlly:HasModifier("modifier_arc_warden_magnetic_field_attack_speed")  ) 
 				then
 					return BOT_ACTION_DESIRE_MODERATE, npcAlly:GetLocation();
 				end
@@ -263,8 +263,11 @@ function ConsiderFlux()
 	
 	-- If a mode has set a target, and we can kill them, do it
 	local npcTarget = npcBot:GetTarget();
-	if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and  
-	   mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
+	if mutil.IsValidTarget(npcTarget) 
+		and mutil.CanCastOnNonMagicImmune(npcTarget) 
+		and mutil.CanKillTarget(npcTarget, nDamage, DAMAGE_TYPE_MAGICAL) 
+		and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
+		and npcTarget:HasModifier('modifier_arc_warden_flux') == false
 	then
 		return BOT_ACTION_DESIRE_HIGH, npcTarget;
 	end
@@ -278,7 +281,7 @@ function ConsiderFlux()
 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE  );
 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
 		do
-			if ( mutil.CanCastOnNonMagicImmune(npcEnemy) )
+			if ( mutil.CanCastOnNonMagicImmune(npcEnemy) and npcEnemy:HasModifier('modifier_arc_warden_flux') == false ) 
 			then
 				local nDamage = npcEnemy:GetEstimatedDamageToTarget( false, npcBot, 3.0, DAMAGE_TYPE_ALL );
 				if ( nDamage > nMostDangerousDamage )
@@ -298,7 +301,10 @@ function ConsiderFlux()
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
 		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)  )
+		if ( mutil.IsRoshan(npcTarget) 
+			and mutil.CanCastOnMagicImmune(npcTarget) 
+			and mutil.IsInRange(npcTarget, npcBot, nCastRange)
+			and npcTarget:HasModifier('modifier_arc_warden_flux') == false	)
 		then
 			return BOT_ACTION_DESIRE_LOW, npcTarget;
 		end
@@ -307,7 +313,10 @@ function ConsiderFlux()
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
+		if mutil.IsValidTarget(npcTarget) 
+			and mutil.CanCastOnNonMagicImmune(npcTarget)
+			and mutil.IsInRange(npcTarget, npcBot, nCastRange)
+			and npcTarget:HasModifier('modifier_arc_warden_flux') == false
 		then
 			return BOT_ACTION_DESIRE_HIGH, npcTarget;
 		end

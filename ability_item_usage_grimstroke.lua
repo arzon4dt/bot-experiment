@@ -96,15 +96,23 @@ function ConsiderQ()
 				return BOT_ACTION_DESIRE_HIGH, abUtils.GetProperLocation( enemy, (GetUnitToUnitDistance(bot, enemy)/nSpeed)+castPoint );
 			end	
 		end
-	end	
+	end
 	
 	if ( abUtils.IsPushing(bot) or abUtils.IsDefending(bot) ) and abUtils.AllowedToSpam(bot, manaCost)
 	then
-		local lanecreeps = bot:GetNearbyLaneCreeps(castRange, true);
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), castRange, nRadius, 0, 0 );
+		if ( locationAoE.count >= 2 ) then
+			local target = mutils.GetVulnerableUnitNearLoc(true, true, castRange, nRadius, locationAoE.targetloc, bot);
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
+			end
+		end
 		local locationAoE = bot:FindAoELocation( true, false, bot:GetLocation(), castRange, nRadius, 0, 0 );
-		if ( locationAoE.count >= 3 and #lanecreeps >= 3  ) 
-		then
-			return BOT_ACTION_DESIRE_LOW, locationAoE.targetloc;
+		if ( locationAoE.count >= 3 ) then
+			local target = mutils.GetVulnerableUnitNearLoc(false, true, castRange, nRadius, locationAoE.targetloc, bot);
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_HIGH, target:GetLocation();
+			end
 		end
 	end
 	

@@ -280,7 +280,7 @@ ItemModule["item_mekansm"] = { "item_buckler"; "item_headdress"; "item_recipe_me
 
 ItemModule["item_mjollnir"] = { "item_maelstrom"; "item_hyperstone"; "item_recipe_mjollnir" }
 
-ItemModule["item_monkey_king_bar"] = { "item_blitz_knuckles"; "item_javelin"; "item_demon_edge" }
+ItemModule["item_monkey_king_bar"] = { "item_blitz_knuckles"; "item_javelin"; "item_demon_edge"; "item_recipe_monkey_king_bar" }
 
 ItemModule["item_moon_shard"] = { "item_hyperstone"; "item_hyperstone"}
 

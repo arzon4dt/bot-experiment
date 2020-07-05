@@ -303,13 +303,18 @@ function ConsiderR()
 	
 	if DotaTime() > castSwapForSaveCheck + 1.0 then
 		for i=1, #allies do
+			local mode2 = allies[i]:GetActiveMode();
 			if allies[i] ~= nil and allies[i] ~= bot
-				and mutils.IsRetreating(allies[i])
 				and allies[i]:WasRecentlyDamagedByAnyHero(3.0)
 				and mutils.CanCastOnNonMagicImmune(allies[i])
 				and GetUnitToUnitDistance(ancient, allies[i]) > GetUnitToUnitDistance(ancient, bot) + nCastRange / 2
 			then
-				return BOT_ACTION_DESIRE_HIGH, allies[i];
+				if ( ( mode2 == BOT_MODE_RETREAT and allies[i]:GetHealth() < 0.25 * allies[i]:GetMaxHealth() ) 
+					or ( allies[i]:GetHealth() < 0.25 * allies[i]:GetMaxHealth() 
+						and ( ( allies[i]:GetAttackTarget() == nil ) or ( allies[i]:GetTarget() == nil ) ) ) )
+				then
+					return BOT_ACTION_DESIRE_HIGH, allies[i];
+				end
 			end	
 		end
 		castSwapForSaveCheck = DotaTime();

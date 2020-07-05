@@ -6,22 +6,7 @@ local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
 	
--- 'npc_dota_hero_beastmaster',
--- 'npc_dota_hero_lycan',
--- 'npc_dota_hero_alchemist',
--- 'npc_dota_hero_invoker',
-'npc_dota_hero_skeleton_king',
-'npc_dota_hero_pudge',
--- 'npc_dota_hero_mars',
--- 'npc_dota_hero_oracle',
--- 'npc_dota_hero_puck',
--- 'npc_dota_hero_pudge',
--- 'npc_dota_hero_rattletrap',
--- 'npc_dota_hero_shredder',
--- 'npc_dota_hero_skywrath_mage',
--- 'npc_dota_hero_snapfire',
--- 'npc_dota_hero_windrunner',
--- 'npc_dota_hero_witch_doctor',
+'npc_dota_hero_arc_warden',
 };
 
 local UnImplementedHeroes = {
@@ -705,9 +690,9 @@ end
 local RandomedHero = nil;
 function MidOnlyLogic()
 	if IsHumanPresentInGame() then
-		if GameTime() > 30 then
+		if GameTime() > 45 then
 			PickMidOnlyRandomHero()
-		elseif GameTime() <= 30 and IsHumansDonePicking() then
+		elseif GameTime() <= 45 and IsHumansDonePicking() then
 			if IsHumanPlayerExist() then
 				local selectedHero = GetSelectedHumanHero(GetTeam())
 				if selectedHero ~= "" and  selectedHero ~= nil then
