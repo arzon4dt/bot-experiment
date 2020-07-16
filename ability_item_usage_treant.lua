@@ -34,6 +34,7 @@ local abilityEF = nil;
 local npcBot = nil;
 local checkBuildingTime = DotaTime();
 local team = GetTeam();
+local castEiFTime = -90;
 
 function AbilityUsageThink()
 
@@ -71,12 +72,13 @@ function AbilityUsageThink()
 
 	if ( castLSDesire > 0 ) 
 	then
-		npcBot:Action_UseAbility( abilityLS );
+		npcBot:Action_UseAbilityOnEntity( abilityLS,  castLSTarget);
 		return;
 	end
 	
 	if ( castEFDesire > 0 ) 
 	then
+		castEiFTime = DotaTime();
 		npcBot:Action_UseAbilityOnTree( abilityEF, castEFTarget );
 		return;
 	end
@@ -402,9 +404,15 @@ end
 function ConsiderEyeForest()
 
 	-- Make sure it's castable
-	if ( not abilityEF:IsFullyCastable() or npcBot:HasScepter() == false or npcBot:DistanceFromFountain() < 1000 ) then 
+	if ( not abilityEF:IsFullyCastable() 
+		or npcBot:HasScepter() == false 
+		or npcBot:DistanceFromFountain() < 1000 
+		or DotaTime() < castEiFTime + 3.0 ) 
+	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
+	
+	
 
 	-- Get some of its values
 	local nRadius = abilityEF:GetCastRange();

@@ -74,44 +74,26 @@ function ConsiderQ()
 	local nCastRange = abilityQ:GetCastRange();
 	local nCastPoint = abilityQ:GetCastPoint( );
 	local nManaCost  = abilityQ:GetManaCost( );
-	local nDamage    = npcBot:GetAttackDamage()+ (( abilityQ:GetSpecialValueInt( 'damage_increase_pct' ) / 100 ) * npcBot:GetAttackDamage());
-	
-	if ( npcBot:GetActiveMode() == BOT_MODE_LANING  ) 
-	     and not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage')
-	then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyLaneCreeps( 1000, true );
-		local tableNearbyAllyCreeps  = npcBot:GetNearbyLaneCreeps( 1000, false );
-		for _,ECreep in pairs(tableNearbyEnemyCreeps)
-		do
-			if mutil.CanKillTarget(ECreep, nDamage, DAMAGE_TYPE_PHYSICAL) then
-				return BOT_ACTION_DESIRE_HIGH, npcBot;
-			end
-		end
-		for _,ACreep in pairs(tableNearbyAllyCreeps)
-		do
-			if mutil.CanKillTarget(ACreep, nDamage, DAMAGE_TYPE_PHYSICAL) then
-				return BOT_ACTION_DESIRE_HIGH, npcBot;
-			end
-		end
-	end	
+	local nHPDrain  = abilityQ:GetSpecialValueFloat('damage_pct');
+	local nDuration  = abilityQ:GetSpecialValueFloat('duration');
+	local maxHPDrain = (nHPDrain * nDuration)/100;
 	
 	if  npcBot:GetActiveMode() == BOT_MODE_FARM 
 	    and not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage')
+		and npcBot:GetHealth() > ( 0.25 + maxHPDrain ) * npcBot:GetMaxHealth()
 	then
-		local tableNearbyCreeps  = npcBot:GetNearbyCreeps( 1000, true );
-		for _,ECreep in pairs(tableNearbyCreeps)
-		do
-			if mutil.CanKillTarget(ECreep, nDamage, DAMAGE_TYPE_PHYSICAL) then
-				return BOT_ACTION_DESIRE_HIGH, npcBot;
-			end
-		end
+		local tableNearbyCreeps  = npcBot:GetNearbyCreeps( 400, true );
+		if tableNearbyCreeps ~= nil and #tableNearbyCreeps >= 2 then
+			return BOT_ACTION_DESIRE_HIGH, npcBot;
+		end		
 	end	
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+		and npcBot:GetHealth() > ( 0.25 + maxHPDrain ) * npcBot:GetMaxHealth()
+		and not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage')
 	then
 		local npcTarget = npcBot:GetAttackTarget();
-		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange) 
-		     and not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage')  )
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 325) )
 		then
 			return BOT_ACTION_DESIRE_LOW, npcBot;
 		end
@@ -129,8 +111,10 @@ function ConsiderQ()
 			for _,npcAlly in pairs( tableNearbyAllyHeroes )
 			do
 				local AllyAD = npcAlly:GetAttackDamage();
-				if ( mutil.CanCastOnNonMagicImmune(npcAlly) and not mutil.StillHasModifier(npcAlly, 'modifier_bloodseeker_bloodrage') and
-					 AllyAD > highesAD ) 
+				if ( mutil.CanCastOnNonMagicImmune(npcAlly) 
+					and not mutil.StillHasModifier(npcAlly, 'modifier_bloodseeker_bloodrage') 
+					and npcAlly:GetHealth() > ( 0.55 + maxHPDrain ) * npcAlly:GetMaxHealth()
+					and AllyAD > highesAD ) 
 				then
 					highesAD = AllyAD;
 					highesADUnit = npcAlly;
@@ -147,15 +131,13 @@ function ConsiderQ()
 	
 	-- If we're going after someone
 	if mutil.IsGoingOnSomeone(npcBot)
+		and not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage')
+		and npcBot:GetHealth() > ( 0.20 + maxHPDrain ) * npcBot:GetMaxHealth()
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + 200) 
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 350) 
 		then
-		    if mutil.IsDisabled(false, npcTarget) and not mutil.StillHasModifier(npcTarget, 'modifier_bloodseeker_bloodrage') then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
-			elseif not mutil.StillHasModifier(npcBot, 'modifier_bloodseeker_bloodrage') then 
-				return BOT_ACTION_DESIRE_HIGH, npcBot;
-			end
+			return BOT_ACTION_DESIRE_HIGH, npcBot;
 		end
 	end
 	

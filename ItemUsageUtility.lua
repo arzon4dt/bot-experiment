@@ -2109,6 +2109,11 @@ ItemUsageModule.Use['item_silver_edge'] = function(item, bot, mode, extra_range)
 	return ItemUsageModule.Use['item_invis_sword'](item, bot, mode, extra_range);
 end
 
+--item_bloodthorn
+ItemUsageModule.Use['item_bloodthorn'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_orchid'](item, bot, mode, extra_range);
+end
+
 --item_satanic
 ItemUsageModule.Use['item_satanic'] = function(item, bot, mode, extra_range)
 

@@ -45,7 +45,7 @@ function AbilityUsageThink()
 	-- Consider using each ability
 	castHSDesire = ConsiderHoofStomp();
 	castDEDesire, castDETarget = ConsiderDoubleEdge();
-	castRTDesire = ConsiderReturn();
+	--castRTDesire = ConsiderReturn();
 	castSTDesire = ConsiderStampede();
 	
 

@@ -23,11 +23,13 @@ local castSTDesire = 0;
 local castSADesire = 0;
 local castWWDesire = 0;
 local castDPDesire = 0;
+local castBADesire = 0;
 
 local abilityST = nil;
 local abilitySA = nil;
 local abilityWW = nil;
 local abilityDP = nil;
+local abilityBA = nil;
 
 local npcBot = nil;
 
@@ -38,23 +40,31 @@ function AbilityUsageThink()
 	-- Check if we're already using an ability
 	if mutil.CanNotUseAbility(npcBot) then return end
 
-	if abilityST == nil then abilityST = npcBot:GetAbilityByName( "clinkz_death_pact" ) end
+	if abilityST == nil then abilityST = npcBot:GetAbilityByName( "clinkz_strafe" ) end
 	if abilitySA == nil then abilitySA = npcBot:GetAbilityByName( "clinkz_searing_arrows" ) end
 	if abilityWW == nil then abilityWW = npcBot:GetAbilityByName( "clinkz_wind_walk" ) end
-	if abilityDP == nil then abilityDP = npcBot:GetAbilityByName( "clinkz_burning_army" ) end
+	if abilityDP == nil then abilityDP = npcBot:GetAbilityByName( "clinkz_death_pact" ) end
+	if abilityBA == nil then abilityBA = npcBot:GetAbilityByName( "clinkz_burning_army" ) end
 	-- Consider using each ability
 	if abilitySA:IsTrained() then
 		ToggleSearingArrow();
 	end
 	
-	castSTDesire, castSTTarget = ConsiderStarfe()
+	castSTDesire			   = ConsiderStarfe()
 	castSADesire, castSATarget = ConsiderSearingArrows()
 	castWWDesire               = ConsiderWindWalk()
 	castDPDesire, castDPTarget = ConsiderDeathPack()
+	castBADesire, castBATarget = ConsiderBurningArmy()
+	
+	if castDPDesire > 0
+	then
+		npcBot:Action_UseAbilityOnEntity(abilityDP, castDPTarget);
+		return;
+	end
 	
 	if castSTDesire > 0
 	then
-		npcBot:Action_UseAbilityOnEntity(abilityST, castSTTarget);
+		npcBot:Action_UseAbility(abilityST);
 		return;
 	end
 	
@@ -70,9 +80,9 @@ function AbilityUsageThink()
 		return;
 	end
 	
-	if castDPDesire > 0
+	if castBADesire > 0
 	then
-		npcBot:Action_UseAbilityOnLocation(abilityDP, castDPTarget);
+		npcBot:Action_UseAbilityOnLocation(abilityBA, castBATarget);
 		return;
 	end
 	
@@ -100,77 +110,69 @@ function ToggleSearingArrow()
 	
 end
 
+function GetMostHPCreep(range)
+	local mostHP = nil;
+	local maxHP = 0;
+	local aCreeps = npcBot:GetNearbyCreeps(range, false);
+	
+	for i=1, #aCreeps do
+		if aCreeps[i]:GetHealth() > maxHP 
+			and aCreeps[i]:IsAncientCreep() == false
+			and mutil.CanCastOnMagicImmune(aCreeps[i])
+		then
+			maxHP = aCreeps[i]:GetHealth();
+			mostHP = aCreeps[i];
+		end
+	end
+	
+	local eCreeps = npcBot:GetNearbyCreeps(range, false);
+	
+	for i=1, #eCreeps do
+		if eCreeps[i]:GetHealth() > maxHP 
+			and eCreeps[i]:IsAncientCreep() == false
+			and mutil.CanCastOnMagicImmune(eCreeps[i])
+		then
+			maxHP = eCreeps[i]:GetHealth();
+			mostHP = eCreeps[i];
+		end
+	end
+	
+	if mostHP ~= nil and mostHP:GetHealth() < 0.50 * mostHP:GetMaxHealth() then
+		mostHP = nil;
+	end
+	
+	return mostHP;
+end
+
 function ConsiderStarfe()
 
 	if ( not abilityST:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
-	local nCastRange = abilityST:GetCastRange()
-	-- local creepLvl = abilityST:GetSpecialValueInt('neutral_level');
-	local creepLvl = 25;
-	
-	if npcBot:GetActiveMode() == BOT_MODE_LANING 
-	then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
-		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
-			for _,creep in pairs(tableNearbyEnemyCreeps)
-			do
-				if creep:IsAncientCreep() == false and creep:GetLevel() <= creepLvl then
-					return BOT_ACTION_DESIRE_LOW, creep;
-				end
-			end
-		end
-	end
-	
-	if mutil.IsRetreating(npcBot)
-	then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
-		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
-			for _,creep in pairs(tableNearbyEnemyCreeps)
-			do
-				if creep:IsAncientCreep() == false and creep:GetLevel() <= creepLvl then
-					return BOT_ACTION_DESIRE_LOW, creep;
-				end
-			end
-		end
-	end
+	local nCastRange = npcBot:GetAttackRange()
 	
 	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
 	then
-		local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
-		if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
-			for _,creep in pairs(tableNearbyEnemyCreeps)
-			do
-				if creep:IsAncientCreep() == false and creep:GetLevel() <= creepLvl then
-					return BOT_ACTION_DESIRE_LOW, creep;
-				end
-			end
+		local npcTarget = npcBot:GetAttackTarget();
+		if ( mutil.IsRoshan(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 400) )
+		then
+			return BOT_ACTION_DESIRE_LOW;
 		end
 	end
 	
 	if mutil.IsGoingOnSomeone(npcBot)
 	then
 		local npcTarget = npcBot:GetTarget();
-		if mutil.IsValidTarget(npcTarget) and mutil.IsInRange(npcTarget, npcBot, 2500)
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange)
 		then
-			local tableNearbyEnemyCreeps = npcBot:GetNearbyCreeps( nCastRange+200, true );
-			if tableNearbyEnemyCreeps ~= nil and #tableNearbyEnemyCreeps >= 1 then
-				for _,creep in pairs(tableNearbyEnemyCreeps)
-				do
-					if creep:IsAncientCreep() == false and  creep:GetLevel() <= creepLvl then
-						return BOT_ACTION_DESIRE_LOW, creep;
-					end
-				end
-			end
+			return BOT_ACTION_DESIRE_LOW;
 		end
 	end
 
 	return BOT_ACTION_DESIRE_NONE;
 	
 end
-
-
 
 function ConsiderSearingArrows()
 
@@ -249,6 +251,52 @@ end
 function ConsiderDeathPack()
 
 	if ( not abilityDP:IsFullyCastable() ) then 
+		return BOT_ACTION_DESIRE_NONE;
+	end
+	
+	local nCastRange = abilityST:GetCastRange()
+	-- local creepLvl = abilityST:GetSpecialValueInt('neutral_level');
+	local creepLvl = 25;
+	
+	if mutil.IsRetreating(npcBot)
+	then
+		local target = GetMostHPCreep(nCastRange);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_LOW, target;
+		end
+	end
+	
+	if ( npcBot:GetActiveMode() == BOT_MODE_ROSHAN  ) 
+	then
+		local target = GetMostHPCreep(nCastRange);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_LOW, target;
+		end
+	end
+	
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget)
+			and mutil.CanCastOnMagicImmune(npcTarget)
+			and mutil.IsInRange(npcTarget, npcBot, 2500)
+		then
+			local target = GetMostHPCreep(nCastRange);
+			if target ~= nil then
+				return BOT_ACTION_DESIRE_LOW, target;
+			end
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
+end
+
+function ConsiderBurningArmy()
+
+	if ( abilityBA:IsFullyCastable() == false 
+		or abilityBA:IsHidden() == true 
+		or npcBot:HasScepter() == false  ) 
+	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end
 

@@ -6,7 +6,12 @@ local hero_roles = role["hero_roles"];
 -- mandate that the bots will pick these heroes - for testing purposes
 local requiredHeroes = {
 	
+'npc_dota_hero_bloodseeker',
 'npc_dota_hero_clinkz',
+'npc_dota_hero_centaur',
+'npc_dota_hero_medusa',
+'npc_dota_hero_tiny',
+'npc_dota_hero_treant',
 };
 
 local UnImplementedHeroes = {
@@ -306,7 +311,7 @@ end
 local lastpick = 10;
 local tmstate = -99;
 function NewTurboModeLogic()
-	if GetHeroPickState() == 57 and GameTime() >= 10 and GameTime() >= lastpick + 2 then
+	if GetHeroPickState() == 60 and GameTime() >= 15 and GameTime() >= lastpick + 2 then
 		for i,id in pairs(GetTeamPlayers(GetTeam())) do
 			if IsPlayerBot(id) and IsPlayerInHeroSelectionControl(id) and GetSelectedHeroName(id) == "" then
 				if testMode then
