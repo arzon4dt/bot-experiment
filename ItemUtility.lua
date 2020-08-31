@@ -252,7 +252,7 @@ ItemModule["item_headdress"] = { "item_ring_of_regen"; "item_recipe_headdress" }
 
 ItemModule["item_heart"] = { "item_ring_of_tarrasque"; "item_vitality_booster"; "item_reaver"; "item_recipe_heart" }
 
-ItemModule["item_heavens_halberd"] = { "item_sange"; "item_talisman_of_evasion"}
+ItemModule["item_heavens_halberd"] = { "item_sange"; "item_talisman_of_evasion"; "item_recipe_heavens_halberd"}
 
 ItemModule["item_helm_of_the_dominator"] = { "item_helm_of_iron_will"; "item_crown"; "item_recipe_helm_of_the_dominator" }
 
