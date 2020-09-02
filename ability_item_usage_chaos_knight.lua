@@ -90,7 +90,7 @@ local function ConsiderQ()
 				   and enemies[i]:GetAttackTarget() ~= nil
 				then
 					target = enemies[i];
-					maxAD  = estDmg;
+					maxDmg = estDmg;
 				end
 			end
 			if target ~= nil then
@@ -208,7 +208,7 @@ function AbilityUsageThink()
 	
 	castQDesire, qTarget = ConsiderQ();
 	castWDesire, wTarget = ConsiderW();
-	castRDesire	         = ConsiderR();
+	castRDesire          = ConsiderR();
 	
 	if castRDesire > 0 then
 		bot:Action_UseAbility(abilities[4]);		
