@@ -21,10 +21,12 @@ end
 
 local castSSDesire = 0;
 local castSWDesire = 0;
+local castSBDesire = 0;
 local castIHDesire = 0;
 
 local abilitySS = nil;
 local abilitySW = nil;
+local abilitySB = nil;
 local abilityIH = nil;
 
 local cast = false;
@@ -39,11 +41,13 @@ function AbilityUsageThink()
 
 	if abilitySS == nil then abilitySS = npcBot:GetAbilityByName( "broodmother_spawn_spiderlings" ); end
 	if abilitySW == nil then abilitySW = npcBot:GetAbilityByName( "broodmother_spin_web" ); end
+	if abilitySB == nil then abilitySB = npcBot:GetAbilityByName( "broodmother_silken_bola" ); end
 	if abilityIH == nil then abilityIH = npcBot:GetAbilityByName( "broodmother_insatiable_hunger" ); end
 
 	-- Consider using each ability
 	castSSDesire, castSSTarget = ConsiderSpawnSpiderlings();
 	castSWDesire, castSWLocation = ConsiderSpinWeb();
+	castSBDesire, castSBTarget = ConsiderSilkenBola();
 	castIHDesire = ConsiderInsatiableHunger();
 	
 	
@@ -56,6 +60,11 @@ function AbilityUsageThink()
 	then
 		npcBot:ActionPush_UseAbilityOnLocation( abilitySW, castSWLocation );
 		timeCast = DotaTime();
+		return;
+	end
+	if ( castSBDesire > 0 ) 
+	then
+		npcBot:Action_UseAbilityOnEntity( abilitySB, castSBTarget );
 		return;
 	end
 	if ( castIHDesire > 0 ) 
@@ -220,6 +229,49 @@ function ConsiderSpinWeb()
 	end
 --
 	return BOT_ACTION_DESIRE_NONE, 0;
+end
+
+function ConsiderSilkenBola()
+
+	-- Make sure it's castable
+	if ( not abilitySB:IsFullyCastable() ) then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+
+	-- Get some of its values
+	local nCastRange = abilitySB:GetCastRange();
+	local nDamage = abilitySB:GetSpecialValueInt("impact_damage");
+	local level = abilitySB:GetLevel();
+	local mana = npcBot:GetMana() / npcBot:GetMaxMana();
+
+	--------------------------------------
+	-- Mode based usage
+	--------------------------------------
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange + 200, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) and not mutil.IsDisabled(true, npcEnemy) ) 
+			then
+				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
+			end
+		end
+	end
+	
+	-- If a mode has set a target, and we can kill them, do it
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange + 200) 
+		   and not mutil.IsDisabled(true, npcTarget)
+		then
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+		end
+	end
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
+
 end
 
 function ConsiderInsatiableHunger()

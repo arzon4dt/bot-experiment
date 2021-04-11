@@ -28,6 +28,7 @@ local castBLDesire = 0;
 local castFGDesire = 0;
 local castRCDesire = 0;
 local castWoWDesire = 0;
+local castRBDesire = 0;
 
 local CancelIlmDesire = 0;
 
@@ -39,6 +40,7 @@ local abilityBL = nil;
 local abilityFB = nil;
 local abilityRC = nil;
 local abilityWoW = nil;
+local abilityRB = nil;
 
 local npcBot = nil;
 
@@ -55,7 +57,8 @@ function AbilityUsageThink()
 	if abilityFG == nil then abilityFG = npcBot:GetAbilityByName( "keeper_of_the_light_spirit_form" ) end
 	if abilityRC == nil then abilityRC = npcBot:GetAbilityByName( "keeper_of_the_light_recall" ) end
 	if abilityWoW == nil then abilityWoW = npcBot:GetAbilityByName( "keeper_of_the_light_will_o_wisp" ) end
-	
+	if abilityRB == nil then abilityRB = npcBot:GetAbilityByName( "keeper_of_the_light_radiant_bind" ) end
+
 	CancelIlmDesire = ConsiderCancelIlm();
 	
 	if CancelIlmDesire > 0 then
@@ -72,8 +75,9 @@ function AbilityUsageThink()
 	castCS2Desire, castCS2Location = ConsiderChrono2();
 	castBLDesire, castBLTarget = ConsiderBloodlust();
 	castWoWDesire, castWoWLoc = ConsiderWillOWisp();
+	castRBDesire, castRBTarget = ConsiderRadiantBind();
 
-	-- castFGDesire, castFGTarget = ConsiderFleshGolem();
+	castFGDesire, castFGTarget = ConsiderFleshGolem();
 	-- castRCDesire, castRCTarget = ConsiderRecall();
 	if ( castWoWDesire > 0 ) 
 	then
@@ -98,6 +102,12 @@ function AbilityUsageThink()
 	if ( castFBDesire > 0 ) 
 	then
 		npcBot:Action_UseAbilityOnEntity( abilityFB, castFBTarget );
+		return;
+	end
+
+	if ( castRBDesire > 0 ) 
+	then
+		npcBot:Action_UseAbilityOnEntity( abilityRB, castRBTarget );
 		return;
 	end
 	
@@ -317,31 +327,65 @@ function ConsiderBloodlust()
 		end	
 	end
 	
-	if  npcBot:GetMana() / npcBot:GetMaxMana() > 0.5 then
-		-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
-		if mutil.IsRetreating(npcBot)
-		then
-			local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
-			for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
-			do
-				if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
-				then
-					return BOT_ACTION_DESIRE_HIGH, npcEnemy;
-				end
-			end
-		end
+	-- if  npcBot:GetMana() / npcBot:GetMaxMana() > 0.5 then
+	-- 	-- If we're seriously retreating, see if we can land a stun on someone who's damaged us recently
+	-- 	if mutil.IsRetreating(npcBot)
+	-- 	then
+	-- 		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+	-- 		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+	-- 		do
+	-- 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
+	-- 			then
+	-- 				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
+	-- 			end
+	-- 		end
+	-- 	end
 
-		-- If we're going after someone
-		if mutil.IsGoingOnSomeone(npcBot)
-		then
-			local npcTarget = npcBot:GetTarget();
-			if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
+	-- 	-- If we're going after someone
+	-- 	if mutil.IsGoingOnSomeone(npcBot)
+	-- 	then
+	-- 		local npcTarget = npcBot:GetTarget();
+	-- 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
+	-- 		then
+	-- 			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+	-- 		end
+	-- 	end
+	-- end
+	
+	
+	return BOT_ACTION_DESIRE_NONE, 0;
+end
+
+function ConsiderRadiantBind()
+
+	-- Make sure it's castable
+	if ( not abilityRB:IsFullyCastable() ) then 
+		return BOT_ACTION_DESIRE_NONE, 0;
+	end
+	
+	local nCastRange = abilityRB:GetCastRange();
+	
+	if mutil.IsRetreating(npcBot)
+	then
+		local tableNearbyEnemyHeroes = npcBot:GetNearbyHeroes( nCastRange, true, BOT_MODE_NONE );
+		for _,npcEnemy in pairs( tableNearbyEnemyHeroes )
+		do
+			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 2.0 ) and mutil.CanCastOnNonMagicImmune(npcEnemy) ) 
 			then
-				return BOT_ACTION_DESIRE_HIGH, npcTarget;
+				return BOT_ACTION_DESIRE_HIGH, npcEnemy;
 			end
 		end
 	end
-	
+
+	-- If we're going after someone
+	if mutil.IsGoingOnSomeone(npcBot)
+	then
+		local npcTarget = npcBot:GetTarget();
+		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnNonMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
+		then
+			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+		end
+	end
 	
 	return BOT_ACTION_DESIRE_NONE, 0;
 end
@@ -349,7 +393,7 @@ end
 function ConsiderFleshGolem()
 
 	-- Make sure it's castable
-	if ( npcBot:HasScepter() or npcBot:HasModifier("modifier_keeper_of_the_light_spirit_form") or not abilityFG:IsFullyCastable() ) then 
+	if ( npcBot:HasModifier("modifier_keeper_of_the_light_spirit_form") or not abilityFG:IsFullyCastable() ) then 
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
@@ -555,7 +599,7 @@ end
 function ConsiderWillOWisp()
 
 	-- Make sure it's castable
-	if ( abilityWoW:IsHidden() or not abilityWoW:IsFullyCastable() ) 
+	if ( npcBot:HasScepter() == false or abilityWoW:IsHidden() or not abilityWoW:IsFullyCastable() ) 
 	then 
 		return BOT_ACTION_DESIRE_NONE, 0;
 	end

@@ -6,7 +6,7 @@ local reason = "";
 local have = false;
 
 function GetDesire()
-	
+
 	if npcBot:IsChanneling() or npcBot:IsIllusion() or (string.find(GetBot():GetUnitName(), "monkey") and npcBot:IsInvulnerable()) then
 		return BOT_MODE_DESIRE_NONE;
 	end

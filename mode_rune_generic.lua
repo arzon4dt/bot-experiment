@@ -62,28 +62,28 @@ function GetDesire()
 		return BOT_MODE_DESIRE_NONE;
 	end
 	
-	if DotaTime() > dropNeutralItemCheck + 0.25 then
-		local canDrop, hItem = uItem.CanDropNeutralItem(bot);
-		if canDrop == true then
-			bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
-			return;
-		end
-		canDrop, hItem = uItem.CanDropExcessNeutralItem(bot);
-		if canDrop == true then
-			bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
-			return;
-		end
-		dropNeutralItemCheck = DotaTime();
-	end
+	-- if DotaTime() > dropNeutralItemCheck + 0.25 then
+		-- local canDrop, hItem = uItem.CanDropNeutralItem(bot);
+		-- if canDrop == true then
+			-- bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
+			-- return;
+		-- end
+		-- canDrop, hItem = uItem.CanDropExcessNeutralItem(bot);
+		-- if canDrop == true then
+			-- bot:Action_DropItem(hItem, bot:GetLocation() + RandomVector(100));
+			-- return;
+		-- end
+		-- dropNeutralItemCheck = DotaTime();
+	-- end
 	
-	if DotaTime() > swapNeutralItemCheck + 0.25 then
-		local canSwap, hItem1, hItem2 = uItem.CanSwapNeutralItem(bot);
-		if canSwap == true then
-			bot:ActionImmediate_SwapItems(hItem1, hItem2);
-			return;
-		end
-		swapNeutralItemCheck = DotaTime();
-	end
+	-- if DotaTime() > swapNeutralItemCheck + 0.25 then
+		-- local canSwap, hItem1, hItem2 = uItem.CanSwapNeutralItem(bot);
+		-- if canSwap == true then
+			-- bot:ActionImmediate_SwapItems(hItem1, hItem2);
+			-- return;
+		-- end
+		-- swapNeutralItemCheck = DotaTime();
+	-- end
 
 	if GetUnitToUnitDistance(bot, GetAncient(GetTeam())) < 3500 or  GetUnitToUnitDistance(bot, GetAncient(GetOpposingTeam())) < 3500 then
 		return BOT_MODE_DESIRE_NONE;
@@ -100,9 +100,9 @@ function GetDesire()
 		return BOT_MODE_DESIRE_HIGH;
 	end	
 	
-	if neutralItem ~= nil then
-		return CountDesire(BOT_MODE_DESIRE_MODERATE, GetUnitToLocationDistance(bot, neutralItem.location), 2000);
-	end
+	-- if neutralItem ~= nil then
+		-- return CountDesire(BOT_MODE_DESIRE_MODERATE, GetUnitToLocationDistance(bot, neutralItem.location), 2000);
+	-- end
 	
 	closestRune, closestDist = GetBotClosestRune();
 	if closestRune ~= -1 and IsEnemyCloserToRuneLoc(closestRune, closestDist) == false then
@@ -144,23 +144,23 @@ function GetDesire()
 			-- print(tostring(i)..'NA')
 		-- end
 	-- end
-	if DotaTime() >= neutralItemCheck + 0.5 and neutralItem == nil and uItem.IsMeepoClone(bot) == false then
-		if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_BACKPACK) > 1 or uItem.IsNeutralItemSlotEmpty(bot) then
-			local dropped = GetDroppedItemList();
-			for _,drop in pairs(dropped) do
-				if uItem.GetNeutralItemTier(drop.item:GetName()) > 0 
-					and uItem.IsRecipeNeutralItem(drop.item:GetName()) == false 
-					and utils.GetDistance(drop.location, mUtils.GetTeamFountain()) > 500
-					and CanPickupNeutralItem(drop.location) == true 
-				then
-					print(bot:GetUnitName().." taking item:"..tostring(drop))
-					neutralItem = drop;
-					break;
-				end
-			end
-		end	
-		neutralItemCheck = DotaTime();
-	end
+	-- if DotaTime() >= neutralItemCheck + 0.5 and neutralItem == nil and uItem.IsMeepoClone(bot) == false then
+		-- if uItem.GetEmptySlotAmount(bot, ITEM_SLOT_TYPE_BACKPACK) > 1 or uItem.IsNeutralItemSlotEmpty(bot) then
+			-- local dropped = GetDroppedItemList();
+			-- for _,drop in pairs(dropped) do
+				-- if uItem.GetNeutralItemTier(drop.item:GetName()) > 0 
+					-- and uItem.IsRecipeNeutralItem(drop.item:GetName()) == false 
+					-- and utils.GetDistance(drop.location, mUtils.GetTeamFountain()) > 500
+					-- and CanPickupNeutralItem(drop.location) == true 
+				-- then
+					-- print(bot:GetUnitName().." taking item:"..tostring(drop))
+					-- neutralItem = drop;
+					-- break;
+				-- end
+			-- end
+		-- end	
+		-- neutralItemCheck = DotaTime();
+	-- end
 	
 	return BOT_MODE_DESIRE_NONE;
 end

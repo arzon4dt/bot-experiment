@@ -49,7 +49,7 @@ function AbilityUsageThink()
 	
 	ItemGC = mutil.GetComboItem(npcBot, 'item_glimmer_cape')
 	
-	--castQDesire, castQTarget = ConsiderQ();
+	castQDesire, castQTarget = ConsiderQ();
 	castWDesire, castWTarget = ConsiderW();
 	castEDesire, castETarget = ConsiderE();
 	castE2Desire             = ConsiderE2();

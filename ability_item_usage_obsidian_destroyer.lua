@@ -51,7 +51,7 @@ function AbilityUsageThink()
 	
 	castSADesire, castSATarget = ConsiderSearingArrows()
 	castDRDesire, castDRTarget = ConsiderDisruption();
-	castEADesire = ConsiderEquilibrium();
+	-- castEADesire = ConsiderEquilibrium();
 	castSSDesire, castSSLocation = ConsiderStaticStorm();
 	
 	if ( castEADesire > 0 ) 

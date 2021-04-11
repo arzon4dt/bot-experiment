@@ -91,7 +91,7 @@ function AbilityUsageThink()
 	
 	if ( castWKDesire > 0 ) 
 	then
-		npcBot:Action_UseAbilityOnEntity( abilityWK, castWKTarget );
+		npcBot:Action_UseAbilityOnLocation( abilityWK, castWKTarget );
 		return;
 	end
 
@@ -374,7 +374,7 @@ function ConsiderWalrusKick()
 		do
 			if ( npcBot:WasRecentlyDamagedByHero( npcEnemy, 1.0 ) and mutil.CanCastOnMagicImmune(npcEnemy) ) 
 			then
-				return BOT_ACTION_DESIRE_MODERATE, npcEnemy;
+				return BOT_ACTION_DESIRE_MODERATE, npcEnemy:GetLocation();
 			end
 		end
 	end
@@ -402,7 +402,7 @@ function ConsiderWalrusKick()
 
 		if ( npcMostDangerousEnemy ~= nil )
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy;
+			return BOT_ACTION_DESIRE_HIGH, npcMostDangerousEnemy:GetLocation();
 		end
 	end
 
@@ -412,7 +412,7 @@ function ConsiderWalrusKick()
 		local npcTarget = npcBot:GetTarget();
 		if mutil.IsValidTarget(npcTarget) and mutil.CanCastOnMagicImmune(npcTarget) and mutil.IsInRange(npcTarget, npcBot, nCastRange+200)
 		then
-			return BOT_ACTION_DESIRE_HIGH, npcTarget;
+			return BOT_ACTION_DESIRE_HIGH, npcTarget:GetLocation();
 		end
 	end
 	

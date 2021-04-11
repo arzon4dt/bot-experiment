@@ -39,8 +39,8 @@ function AbilityUsageThink()
 	if mutils.CantUseAbility(bot) then return end
 	
 	castQDesire, targetQ = ConsiderQ();
-	--castWDesire, targetW = ConsiderW();
-	castEDesire, targetE  = ConsiderE();
+	castWDesire, targetW = ConsiderE();
+	-- castEDesire, targetE  = ConsiderE();
 	-- castRDesire, targetR = ConsiderR();
 	
 	if castRDesire > 0 then
@@ -178,7 +178,7 @@ function ConsiderW()
 end	
 
 function ConsiderE()
-	if not mutils.CanBeCast(abilities[3]) or bot:HasModifier("modifier_skeleton_king_mortal_strike") == false 
+	if not mutils.CanBeCast(abilities[2]) or bot:HasModifier("modifier_skeleton_king_mortal_strike") == false 
 	then
 		return BOT_ACTION_DESIRE_NONE;
 	end
@@ -190,12 +190,12 @@ function ConsiderE()
 	if modIdx > -1 then
 		stack = bot:GetModifierStackCount(modIdx);
 	end
-	local nStack = abilities[3]:GetSpecialValueInt("max_skeleton_charges");
+	local nStack = abilities[2]:GetSpecialValueInt("max_skeleton_charges");
 	if ( stack < nStack ) then
 		return BOT_ACTION_DESIRE_NONE;
 	end
 	
-	local manaCost = abilities[3]:GetManaCost();
+	local manaCost = abilities[2]:GetManaCost();
 	local manaCost2  = abilities[4]:GetManaCost();
 	
 	if abilities[4]:IsTrained() and abilities[4]:IsFullyCastable() then

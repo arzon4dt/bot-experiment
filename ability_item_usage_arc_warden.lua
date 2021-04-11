@@ -50,7 +50,7 @@ function AbilityUsageThink()
 	castPRDesire, castPRTarget = ConsiderFlux();
 	castWADesire, castWALocation = ConsiderSparkWraith();
 	castMFDesire, castMFLocation = ConsiderMagneticField();
-	castASSDesire, castASSLoc = ConsiderAghScepterSkill();
+	-- castASSDesire, castASSLoc = ConsiderAghScepterSkill();
 	castWBDesire = ConsiderTempestDouble();
 
 	if ( castPRDesire > castWADesire ) 

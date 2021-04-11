@@ -1453,6 +1453,9 @@ ItemUsageModule.Use['item_force_staff'] = function(item, bot, mode, extra_range)
 	
 	if item:GetName() == 'item_hurricane_pike' then
 		eCastRange = 400;
+	elseif item:GetName() == 'item_force_boots' then
+		aCastRange = 750
+		eCastRange = 750
 	end
 	
 	if mutil.IsRetreating(bot) == true
@@ -1537,7 +1540,7 @@ end
 --item_cyclone
 ItemUsageModule.Use['item_cyclone'] = function(item, bot, mode, extra_range)
 	
-	local nCastRange = 575 + extra_range;
+	local nCastRange = 550 + extra_range;
 	
 	if item:GetName() == 'item_rod_of_atos' then
 		nCastRange = 1100 + extra_range;
@@ -1976,7 +1979,7 @@ end
 --item_abyssal_blade
 ItemUsageModule.Use['item_abyssal_blade'] = function(item, bot, mode, extra_range)
 	
-	local nCastRange = 600 + extra_range;
+	local nCastRange = 200 + extra_range;
 	
 	if mutil.IsRetreating(bot)
 	then
@@ -2451,12 +2454,17 @@ end
 
 --item_force_boots
 ItemUsageModule.Use['item_force_boots'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_force_staff'](item, bot, mode, extra_range);
+end
+
+--item_force_boots_old
+ItemUsageModule.Use['item_force_boots_old'] = function(item, bot, mode, extra_range)
 	if mutil.IsRetreating(bot) == true
 		and ( bot:WasRecentlyDamagedByAnyHero(3.0) == true or bot:WasRecentlyDamagedByTower(3.0) == true )
 	then
 		local loc = mutil.GetEscapeLoc();
 		if bot:IsFacingLocation(loc,15) then
-			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+			return BOT_ACTION_DESIRE_ABSOLUTE, bot, 'unit';
 		end
 	end
 	
@@ -2472,7 +2480,7 @@ ItemUsageModule.Use['item_force_boots'] = function(item, bot, mode, extra_range)
 			local enemies = target:GetNearbyHeroes(1000, false, BOT_MODE_NONE);
 			local allies = target:GetNearbyHeroes(1000, true, BOT_MODE_NONE);
 			if enemies ~= nil and allies ~= nil and  #enemies <= #allies then
-				return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+				return BOT_ACTION_DESIRE_ABSOLUTE, bot, 'unit';
 			end
 		end
 	end
@@ -2572,4 +2580,162 @@ ItemUsageModule.Use['item_cheese'] = function(item, bot, mode, extra_range)
 	
 	return BOT_ACTION_DESIRE_NONE;
 end
+
+--------- PATCH 7.28 -----------
+--item_gungir
+ItemUsageModule.Use['item_gungir'] = function(item, bot, mode, extra_range)
+	local nCastRange = 1100 + extra_range;
+	
+	if  mutil.IsInTeamFight(bot, 1200) then
+		local locationAoE = bot:FindAoELocation( true, true, bot:GetLocation(), nCastRange, 300, 0, 0 );
+		if ( locationAoE.count >= 2 ) 
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, locationAoE.targetloc, 'point';
+		end
+	elseif mutil.IsGoingOnSomeone(bot) then
+		local target = bot:GetTarget();
+		if mutil.IsValidTarget(target) and mutil.CanCastOnNonMagicImmune(target) and mutil.IsInRange(target, bot, nCastRange) 
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, target:GetLocation(), 'point';
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
+end
+--item_eternal_shroud
+ItemUsageModule.Use['item_eternal_shroud'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_hood_of_defiance'](item, bot, mode, extra_range);
+end
+--item_helm_of_the_dominator_2
+ItemUsageModule.Use['item_helm_of_the_dominator_2'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_helm_of_the_dominator'](item, bot, mode, extra_range);
+end
+--item_overwhelming_blink
+ItemUsageModule.Use['item_overwhelming_blink'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_blink'](item, bot, mode, extra_range);
+end
+--item_swift_blink
+ItemUsageModule.Use['item_swift_blink'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_blink'](item, bot, mode, extra_range);
+end
+--item_arcane_blink
+ItemUsageModule.Use['item_arcane_blink'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_blink'](item, bot, mode, extra_range);
+end
+--item_wind_waker
+ItemUsageModule.Use['item_wind_waker'] = function(item, bot, mode, extra_range)
+	return ItemUsageModule.Use['item_cyclone'](item, bot, mode, extra_range);
+end
+--item_bullwhip
+ItemUsageModule.Use['item_bullwhip'] = function(item, bot, mode, extra_range)
+	local nCastRange = 850 + extra_range;
+
+	if mutil.IsGoingOnSomeone(bot)
+	then
+		local target = bot:GetTarget();
+		if mutil.IsValidTarget(target) 
+			and mutil.CanCastOnNonMagicImmune(bot) 
+			and mutil.IsInRange(target, bot, bot:GetAttackRange()) == false 
+			and mutil.IsInRange(target, bot, bot:GetAttackRange() + 200) == true 
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, target, 'unit';
+		end
+	end
+
+	local allies = bot:GetNearbyHeroes(nCastRange,false,BOT_MODE_RETREAT);
+	for i = 1, #allies
+	do
+		if mutil.IsValidTarget(allies[i])
+		   and allies[i]:IsIllusion() == false
+		   and mutil.CanCastOnNonMagicImmune(allies[i])
+		   and allies[i]:WasRecentlyDamagedByAnyHero(1.0)
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, allies[i], 'unit';
+		end
+	end
+
+	local allies = bot:GetNearbyHeroes(nCastRange,false,BOT_MODE_ATTACK);
+	for i = 1, #allies
+	do
+		if mutil.IsValidTarget(allies[i])
+		   and allies[i]:IsIllusion() == false
+		   and mutil.CanCastOnNonMagicImmune(allies[i])
+		   and allies[i]:GetAttackRange() < 325
+		then
+			return BOT_ACTION_DESIRE_ABSOLUTE, allies[i], 'unit';
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
+end
+--item_psychic_headband
+ItemUsageModule.Use['item_psychic_headband'] = function(item, bot, mode, extra_range)
+	local nCastRange = 800 + extra_range;
+
+	if mutil.IsRetreating(bot) == true
+		and ( bot:WasRecentlyDamagedByAnyHero(2.0) == true
+		or bot:WasRecentlyDamagedByTower(2.0) == true )
+	then
+		local target = ItemUsageModule.GetNonDisabledStrongestEnemy(bot, nCastRange);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_ABSOLUTE, target, 'unit';
+		end
+	end
+
+	return BOT_ACTION_DESIRE_NONE;
+end
+--item_stormcrafter
+ItemUsageModule.Use['item_stormcrafter'] = function(item, bot, mode, extra_range)
+	
+	if ( bot:IsSilenced() == true or bot:IsRooted( ) == true )
+		and bot:WasRecentlyDamagedByAnyHero(3.0) == true 
+		and bot:GetHealth() < 0.65*bot:GetMaxHealth() 
+		and mutil.CanCastOnNonMagicImmune(bot)
+	then
+		return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+	end
+	
+	return BOT_ACTION_DESIRE_NONE;
+end
+--item_trickster_cloak
+ItemUsageModule.Use['item_trickster_cloak'] = function(item, bot, mode, extra_range)
+	
+	if mutil.IsRetreating(bot) == true
+		and ( bot:WasRecentlyDamagedByAnyHero(3.0) == true or bot:WasRecentlyDamagedByTower(3.0) == true )
+	then
+		local enemies = bot:GetNearbyHeroes(1300, true, BOT_MODE_NONE);
+		if #enemies > 0 then
+			return BOT_ACTION_DESIRE_ABSOLUTE, nil, 'no_target';
+		end
+	end
+	return BOT_ACTION_DESIRE_NONE;
+end
+--item_book_of_shadows
+ItemUsageModule.Use['item_book_of_shadows'] = function(item, bot, mode, extra_range)
+	local nCastRange = 700 + extra_range
+	if mutil.IsRetreating(bot) and bot:WasRecentlyDamagedByAnyHero(2.0)
+	then
+		local target = ItemUsageModule.GetNonDisabledStrongestEnemy(bot, nCastRange);
+		if target ~= nil then
+			return BOT_ACTION_DESIRE_ABSOLUTE, target, 'unit';
+		end
+	end
+	if mutil.IsGoingOnSomeone(bot)
+	then	
+		local target = bot:GetTarget();
+		if mutil.IsValidTarget(target)
+		then
+			local enemies = bot:GetNearbyHeroes(nCastRange, true, BOT_MODE_NONE);
+			if #enemies > 1 then
+				for i=1, #enemies do
+					if enemies[i] ~= target and mutil.CanCastOnNonMagicImmune(enemies[i]) then
+						return BOT_ACTION_DESIRE_ABSOLUTE, enemies[i], 'unit';
+					end
+				end
+			end
+		end
+	end
+	return BOT_ACTION_DESIRE_NONE;
+end
+
 return ItemUsageModule;

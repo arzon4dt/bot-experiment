@@ -55,7 +55,7 @@ function AbilityUsageThink()
 
 	-- Consider using each ability
 	castRGDesire = ConsiderRage();
-	castOWDesire, castOWTarget = ConsiderOpenWounds();
+	-- castOWDesire, castOWTarget = ConsiderOpenWounds();
 	castINDesire, castINTarget = ConsiderInfest();
 	
 	if ( castRGDesire > 0 ) 

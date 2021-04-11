@@ -2112,7 +2112,7 @@ function ItemUsageThink()
 	local aether_lens_slot_type = bot:GetItemSlotType(bot:FindItemSlot('item_aether_lens'));
 	if aether_lens_slot_type == ITEM_SLOT_TYPE_MAIN 
 	then
-		extra_range = extra_range + 250;
+		extra_range = extra_range + 225;
 	end
 
 	local item_slot = {0,1,2,3,4,5,15,16};

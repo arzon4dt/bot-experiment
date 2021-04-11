@@ -123,6 +123,18 @@ X["hero_roles"] = {
 		['support'] = 0,
 		['pusher'] = 0
 	},
+	
+	["npc_dota_hero_dawnbreaker"] = {
+		['carry'] = 2,
+		['disabler'] = 2,
+		['durable'] = 2,
+		['escape'] = 1,
+		['initiator'] = 3,
+		['jungler'] = 0,
+		['nuker'] = 1,
+		['support'] = 0,
+		['pusher'] = 0
+	},
 
 	["npc_dota_hero_doom_bringer"] = {
 		['carry'] = 1,
@@ -205,6 +217,18 @@ X["hero_roles"] = {
 		['jungler'] = 0,
 		['nuker'] = 0,
 		['support'] = 0,
+		['pusher'] = 0
+	},
+
+	["npc_dota_hero_hoodwink"] = {
+		['carry'] = 3,
+		['disabler'] = 1,
+		['durable'] = 0,
+		['escape'] = 2,
+		['initiator'] = 0,
+		['jungler'] = 0,
+		['nuker'] = 2,
+		['support'] = 1,
 		['pusher'] = 0
 	},
 
@@ -1581,6 +1605,7 @@ X['off'] = {
 	'npc_dota_hero_centaur',
 	'npc_dota_hero_dark_seer',
 	'npc_dota_hero_doom_bringer',
+	'npc_dota_hero_dawnbreaker',
 	'npc_dota_hero_enchantress',
 	'npc_dota_hero_furion',
 	'npc_dota_hero_legion_commander',
@@ -1658,7 +1683,8 @@ X['safe'] = {
 	'npc_dota_hero_terrorblade',
 	'npc_dota_hero_troll_warlord',
 	'npc_dota_hero_ursa',
-	'npc_dota_hero_weaver'
+	'npc_dota_hero_weaver',
+	'npc_dota_hero_hoodwink',
 }
 
 X['supp'] = {
