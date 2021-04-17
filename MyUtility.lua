@@ -617,6 +617,31 @@ function U.IsDisabled(enemy, npcTarget)
 	end
 end
 
+
+
+
+function U.IsDisabled2(npcBot)
+      if npcBot:IsRooted( ) or npcBot:IsStunned( ) or npcBot:IsHexed( ) or npcBot:IsNightmared() or npcBot:IsSilenced() 
+        or npcBot:HasModifier ("modifier_obsidian_destroyer_astral_imprisonment_prision")
+        or npcBot:HasModifier ("modifier_shadow_demon_disruption")  or npcBot:HasModifier ("modifier_doom_bringer_doom")
+        or npcBot:HasModifier ("modifier_bloodseeker_rupture") or npcBot:HasModifier ("modifier_crystal_maiden_frosbite")
+        or U.IsTaunted2 (npcBot) or U.IsSlowed2(npcBot)
+       then
+        return true;
+      end
+        return false;
+end
+     
+ 
+
+function U.IsSlowed2(npcBot)
+	local speedPlusBoots =  U.GetUpgradedSpeed(npcBot);
+	return npcBot:GetCurrentMovementSpeed() < speedPlusBoots;
+end
+
+
+
+
 function U.IsSlowed(bot)
 	local speedPlusBoots =  U.GetUpgradedSpeed(bot);
 	return bot:GetCurrentMovementSpeed() < speedPlusBoots;
@@ -638,6 +663,18 @@ function U.IsTaunted(npcTarget)
 	    or npcTarget:HasModifier("modifier_winter_wyvern_winters_curse") 
 		or npcTarget:HasModifier(" modifier_winter_wyvern_winters_curse_aura");
 end
+
+
+
+function U.IsTaunted2(npcBot)
+	return npcBot:HasModifier("modifier_axe_berserkers_call") 
+	    or npcBot:HasModifier("modifier_legion_commander_duel") 
+	    or npcBot:HasModifier("modifier_winter_wyvern_winters_curse") 
+		or npcBot:HasModifier(" modifier_winter_wyvern_winters_curse_aura");
+end
+
+
+
 
 function U.IsInRange(npcTarget, npcBot, nCastRange)
 	return GetUnitToUnitDistance( npcTarget, npcBot ) <= nCastRange;
